@@ -1,0 +1,6 @@
+@g_flame_youth_HostAddress = http://localhost:5020
+
+GET {{g_flame_youth_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

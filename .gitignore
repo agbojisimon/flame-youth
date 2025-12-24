@@ -1,0 +1,9 @@
+appsettings.Development.json
+bin/
+obj/
+.vscode/
+*.log
+*.db
+.env
+*.user
+*.suo
