@@ -26,6 +26,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequiredLength = 8;
 })
+.AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddAuthentication(options =>
@@ -59,12 +60,28 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
 
-app.MapControllers();
+    var dbContext = services.GetRequiredService<AppDbContext>();
+    await dbContext.Database.MigrateAsync();
+
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+    if (!await roleManager.RoleExistsAsync(Roles.Admin))
+        await roleManager.CreateAsync(new IdentityRole(Roles.Admin));
+
+    if (!await roleManager.RoleExistsAsync(Roles.Member))
+        await roleManager.CreateAsync(new IdentityRole(Roles.Member));
+}
+
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.MapControllers();
 
 app.Run();
