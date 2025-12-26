@@ -12,8 +12,8 @@ using g_flame_youth.Data;
 namespace g_flame_youth.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251225213619_InitialIdenititySetup")]
-    partial class InitialIdenititySetup
+    [Migration("20251226120636_IdentitySetup")]
+    partial class IdentitySetup
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

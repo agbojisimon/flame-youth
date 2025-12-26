@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using g_flame_youth.DTOs.Account;
 using g_flame_youth.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,47 +13,34 @@ namespace g_flame_youth.Controllers
         private readonly UserManager<AppUser> _userManager;
         public AccountController(UserManager<AppUser> userManager)
         {
-            this._userManager = userManager;
+            _userManager = userManager;
         }
 
+        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
-            try
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var appUser = new AppUser()
             {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
+                UserName = registerDto.UserName,
+                Email = registerDto.Email,
+            };
 
-                var appUser = new AppUser()
-                {
-                    UserName = registerDto.UserName,
-                    Email = registerDto.Email,
-                };
+            var createdUser = await _userManager.CreateAsync(appUser, registerDto.Password);
 
-                var createdUser = await _userManager.CreateAsync(appUser, registerDto.Password);
+            if (!createdUser.Succeeded)
+                return BadRequest(createdUser.Errors);
 
-                if (createdUser.Succeeded)
-                {
-                    var roleResult = await _userManager.AddToRoleAsync(appUser, "Member");
+            var roleResult = await _userManager.AddToRoleAsync(appUser, "Member");
 
-                    if (roleResult.Succeeded)
-                    {
-                        return Ok("User Created");
-                    }
-                    else
-                    {
-                        return StatusCode(500, roleResult.Errors);
-                    }
-                }
-                else
-                {
-                    return StatusCode(500, createdUser.Errors);
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Fatal Error Encountered : " + ex.Message);
-            }
+            if (!roleResult.Succeeded)
+                return BadRequest(roleResult.Errors);
+
+            return StatusCode(201, "User Created Successfully");
         }
     }
 }

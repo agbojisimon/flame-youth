@@ -2,7 +2,6 @@ using g_flame_youth.Data;
 using g_flame_youth.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -48,6 +47,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SigningKey"])),
         ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero,
     };
 });
 
@@ -58,22 +58,18 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-}
 
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
+    using (var scope = app.Services.CreateScope())
+    {
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        var roles = new[] { "Admin", "Member" };
 
-    var dbContext = services.GetRequiredService<AppDbContext>();
-    await dbContext.Database.MigrateAsync();
-
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-
-    if (!await roleManager.RoleExistsAsync(Roles.Admin))
-        await roleManager.CreateAsync(new IdentityRole(Roles.Admin));
-
-    if (!await roleManager.RoleExistsAsync(Roles.Member))
-        await roleManager.CreateAsync(new IdentityRole(Roles.Member));
+        foreach (var role in roles)
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole(role));
+        }
+    }
 }
 
 app.UseHttpsRedirection();
