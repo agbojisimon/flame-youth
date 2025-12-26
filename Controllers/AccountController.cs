@@ -1,4 +1,5 @@
 using g_flame_youth.DTOs.Account;
+using g_flame_youth.Interfaces;
 using g_flame_youth.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -11,9 +12,11 @@ namespace g_flame_youth.Controllers
     public class AccountController : ControllerBase
     {
         private readonly UserManager<AppUser> _userManager;
-        public AccountController(UserManager<AppUser> userManager)
+        private readonly ITokenService _tokenService;
+        public AccountController(UserManager<AppUser> userManager, ITokenService tokenService)
         {
             _userManager = userManager;
+            _tokenService = tokenService;
         }
 
         [AllowAnonymous]
@@ -40,7 +43,14 @@ namespace g_flame_youth.Controllers
             if (!roleResult.Succeeded)
                 return BadRequest(roleResult.Errors);
 
-            return StatusCode(201, "User Created Successfully");
+            return Ok(
+                new NewUserDto
+                {
+                    UserName = appUser.UserName,
+                    Email = appUser.Email,
+                    Token = _tokenService.CreateToken(appUser)
+                }
+            );
         }
     }
 }
