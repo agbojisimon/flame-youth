@@ -51,7 +51,7 @@ namespace g_flame_youth.Controllers
                 {
                     UserName = appUser.UserName,
                     Email = appUser.Email,
-                    Token = _tokenService.CreateToken(appUser)
+                    Token = await _tokenService.CreateTokenAsync(appUser)
                 }
             );
         }
@@ -63,7 +63,7 @@ namespace g_flame_youth.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Email == loginDto.Email.ToLower());
+            var user = await _userManager.FindByEmailAsync(loginDto.Email);
 
             if (user == null) return Unauthorized("Email or password does not exit");
 
@@ -78,7 +78,7 @@ namespace g_flame_youth.Controllers
                     UserName = user.UserName,
                     Email = user.Email,
 
-                    Token = _tokenService.CreateToken(user)
+                    Token = await _tokenService.CreateTokenAsync(user)
                 }
             );
         }

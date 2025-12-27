@@ -8,6 +8,6 @@ namespace g_flame_youth.Interfaces
 {
     public interface ITokenService
     {
-        string CreateToken(AppUser user);
+        Task<string> CreateTokenAsync(AppUser user);
     }
 }

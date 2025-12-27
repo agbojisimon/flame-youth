@@ -14,6 +14,10 @@ namespace g_flame_youth.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<AppUser>()
+           .HasIndex(u => u.Email)
+           .IsUnique();
         }
     }
 }
