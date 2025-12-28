@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using g_flame_youth.DTOs.Account;
+using g_flame_youth.DTOs.User;
 using g_flame_youth.Mappers;
 using g_flame_youth.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -32,7 +34,7 @@ namespace g_flame_youth.Controllers
             return Ok(userDto);
         }
 
-        [HttpGet("{Id:string}")]
+        [HttpGet("{Id}")]
         public async Task<IActionResult> GetById([FromRoute] string Id)
         {
             if (string.IsNullOrEmpty(Id))
@@ -44,6 +46,36 @@ namespace g_flame_youth.Controllers
                 return NotFound($"User with ID {Id} not found.");
 
             var userDto = user.ToUserDto();
+
+            return Ok(userDto);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateUser([FromBody] RegisterDto registerDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var appUser = new AppUser()
+            {
+                FirstName = registerDto.FirstName,
+                LastName = registerDto.LastName,
+                UserName = registerDto.UserName,
+                Email = registerDto.Email,
+                CreatedOn = DateTime.UtcNow
+            };
+
+            var createdUser = await _userManager.CreateAsync(appUser, registerDto.Password);
+
+            if (!createdUser.Succeeded)
+                return BadRequest(createdUser.Errors);
+
+            var roleResult = await _userManager.AddToRoleAsync(appUser, "Member");
+
+            if (!roleResult.Succeeded)
+                return BadRequest(roleResult.Errors);
+
+            var userDto = appUser.ToUserDto();
 
             return Ok(userDto);
         }
