@@ -32,8 +32,11 @@ namespace g_flame_youth.Controllers
 
             var appUser = new AppUser()
             {
+                FirstName = registerDto.FirstName,
+                LastName = registerDto.LastName,
                 UserName = registerDto.UserName,
                 Email = registerDto.Email,
+                CreatedOn = DateTime.UtcNow
             };
 
             var createdUser = await _userManager.CreateAsync(appUser, registerDto.Password);
@@ -49,6 +52,8 @@ namespace g_flame_youth.Controllers
             return Ok(
                 new NewUserDto
                 {
+                    FirstName = appUser.FirstName,
+                    LastName = appUser.LastName,
                     UserName = appUser.UserName,
                     Email = appUser.Email,
                     Token = await _tokenService.CreateTokenAsync(appUser)
@@ -75,6 +80,8 @@ namespace g_flame_youth.Controllers
             return Ok(
                 new NewUserDto
                 {
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
                     UserName = user.UserName,
                     Email = user.Email,
 
