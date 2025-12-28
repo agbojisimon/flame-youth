@@ -106,5 +106,22 @@ namespace g_flame_youth.Controllers
 
             return Ok(user.ToUserDto());
         }
+
+        [HttpDelete("{Id}")]
+        public async Task<IActionResult> DeleteUser([FromRoute] string Id)
+        {
+            if (string.IsNullOrEmpty(Id))
+                return BadRequest("User ID is required.");
+
+            var user = await _userManager.FindByIdAsync(Id);
+            if (user == null)
+                return NotFound($"User with ID {Id} not found.");
+
+            var deleteResult = await _userManager.DeleteAsync(user);
+            if (!deleteResult.Succeeded)
+                return BadRequest(deleteResult.Errors);
+
+            return Ok("User deleted successfully.");
+        }
     }
 }
