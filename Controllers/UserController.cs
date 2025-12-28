@@ -79,5 +79,32 @@ namespace g_flame_youth.Controllers
 
             return Ok(userDto);
         }
+        [HttpPut("{Id}")]
+        public async Task<IActionResult> UpdateUser([FromRoute] string Id, [FromBody] UpdateUserDto updateUserDto)
+        {
+            if (string.IsNullOrEmpty(Id))
+                return BadRequest("User ID is required.");
+
+            var user = await _userManager.FindByIdAsync(Id);
+            if (user == null)
+                return NotFound($"User with ID {Id} not found.");
+
+            user = updateUserDto.ToAppUser(user);
+
+            var updateResult = await _userManager.UpdateAsync(user);
+            if (!updateResult.Succeeded)
+                return BadRequest(updateResult.Errors);
+
+            if (!string.IsNullOrWhiteSpace(updateUserDto.Password))
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var passwordResult = await _userManager.ResetPasswordAsync(user, token, updateUserDto.Password);
+
+                if (!passwordResult.Succeeded)
+                    return BadRequest(passwordResult.Errors);
+            }
+
+            return Ok(user.ToUserDto());
+        }
     }
 }
