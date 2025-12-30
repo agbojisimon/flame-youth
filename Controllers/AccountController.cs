@@ -70,7 +70,8 @@ namespace g_flame_youth.Controllers
 
             var user = await _userManager.FindByEmailAsync(loginDto.Email);
 
-            if (user == null) return Unauthorized("Email or password does not exit");
+            if (user == null)
+                return Unauthorized("Email or password does not exit");
 
             var result = await _signManger.CheckPasswordSignInAsync(user, loginDto.Password, false);
 

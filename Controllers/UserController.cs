@@ -123,5 +123,27 @@ namespace g_flame_youth.Controllers
 
             return Ok("User deleted successfully.");
         }
+
+        [HttpPost("assign-role")]
+        public async Task<IActionResult> AssignRole([FromBody] AssignRoleDto assignRoleDto)
+        {
+            var allowedRoles = new[] { "Member", "Admin" };
+            if (!allowedRoles.Contains(assignRoleDto.Role))
+                return BadRequest("Invalid Role");
+
+            var user = await _userManager.FindByIdAsync(assignRoleDto.userId);
+            if (user == null)
+                return NotFound($"User with ID {assignRoleDto.userId} not found.");
+
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+
+            var roleResult = await _userManager.AddToRoleAsync(user, assignRoleDto.Role);
+
+            if (!roleResult.Succeeded)
+                return BadRequest(roleResult.Errors);
+
+            return Ok("Role assigned successfully.");
+        }
     }
 }
