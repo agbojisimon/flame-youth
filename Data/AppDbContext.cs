@@ -11,6 +11,7 @@ namespace g_flame_youth.Data
 
         }
 
+        public DbSet<Announcement> Announcements { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -18,6 +19,12 @@ namespace g_flame_youth.Data
             builder.Entity<AppUser>()
            .HasIndex(u => u.Email)
            .IsUnique();
+
+            builder.Entity<Announcement>()
+            .HasOne(a => a.CreatedBy)
+            .WithMany()
+            .HasForeignKey(a => a.CreatedById)
+            .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
