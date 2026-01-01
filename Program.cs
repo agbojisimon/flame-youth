@@ -2,6 +2,7 @@ using System.Text;
 using g_flame_youth.Data;
 using g_flame_youth.Interfaces;
 using g_flame_youth.Models;
+using g_flame_youth.Repository;
 using g_flame_youth.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -55,7 +56,10 @@ builder.Services.AddSwaggerGen(option =>
         }
     });
 });
-
+builder.Services.AddControllers().AddNewtonsoftJson(options =>
+{
+    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+});
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -97,6 +101,7 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
 
 var app = builder.Build();
 
