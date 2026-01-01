@@ -13,6 +13,7 @@ namespace g_flame_youth.Models
         public string CreatedById { get; set; } = string.Empty;
         public AppUser CreatedBy { get; set; } = null!;
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedOn { get; set; }
         public string Status { get; set; } = "Draft";
         public string Category { get; set; } = string.Empty;
         public bool IsDeleted { get; set; } = false;
