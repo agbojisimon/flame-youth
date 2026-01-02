@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using g_flame_youth.DTOs.Announcement;
+using g_flame_youth.Helpers;
 using g_flame_youth.Interfaces;
 using g_flame_youth.Mappers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace g_flame_youth.Controllers.Admin
@@ -17,16 +19,18 @@ namespace g_flame_youth.Controllers.Admin
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAnnouncements()
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllAnnouncements([FromQuery] AnnouncementQueryObject query)
         {
-            var announcements = await _announcementRepository.GetAnnouncementsAsync();
+            var announcements = await _announcementRepository.GetAnnouncementsAsync(query);
 
             var announcementDtos = announcements.Select(a => a.ToAnnouncementDto()).ToList();
 
             return Ok(announcementDtos);
         }
 
-        [HttpGet("{Id}")]
+        [HttpGet("{Id:int}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAnnouncementById([FromRoute] int Id)
         {
             var announcement = await _announcementRepository.GetAnnouncementByIdAsync(Id);
@@ -39,6 +43,7 @@ namespace g_flame_youth.Controllers.Admin
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateAnnouncement([FromBody] CreateAnnouncementDto createAnnouncementDto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -50,13 +55,13 @@ namespace g_flame_youth.Controllers.Admin
 
             var createdAnnouncement = await _announcementRepository.CreateAnnouncementAsync(announcement);
 
-            return CreatedAtAction(
-                nameof(GetAnnouncementById),
-                new { id = createdAnnouncement.Id },
+            return CreatedAtAction(nameof(GetAnnouncementById), new { id = createdAnnouncement.Id },
                 createdAnnouncement.ToAnnouncementDto()
             );
         }
-        [HttpPut("{Id}")]
+
+        [HttpPut("{Id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateAnnouncement([FromRoute] int Id, [FromBody] UpdateAnnouncementDto updateAnnouncementDto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -70,6 +75,23 @@ namespace g_flame_youth.Controllers.Admin
                 return NotFound($"Announcement with ID {Id} not found.");
 
             return Ok(updatedAnnouncement.ToAnnouncementDto());
+        }
+
+        [HttpDelete("{Id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteAnnouncement([FromRoute] int Id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var isDeleted = await _announcementRepository.DeleteAnnouncementAsync(Id);
+
+            if (!isDeleted)
+                return NotFound($"Announcement with ID {Id} not found.");
+
+            return Ok(new { message = "Announcement deleted successfully." });
         }
     }
 }

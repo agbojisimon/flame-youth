@@ -1,9 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using g_flame_youth.Data;
 using g_flame_youth.DTOs.Account;
 using g_flame_youth.DTOs.User;
+using g_flame_youth.Helpers;
 using g_flame_youth.Mappers;
 using g_flame_youth.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -18,20 +16,49 @@ namespace g_flame_youth.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
+        private readonly AppDbContext _context;
         private readonly UserManager<AppUser> _userManager;
-        public UserController(UserManager<AppUser> userManager)
+        public UserController(AppDbContext context, UserManager<AppUser> userManager)
         {
+            _context = context;
             _userManager = userManager;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] UserQueryObject query)
         {
-            var users = await _userManager.Users.ToListAsync();
+            var usersQuery = _context.Users.AsQueryable();
 
-            var userDto = users.Select(u => u.ToUserDto());
+            if (!string.IsNullOrWhiteSpace(query.Email))
+            {
+                usersQuery = usersQuery.Where(u => u.Email.Contains(query.Email));
+            }
 
-            return Ok(userDto);
+            if (!string.IsNullOrWhiteSpace(query.FullName))
+            {
+                usersQuery = usersQuery.Where(u =>
+                    (u.FirstName + " " + u.LastName).Contains(query.FullName));
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.SortBy))
+            {
+                if (query.SortBy.Equals("Email", StringComparison.OrdinalIgnoreCase))
+                {
+                    usersQuery = query.IsDescending ? usersQuery.OrderByDescending(u => u.Email) : usersQuery.OrderBy(u => u.Email);
+                }
+            }
+            else
+            {
+                usersQuery = usersQuery.OrderByDescending(u => u.CreatedOn);
+            }
+
+            var skipNumber = (query.PageNumber - 1) * query.PageSize;
+
+            var users = await usersQuery.Skip(skipNumber).Take(query.PageSize).ToListAsync();
+
+            var userDtos = users.Select(u => u.ToUserDto()).ToList();
+
+            return Ok(userDtos);
         }
 
         [HttpGet("{Id}")]
