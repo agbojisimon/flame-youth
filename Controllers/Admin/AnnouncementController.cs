@@ -2,7 +2,6 @@ using System.Security.Claims;
 using g_flame_youth.DTOs.Announcement;
 using g_flame_youth.Helpers;
 using g_flame_youth.Interfaces;
-using g_flame_youth.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,81 +11,76 @@ namespace g_flame_youth.Controllers.Admin
     [ApiController]
     public class AnnouncementController : ControllerBase
     {
-        private readonly IAnnouncementRepository _announcementRepository;
-        public AnnouncementController(IAnnouncementRepository announcement)
+        private readonly IAnnouncementService _announceService;
+        public AnnouncementController(IAnnouncementService announceService)
         {
-            _announcementRepository = announcement;
+            _announceService = announceService;
         }
 
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> GetAllAnnouncements([FromQuery] AnnouncementQueryObject query)
         {
-            var announcements = await _announcementRepository.GetAnnouncementsAsync(query);
+            var announcements = await _announceService.GetAnnouncementsAsync(query);
 
-            var announcementDtos = announcements.Select(a => a.ToAnnouncementDto()).ToList();
-
-            return Ok(announcementDtos);
+            return Ok(announcements);
         }
 
         [HttpGet("{Id:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAnnouncementById([FromRoute] int Id)
         {
-            var announcement = await _announcementRepository.GetAnnouncementByIdAsync(Id);
+            var announcement = await _announceService.GetAnnouncementByIdAsync(Id);
+
             if (announcement == null)
                 return NotFound($"Announcement with ID {Id} not found.");
 
-            var announcementDto = announcement.ToAnnouncementDto();
-
-            return Ok(announcementDto);
+            return Ok(announcement);
         }
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> CreateAnnouncement([FromBody] CreateAnnouncementDto createAnnouncementDto)
+        public async Task<IActionResult> CreateAnnouncement([FromBody] CreateAnnouncementDto createDto, string userId)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            var announcement = createAnnouncementDto.ToAnnouncementFromCreateDto(userId);
-
-            var createdAnnouncement = await _announcementRepository.CreateAnnouncementAsync(announcement);
+            var createdAnnouncement = await _announceService.CreateAnnouncementAsync(createDto, UserId);
 
             return CreatedAtAction(nameof(GetAnnouncementById), new { id = createdAnnouncement.Id },
-                createdAnnouncement.ToAnnouncementDto()
+                createdAnnouncement
             );
         }
 
         [HttpPut("{Id:int}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateAnnouncement([FromRoute] int Id, [FromBody] UpdateAnnouncementDto updateAnnouncementDto)
+        public async Task<IActionResult> UpdateAnnouncement([FromRoute] int Id, [FromBody] UpdateAnnouncementDto updateAnnouncementDto, string userId)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            var updatedAnnouncement = await _announcementRepository.UpdateAnnouncementAsync(Id, updateAnnouncementDto);
+            var updatedAnnouncement = await _announceService.UpdateAnnouncementAsync(Id, updateAnnouncementDto, UserId);
 
             if (updatedAnnouncement == null)
                 return NotFound($"Announcement with ID {Id} not found.");
 
-            return Ok(updatedAnnouncement.ToAnnouncementDto());
+            return Ok(updatedAnnouncement);
         }
 
         [HttpDelete("{Id:int}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteAnnouncement([FromRoute] int Id)
+        public async Task<IActionResult> DeleteAnnouncement([FromRoute] int Id, string userId)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            var isDeleted = await _announcementRepository.DeleteAnnouncementAsync(Id);
+            var isDeleted = await _announceService.DeleteAnnouncementAsync(Id, UserId);
 
             if (!isDeleted)
                 return NotFound($"Announcement with ID {Id} not found.");
