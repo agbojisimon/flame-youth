@@ -8,8 +8,8 @@ namespace g_flame_youth.Interfaces
     {
         Task<List<Announcement>> GetAnnouncementsAsync(AnnouncementQueryObject query);
         Task<Announcement?> GetAnnouncementByIdAsync(int Id);
-        Task<Announcement> CreateAnnouncementAsync(Announcement announcement);
-        Task<Announcement?> UpdateAnnouncementAsync(int Id, UpdateAnnouncementDto updateAnnouncementDto);
+        Task CreateAnnouncementAsync(Announcement announcement);
+        Task UpdateAnnouncementAsync(Announcement announcement);
         Task<bool> DeleteAnnouncementAsync(int Id);
     }
 }
