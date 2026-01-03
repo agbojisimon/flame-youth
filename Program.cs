@@ -3,7 +3,7 @@ using g_flame_youth.Data;
 using g_flame_youth.Interfaces;
 using g_flame_youth.Models;
 using g_flame_youth.Repository;
-using g_flame_youth.Service;
+using g_flame_youth.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -102,6 +102,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
+builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 
 var app = builder.Build();
 
