@@ -1,5 +1,4 @@
 using g_flame_youth.Data;
-using g_flame_youth.DTOs.Announcement;
 using g_flame_youth.Helpers;
 using g_flame_youth.Interfaces;
 using g_flame_youth.Models;
@@ -36,12 +35,12 @@ namespace g_flame_youth.Repository
 
         public async Task<Announcement?> GetAnnouncementByIdAsync(int Id)
         {
-            return await _context.Announcements.Include(a => a.CreatedBy).FirstOrDefaultAsync(a => a.Id == Id && !a.IsDeleted);
+            return await _context.Announcements.FirstOrDefaultAsync(a => a.Id == Id && !a.IsDeleted);
         }
 
         public async Task<List<Announcement>> GetAnnouncementsAsync(AnnouncementQueryObject query)
         {
-            var announcements = _context.Announcements.Include(a => a.CreatedBy).Where(a => !a.IsDeleted).AsQueryable();
+            var announcements = _context.Announcements.Where(a => !a.IsDeleted).AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(query.Title))
             {
