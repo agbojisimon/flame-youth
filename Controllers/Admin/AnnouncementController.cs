@@ -40,14 +40,14 @@ namespace g_flame_youth.Controllers.Admin
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> CreateAnnouncement([FromBody] CreateAnnouncementDto createDto, string userId)
+        public async Task<IActionResult> CreateAnnouncement([FromBody] CreateAnnouncementDto createDto)
         {
-            var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+                return Unauthorized("User ID not found in token");
 
-            var createdAnnouncement = await _announceService.CreateAnnouncementAsync(createDto, UserId);
+            var createdAnnouncement = await _announceService.CreateAnnouncementAsync(createDto, userId);
 
             return CreatedAtAction(nameof(GetAnnouncementById), new { id = createdAnnouncement.Id },
                 createdAnnouncement
