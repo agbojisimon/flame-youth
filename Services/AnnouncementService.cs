@@ -14,8 +14,8 @@ namespace g_flame_youth.Services
     }
     public async Task<AnnouncementDto> CreateAnnouncementAsync(CreateAnnouncementDto createDto, string userId)
     {
-      var announcement = createDto.ToAnnouncementFromCreateDto(userId);
-
+      var announcement = createDto.ToAnnouncementFromCreateDto();
+      announcement.CreatedById = userId;
       announcement.Status = "Draft";
       announcement.CreatedOn = DateTime.UtcNow;
 
@@ -72,7 +72,6 @@ namespace g_flame_youth.Services
       announcement.Title = updateDto.Title;
       announcement.Content = updateDto.Content;
       announcement.Category = updateDto.Category;
-      announcement.Status = updateDto.Status;
       announcement.UpdatedOn = DateTime.UtcNow;
 
       await _announceRepo.UpdateAnnouncementAsync(announcement);
