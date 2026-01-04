@@ -23,19 +23,16 @@ namespace g_flame_youth.Mappers
                 Category = announcementModel.Category,
                 Status = announcementModel.Status,
                 CreatedById = announcementModel.CreatedById,
-                CreatedByName = announcementModel.CreatedBy?.FullName,
                 CreatedOn = announcementModel.CreatedOn,
             };
         }
-        public static Announcement ToAnnouncementFromCreateDto(this CreateAnnouncementDto createAnnouncementDto, string createdById)
+        public static Announcement ToAnnouncementFromCreateDto(this CreateAnnouncementDto createAnnouncementDto)
         {
             return new Announcement
             {
                 Title = createAnnouncementDto.Title,
                 Content = createAnnouncementDto.Content,
-                Status = createAnnouncementDto.Status,
                 Category = createAnnouncementDto.Category,
-                CreatedById = createdById,
                 CreatedOn = DateTime.UtcNow
             };
         }
