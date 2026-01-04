@@ -11,7 +11,6 @@ namespace g_flame_youth.Models
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public string CreatedById { get; set; } = string.Empty;
-        public AppUser CreatedBy { get; set; } = null!;
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedOn { get; set; }
         public string Status { get; set; } = "Draft";
