@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace g_flame_youth.Controllers
 {
     [Authorize(Roles = "Admin")]
-    [Route("g-flame-youth/[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -18,48 +18,75 @@ namespace g_flame_youth.Controllers
             _userService = userService;
         }
 
-        [HttpGet]
+        [HttpGet("get-all-users")]
         public async Task<IActionResult> GetAll([FromQuery] UserQueryObject query)
         {
             var users = await _userService.GetUsersAsync(query);
-            return Ok(users);
+
+            return Ok(new ApiResponse<List<UserDto>>
+            {
+                isSuccess = true,
+                Message = "User retrieved successfully",
+                Data = users
+            });
         }
 
-        [HttpGet("{Id}")]
+        [HttpGet("{Id}/get-user")]
         public async Task<IActionResult> GetById([FromRoute] string Id)
         {
             if (string.IsNullOrEmpty(Id))
-                return BadRequest("User ID is required.");
+                return BadRequest(new ApiResponse<string?>
+                {
+                    isSuccess = false,
+                    Message = "User ID cannot be null or empty.",
+                    Data = null
+                });
 
             var user = await _userService.GetUserByIdAsync(Id);
 
             if (user == null)
                 return NotFound();
 
-            return Ok(user);
+            return Ok(new ApiResponse<UserDto?>
+            {
+                isSuccess = true,
+                Message = "User retrieved successfully",
+                Data = user
+            });
         }
 
-        [HttpPost]
+        [HttpPost("create-user")]
         public async Task<IActionResult> CreateUser([FromBody] RegisterDto registerDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             var user = await _userService.CreateUserAsync(registerDto);
-            return Ok(user);
+            return Ok(new ApiResponse<UserDto>
+            {
+                isSuccess = true,
+                Message = "User created successfully",
+                Data = user
+            });
         }
 
-        [HttpPut("{Id}")]
+        [HttpPut("{Id}/update-user")]
         public async Task<IActionResult> UpdateUser([FromRoute] string Id, [FromBody] UpdateUserDto updateUserDto)
         {
             var user = await _userService.UpdateUserAsync(Id, updateUserDto);
+
             if (user == null)
                 return NotFound();
 
-            return Ok(user);
+            return Ok(new ApiResponse<UserDto>
+            {
+                isSuccess = true,
+                Message = "User updated successfully",
+                Data = user
+            });
         }
 
-        [HttpDelete("{Id}")]
+        [HttpDelete("{Id}/delete-user")]
         public async Task<IActionResult> DeleteUser([FromRoute] string Id)
         {
             var deleted = await _userService.DeleteUserAsync(Id);
@@ -69,7 +96,7 @@ namespace g_flame_youth.Controllers
             return Ok("User deleted successfully.");
         }
 
-        [HttpPost("assign-role")]
+        [HttpPost("change-role")]
         public async Task<IActionResult> AssignRole([FromBody] AssignRoleDto assignRoleDto)
         {
             var result = await _userService.AssignRoleAsync(assignRoleDto.userId, assignRoleDto.Role);
