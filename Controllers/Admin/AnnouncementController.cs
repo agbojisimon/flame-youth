@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace g_flame_youth.Controllers.Admin
 {
-    [Route("g-flame-youth/[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class AnnouncementController : ControllerBase
     {
@@ -23,7 +23,12 @@ namespace g_flame_youth.Controllers.Admin
         {
             var announcements = await _announceService.GetAnnouncementsAsync(query);
 
-            return Ok(announcements);
+            return Ok(new ApiResponse<List<AnnouncementDto>>
+            {
+                isSuccess = true,
+                Message = "Announcements Retrieved Successfully",
+                Data = announcements
+            });
         }
 
         [HttpGet("{Id:int}")]
@@ -35,7 +40,12 @@ namespace g_flame_youth.Controllers.Admin
             if (announcement == null)
                 return NotFound($"Announcement with ID {Id} not found.");
 
-            return Ok(announcement);
+            return Ok(new ApiResponse<AnnouncementDto?>
+            {
+                isSuccess = true,
+                Message = "Announcement Retrieved Successfully",
+                Data = announcement
+            });
         }
 
         [HttpPost]
@@ -45,42 +55,57 @@ namespace g_flame_youth.Controllers.Admin
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrEmpty(userId))
-                return Unauthorized("User ID not found in token");
+                return Unauthorized(new ApiResponse<string?>
+                {
+                    isSuccess = false,
+                    Message = "User ID not found.",
+                    Data = null
+                });
 
             var createdAnnouncement = await _announceService.CreateAnnouncementAsync(createDto, userId);
 
             return CreatedAtAction(nameof(GetAnnouncementById), new { id = createdAnnouncement.Id },
-                createdAnnouncement
+                new ApiResponse<AnnouncementDto>
+                {
+                    isSuccess = true,
+                    Message = "Announcement created successfully.",
+                    Data = createdAnnouncement
+                }
             );
         }
 
         [HttpPut("{Id:int}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateAnnouncement([FromRoute] int Id, [FromBody] UpdateAnnouncementDto updateAnnouncementDto, string userId)
+        public async Task<IActionResult> UpdateAnnouncement([FromRoute] int Id, [FromBody] UpdateAnnouncementDto updateAnnouncementDto)
         {
-            var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+            if (userId == null)
+                return NotFound("User ID must not be empty");
 
-            var updatedAnnouncement = await _announceService.UpdateAnnouncementAsync(Id, updateAnnouncementDto, UserId);
+            var updatedAnnouncement = await _announceService.UpdateAnnouncementAsync(Id, updateAnnouncementDto);
 
             if (updatedAnnouncement == null)
                 return NotFound($"Announcement with ID {Id} not found.");
 
-            return Ok(updatedAnnouncement);
+            return Ok(new ApiResponse<AnnouncementDto>
+            {
+                isSuccess = true,
+                Message = "Announcement updated successfully.",
+                Data = updatedAnnouncement
+            });
         }
 
         [HttpDelete("{Id:int}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteAnnouncement([FromRoute] int Id, string userId)
+        public async Task<IActionResult> DeleteAnnouncement([FromRoute] int Id)
         {
-            var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+            if (userId == null)
+                return NotFound("User ID must not be found");
 
-            var isDeleted = await _announceService.DeleteAnnouncementAsync(Id, UserId);
+            var isDeleted = await _announceService.DeleteAnnouncementAsync(Id);
 
             if (!isDeleted)
                 return NotFound($"Announcement with ID {Id} not found.");
