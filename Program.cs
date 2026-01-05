@@ -104,6 +104,8 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IEvenRepository, EventRepository>();
+builder.Services.AddScoped<IEventService, EventService>();
 
 var app = builder.Build();
 
