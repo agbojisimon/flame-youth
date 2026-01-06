@@ -57,7 +57,7 @@ namespace g_flame_youth.Controllers.Admin
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (userId == null)
-                return Unauthorized();
+                return NotFound("User ID not found");
 
             var createdEvent = await _eventService.CreateEventAsync(createDto);
 
@@ -67,6 +67,50 @@ namespace g_flame_youth.Controllers.Admin
                 isSuccess = true,
                 Message = "Event created successfully",
                 Data = createdEvent
+            });
+        }
+
+        [HttpPut("{Id:int}/update-event")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateEvent([FromRoute] int Id, [FromBody] UpdateEventDto updateDto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId == null)
+                return NotFound("User ID not found");
+
+            var updatedEvent = await _eventService.UpdateEventAsync(Id, updateDto);
+
+            if (updatedEvent == null)
+                return NotFound($"Event with ID {Id} not found.");
+
+            return Ok(new ApiResponse<EventResponseDto?>
+            {
+                isSuccess = true,
+                Message = "Event updated successfully",
+                Data = updatedEvent
+            });
+        }
+
+        [HttpDelete("{Id:int}/delete-event")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteEvent([FromRoute] int Id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId == null)
+                return NotFound("User ID not found");
+
+            var isDeleted = await _eventService.DeleteEventAsync(Id);
+
+            if (!isDeleted)
+                return NotFound($"Event with ID {Id} not found.");
+
+            return Ok(new ApiResponse<string>
+            {
+                isSuccess = true,
+                Message = "Event deleted successfully",
+                Data = $"Event with ID {Id} has been deleted."
             });
         }
     }
