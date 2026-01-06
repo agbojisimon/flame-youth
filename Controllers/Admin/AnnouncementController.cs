@@ -23,6 +23,16 @@ namespace g_flame_youth.Controllers.Admin
         {
             var announcements = await _announceService.GetAnnouncementsAsync(query);
 
+            if (announcements.Count == 0)
+            {
+                return Ok(new ApiResponse<List<AnnouncementDto>>
+                {
+                    isSuccess = true,
+                    Message = "No announcements available",
+                    Data = []
+                });
+            }
+
             return Ok(new ApiResponse<List<AnnouncementDto>>
             {
                 isSuccess = true,
@@ -96,21 +106,24 @@ namespace g_flame_youth.Controllers.Admin
             });
         }
 
-        [HttpDelete("{Id:int}")]
+        [HttpDelete("{Id:int}/delete-announcement")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteAnnouncement([FromRoute] int Id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (userId == null)
-                return NotFound("User ID must not be found");
+                return NotFound("User ID not found");
 
             var isDeleted = await _announceService.DeleteAnnouncementAsync(Id);
 
-            if (!isDeleted)
-                return NotFound($"Announcement with ID {Id} not found.");
-
-            return Ok(new { message = "Announcement deleted successfully." });
+            return Ok(new ApiResponse<string>
+            {
+                isSuccess = true,
+                Message = "Announcement deleted successfully",
+                Data = $"Announcement with ID {Id} has been deleted."
+            });
         }
+
     }
 }

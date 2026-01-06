@@ -12,7 +12,6 @@ namespace g_flame_youth.DTOs.Announcement
         public string Content { get; set; } = string.Empty;
         public string CreatedById { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
-        public string Status { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
     }
 }

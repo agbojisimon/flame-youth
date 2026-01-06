@@ -17,7 +17,6 @@ namespace g_flame_youth.Mappers
                 Title = announcementModel.Title,
                 Content = announcementModel.Content,
                 Category = announcementModel.Category,
-                Status = announcementModel.Status,
                 CreatedById = announcementModel.CreatedById,
                 CreatedOn = announcementModel.CreatedOn,
             };

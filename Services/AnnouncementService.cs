@@ -16,7 +16,6 @@ namespace g_flame_youth.Services
     {
       var announcement = createDto.ToAnnouncementFromCreateDto();
       announcement.CreatedById = userId;
-      announcement.Status = "Draft";
       announcement.CreatedOn = DateTime.UtcNow;
 
       await _announceRepo.CreateAnnouncementAsync(announcement);
@@ -24,15 +23,12 @@ namespace g_flame_youth.Services
       return announcement.ToAnnouncementDto();
     }
 
-    public async Task<bool> DeleteAnnouncementAsync(int Id, string userId)
+    public async Task<bool> DeleteAnnouncementAsync(int Id)
     {
       var announcement = await _announceRepo.GetAnnouncementByIdAsync(Id);
 
       if (announcement == null)
         return false;
-
-      if (announcement.CreatedById != userId)
-        throw new UnauthorizedAccessException("You are not allowed to delete this announcement.");
 
       return await _announceRepo.DeleteAnnouncementAsync(Id);
     }
@@ -44,9 +40,6 @@ namespace g_flame_youth.Services
       if (announcement == null)
         return null;
 
-      if (announcement.Status != "Published")
-        return null;
-
       return announcement.ToAnnouncementDto();
     }
 
@@ -54,20 +47,15 @@ namespace g_flame_youth.Services
     {
       var announcements = await _announceRepo.GetAnnouncementsAsync(query);
 
-      var publishedAnnouncements = announcements.Where(a => a.Status == "Published").ToList();
-
-      return publishedAnnouncements.Select(a => a.ToAnnouncementDto()).ToList();
+      return announcements.Select(a => a.ToAnnouncementDto()).ToList();
     }
 
-    public async Task<AnnouncementDto?> UpdateAnnouncementAsync(int Id, UpdateAnnouncementDto updateDto, string userId)
+    public async Task<AnnouncementDto?> UpdateAnnouncementAsync(int Id, UpdateAnnouncementDto updateDto)
     {
       var announcement = await _announceRepo.GetAnnouncementByIdAsync(Id);
 
       if (announcement == null)
         return null;
-
-      if (announcement.CreatedById != userId)
-        throw new UnauthorizedAccessException("You are not allowed to update this announcement.");
 
       announcement.Title = updateDto.Title;
       announcement.Content = updateDto.Content;
