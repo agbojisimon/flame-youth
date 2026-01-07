@@ -25,11 +25,11 @@ namespace g_flame_youth.Controllers.Admin
 
             if (announcements.Count == 0)
             {
-                return Ok(new ApiResponse<List<AnnouncementDto>>
+                return Ok(new ApiResponse<List<AnnouncementDto>?>
                 {
                     isSuccess = true,
-                    Message = "No announcements available",
-                    Data = []
+                    Message = "No announcements available at the moment",
+                    Data = null
                 });
             }
 
@@ -65,13 +65,7 @@ namespace g_flame_youth.Controllers.Admin
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrEmpty(userId))
-                return Unauthorized(new ApiResponse<string?>
-                {
-                    isSuccess = false,
-                    Message = "User ID not found.",
-                    Data = null
-                });
-
+                return NotFound("User ID must not be empty");
             var createdAnnouncement = await _announceService.CreateAnnouncementAsync(createDto, userId);
 
             return CreatedAtAction(nameof(GetAnnouncementById), new { id = createdAnnouncement.Id },
