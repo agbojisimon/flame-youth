@@ -106,6 +106,8 @@ builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEvenRepository, EventRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IPrayerRequestRepository, PrayerRequestRepository>();
+builder.Services.AddScoped<IPrayerRequestService, PrayerRequestService>();
 
 var app = builder.Build();
 
