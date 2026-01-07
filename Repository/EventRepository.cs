@@ -40,7 +40,24 @@ namespace g_flame_youth.Repository
 
         public async Task<List<Event>> GetEventsAsync(EventQueryObject query)
         {
-            return await _context.Events.Where(e => !e.IsDeleted).ToListAsync();
+            var events = _context.Events.Where(e => !e.IsDeleted && !e.IsCancelled).AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query.Title))
+            {
+                events = events.Where(e => e.Title.Contains(query.Title));
+            }
+            if (!string.IsNullOrWhiteSpace(query.SortBy))
+            {
+                events = query.SortBy.Equals("CreatedOn", StringComparison.OrdinalIgnoreCase) ? (query.IsDescending ? events.OrderByDescending(a => a.CreatedOn) : events.OrderBy(a => a.CreatedOn)) : events;
+            }
+            else
+            {
+                events = events.OrderByDescending(a => a.CreatedOn);
+            }
+
+            var skip = (query.PageNumber - 1) * query.PageSize;
+
+            return await events.Skip(skip).Take(query.PageSize).ToListAsync();
         }
 
         public async Task UpdateEventAsync(Event updatedEvent)
