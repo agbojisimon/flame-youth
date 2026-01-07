@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 using g_flame_youth.DTOs.Event;
 using g_flame_youth.Helpers;
 using g_flame_youth.Interfaces;
@@ -26,6 +22,15 @@ namespace g_flame_youth.Controllers.Admin
         {
             var events = await _eventService.GetEventsAsync(query);
 
+            if (events.Count == 0)
+            {
+                return Ok(new ApiResponse<List<EventResponseDto>?>
+                {
+                    isSuccess = true,
+                    Message = "No event is available at the moment",
+                    Data = null
+                });
+            }
             return Ok(new ApiResponse<List<EventResponseDto>>
             {
                 isSuccess = true,
