@@ -2,6 +2,7 @@ using g_flame_youth.Data;
 using g_flame_youth.Helpers.Queries;
 using g_flame_youth.Interfaces;
 using g_flame_youth.Models;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace g_flame_youth.Repository
@@ -16,8 +17,19 @@ namespace g_flame_youth.Repository
 
         public async Task CreateDevotionalAsync(Devotional devotional)
         {
-            await _context.Devotionals.AddAsync(devotional);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.Devotionals.AddAsync(devotional);
+
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+                when (ex.InnerException is SqlException sqlEx && sqlEx.Number == 2601)
+            {
+                throw new InvalidOperationException(
+                    "A devotional for this date already exists."
+                );
+            }
         }
 
         public async Task<bool> DeleteDevotionalAsync(int Id)

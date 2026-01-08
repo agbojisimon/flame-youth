@@ -33,7 +33,7 @@ namespace g_flame_youth.Controllers.Admin
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new ApiResponse<DevotionalResponseDto?>
+                return Conflict(new ApiResponse<DevotionalResponseDto?>
                 {
                     isSuccess = false,
                     Message = ex.Message,

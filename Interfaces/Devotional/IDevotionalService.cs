@@ -1,7 +1,5 @@
-
 using g_flame_youth.DTOs.Devotional;
 using g_flame_youth.Helpers.Queries;
-using g_flame_youth.Migrations;
 
 namespace g_flame_youth.Interfaces
 {
