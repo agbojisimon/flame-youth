@@ -108,6 +108,8 @@ builder.Services.AddScoped<IEvenRepository, EventRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IPrayerRequestRepository, PrayerRequestRepository>();
 builder.Services.AddScoped<IPrayerRequestService, PrayerRequestService>();
+builder.Services.AddScoped<IDevotionalRepository, DevotionalRepository>();
+builder.Services.AddScoped<IDevotionalService, DevotionalService>();
 
 var app = builder.Build();
 
