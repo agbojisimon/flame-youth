@@ -15,6 +15,7 @@ namespace g_flame_youth.Data
         public DbSet<Event> Events { get; set; }
         public DbSet<PrayerRequest> PrayerRequests { get; set; }
         public DbSet<Devotional> Devotionals { get; set; }
+        public DbSet<Testimony> Testimonies { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -65,6 +66,20 @@ namespace g_flame_youth.Data
                 entity.HasIndex(d => d.DevotionalDate).IsUnique();
                 entity.HasQueryFilter(d => !d.IsDeleted);
                 entity.Property(d => d.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            builder.Entity<Testimony>(entity =>
+            {
+                entity.HasKey(t => t.Id);
+                entity.Property(t => t.AppUserId).IsRequired();
+                entity.Property(t => t.Content).IsRequired().HasMaxLength(2000);
+                entity.Property(t => t.Attachment).HasMaxLength(500);
+                entity.Property(t => t.Status).HasDefaultValue(false);
+                entity.Property(t => t.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.HasOne(t => t.User)
+                      .WithMany(u => u.Testimonies)
+                      .HasForeignKey(t => t.AppUserId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

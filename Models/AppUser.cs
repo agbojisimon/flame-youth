@@ -10,5 +10,7 @@ namespace g_flame_youth.Models
         [NotMapped]
         public string FullName => $"{FirstName} {LastName}".Trim();
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+
+        public ICollection<Testimony> Testimonies { get; set; } = new List<Testimony>();
     }
 }
