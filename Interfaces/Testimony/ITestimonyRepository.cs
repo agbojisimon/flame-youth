@@ -1,4 +1,3 @@
-
 using g_flame_youth.Helpers;
 using g_flame_youth.Models;
 

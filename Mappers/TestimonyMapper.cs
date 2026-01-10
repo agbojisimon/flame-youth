@@ -1,4 +1,3 @@
-using g_flame_youth.DTOs.Account;
 using g_flame_youth.DTOs.Testimony;
 using g_flame_youth.Models;
 
@@ -11,18 +10,11 @@ namespace g_flame_youth.Mappers
             return new TestimonyResponseDto
             {
                 Id = testimonyModel.Id,
-                AppUserId = testimonyModel.AppUserId,
+                FullName = testimonyModel.User.FullName,
                 Content = testimonyModel.Content,
                 Attachment = testimonyModel.Attachment,
                 Status = testimonyModel.Status,
                 CreatedAt = testimonyModel.CreatedAt,
-
-                User = new UserInfoDto
-                {
-                    Id = testimonyModel.User.Id,
-                    FullName = testimonyModel.User.FullName,
-                    Email = testimonyModel.User.Email
-                }
             };
         }
 
