@@ -110,6 +110,8 @@ builder.Services.AddScoped<IPrayerRequestRepository, PrayerRequestRepository>();
 builder.Services.AddScoped<IPrayerRequestService, PrayerRequestService>();
 builder.Services.AddScoped<IDevotionalRepository, DevotionalRepository>();
 builder.Services.AddScoped<IDevotionalService, DevotionalService>();
+builder.Services.AddScoped<ITestimonyRepository, TestimonyRepository>();
+builder.Services.AddScoped<ITestimonyService, TestimonyService>();
 
 var app = builder.Build();
 
