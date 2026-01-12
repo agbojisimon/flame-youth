@@ -112,6 +112,8 @@ builder.Services.AddScoped<IDevotionalRepository, DevotionalRepository>();
 builder.Services.AddScoped<IDevotionalService, DevotionalService>();
 builder.Services.AddScoped<ITestimonyRepository, TestimonyRepository>();
 builder.Services.AddScoped<ITestimonyService, TestimonyService>();
+builder.Services.AddScoped<IContactRepository, ContactRepository>();
+builder.Services.AddScoped<IContactService, ContactService>();
 
 var app = builder.Build();
 
