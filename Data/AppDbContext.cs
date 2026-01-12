@@ -16,6 +16,7 @@ namespace g_flame_youth.Data
         public DbSet<PrayerRequest> PrayerRequests { get; set; }
         public DbSet<Devotional> Devotionals { get; set; }
         public DbSet<Testimony> Testimonies { get; set; }
+        public DbSet<Contact> Contacts { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -29,23 +30,14 @@ namespace g_flame_youth.Data
             builder.Entity<Event>(entity =>
             {
                 entity.HasKey(e => e.Id);
-
                 entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
-
                 entity.Property(e => e.Description).HasMaxLength(2000);
-
                 entity.Property(e => e.StartDate).IsRequired();
-
                 entity.Property(e => e.EndDate).IsRequired();
-
                 entity.Property(e => e.Location).IsRequired().HasMaxLength(300);
-
                 entity.Property(e => e.ImageUrl).HasMaxLength(500);
-
                 entity.Property(e => e.IsCancelled).HasDefaultValue(false);
-
                 entity.Property(e => e.IsDeleted).HasDefaultValue(false);
-
                 entity.Property(e => e.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
             });
 
@@ -81,6 +73,19 @@ namespace g_flame_youth.Data
                       .HasForeignKey(t => t.AppUserId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+
+            builder.Entity<Contact>(entity =>
+           {
+
+               entity.HasKey(c => c.Id);
+               entity.Property(c => c.FullName).IsRequired().HasMaxLength(150);
+               entity.Property(c => c.Email).IsRequired().HasMaxLength(200);
+               entity.Property(c => c.PhoneNumber).HasMaxLength(20);
+               entity.Property(c => c.Message).IsRequired().HasColumnType("nvarchar(max)");
+               entity.Property(c => c.Status).IsRequired();
+               entity.Property(c => c.CreatedAt).IsRequired();
+               entity.HasIndex(c => c.CreatedAt);
+           });
         }
     }
 }
