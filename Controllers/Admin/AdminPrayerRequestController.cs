@@ -49,7 +49,7 @@ namespace g_flame_youth.Controllers.Admin
             });
         }
 
-        [HttpDelete("delete-prayer-request")]
+        [HttpDelete("{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeletePrayer([FromRoute] int id)
         {
