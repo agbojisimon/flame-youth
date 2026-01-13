@@ -1,6 +1,8 @@
 using System.Text;
 using g_flame_youth.Data;
+using g_flame_youth.Fillters;
 using g_flame_youth.Interfaces;
+using g_flame_youth.Interfaces.Auth;
 using g_flame_youth.Models;
 using g_flame_youth.Repository;
 using g_flame_youth.Services;
@@ -100,7 +102,14 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddControllers(options =>
+{
+    // Register the filter globally so it applies to ALL controllers
+    options.Filters.Add<ApiResponseFilter>();
+});
+
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddScoped<IUserService, UserService>();
