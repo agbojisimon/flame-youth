@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using g_flame_youth.DTOs.Contact;
 using g_flame_youth.Helpers;
 using g_flame_youth.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -23,14 +22,7 @@ namespace g_flame_youth.Controllers.Admin
         {
             var contacts = await _contactService.GetContactsAsync(query);
 
-            return Ok(new ApiResponse<List<ContactResponseDto>>
-            {
-                isSuccess = true,
-                Message = contacts.Count == 0
-                ? "No contact is available at the moment"
-                : "Contacts retrieved successfully",
-                Data = contacts
-            });
+            return Ok(contacts);
         }
 
         [HttpGet("{Id:int}")]
@@ -41,12 +33,7 @@ namespace g_flame_youth.Controllers.Admin
             if (contact == null)
                 return NotFound($"Contacts with ID {Id} is not found");
 
-            return Ok(new ApiResponse<ContactResponseDto?>
-            {
-                isSuccess = true,
-                Message = "Contacts retrieved successfully",
-                Data = contact
-            });
+            return Ok(contact);
         }
 
         [HttpDelete("{Id:int}")]

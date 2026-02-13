@@ -27,13 +27,7 @@ namespace g_flame_youth.Controllers.Members
 
             var createdContact = await _contactService.CreateContactAsync(createDto);
 
-            return StatusCode(StatusCodes.Status201Created,
-                new ApiResponse<ContactResponseDto?>
-                {
-                    isSuccess = true,
-                    Message = "Message sent successfully",
-                    Data = createdContact
-                });
+            return Ok(createdContact);
         }
     }
 }

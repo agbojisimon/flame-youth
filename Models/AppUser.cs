@@ -9,6 +9,8 @@ namespace g_flame_youth.Models
         public string LastName { get; set; } = string.Empty;
         [NotMapped]
         public string FullName => $"{FirstName} {LastName}".Trim();
+        public string? RefreshToken { get; set; }
+        public DateTime RefreshTokenExpiryTime { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
 
         public ICollection<Testimony> Testimonies { get; set; } = new List<Testimony>();

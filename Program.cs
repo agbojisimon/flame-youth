@@ -1,8 +1,11 @@
 using System.Text;
+using g_flame_youth.Configuration;
 using g_flame_youth.Data;
 using g_flame_youth.Fillters;
 using g_flame_youth.Interfaces;
+using g_flame_youth.Interfaces.Account;
 using g_flame_youth.Interfaces.Auth;
+using g_flame_youth.Interfaces.Email;
 using g_flame_youth.Models;
 using g_flame_youth.Repository;
 using g_flame_youth.Services;
@@ -69,6 +72,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
+    options.SignIn.RequireConfirmedEmail = true;
+    options.SignIn.RequireConfirmedAccount = true;
     options.User.RequireUniqueEmail = true;
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
@@ -77,7 +82,8 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     options.Password.RequiredLength = 8;
 })
 .AddRoles<IdentityRole>()
-.AddEntityFrameworkStores<AppDbContext>();
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -106,8 +112,12 @@ builder.Services.AddControllers(options =>
 {
     // Register the filter globally so it applies to ALL controllers
     options.Filters.Add<ApiResponseFilter>();
+    options.Filters.Add<GlobalExceptionFilter>();
+    options.Filters.Add<ValidationFilter>();
 });
 
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
@@ -123,6 +133,7 @@ builder.Services.AddScoped<ITestimonyRepository, TestimonyRepository>();
 builder.Services.AddScoped<ITestimonyService, TestimonyService>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IContactService, ContactService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 
 var app = builder.Build();
 
