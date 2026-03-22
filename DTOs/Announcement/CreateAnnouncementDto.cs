@@ -1,19 +1,23 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace g_flame_youth.DTOs.Announcement
+namespace GlobalFlameMinistry.API.DTOs.Announcement
 {
     public class CreateAnnouncementDto
     {
-        [Required]
-        [MaxLength(100, ErrorMessage = "Title cannot exceed 100 characters.")]
-        [MinLength(3, ErrorMessage = "Title must be at least 3 characters long.")]
+        [Required(ErrorMessage = "Title is required")]
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Title must be between 3 and 100 characters")]
         public string Title { get; set; } = string.Empty;
-        [Required]
-        [MinLength(5, ErrorMessage = "Content must be at least 5 characters long.")]
+
+        [Required(ErrorMessage = "Content is required")]
+        [StringLength(10000, MinimumLength = 10, ErrorMessage = "Content must be between 10 and 10000 characters")]
         public string Content { get; set; } = string.Empty;
-        [Required]
-        [MaxLength(50, ErrorMessage = "Category cannot exceed 50 characters.")]
-        [MinLength(3, ErrorMessage = "Category must be at least 3 characters long.")]
+
+        [Required(ErrorMessage = "Module is required")]
+        [RegularExpression("^(Ministry|Youth)$", ErrorMessage = "Module must be either 'Ministry' or 'Youth'")]
+        public string Module { get; set; } = "Ministry";
+
+        [StringLength(50, ErrorMessage = "Category cannot exceed 50 characters")]
         public string Category { get; set; } = string.Empty;
+        public bool IsPublished { get; set; } = false;
     }
 }

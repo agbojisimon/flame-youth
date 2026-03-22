@@ -1,11 +1,11 @@
 using System.Security.Claims;
-using g_flame_youth.DTOs.User;
-using g_flame_youth.Interfaces.Account;
-using g_flame_youth.Mappers;
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.DTOs.User;
+using GlobalFlameMinistry.API.Interfaces.Account;
+using GlobalFlameMinistry.API.Mappers;
+using GlobalFlameMinistry.API.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace g_flame_youth.Services
+namespace GlobalFlameMinistry.API.Services
 {
     public class AccountService : IAccountService
     {
@@ -18,20 +18,19 @@ namespace g_flame_youth.Services
 
         public async Task<UserDto> GetMyProfileAsync(ClaimsPrincipal principal)
         {
-            if (principal?.Identity == null || !principal.Identity.IsAuthenticated)
-                throw new UnauthorizedAccessException("User is not authenticated.");
-
             var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrEmpty(userId))
-                throw new UnauthorizedAccessException("Invalid token: user ID claim missing.");
+                throw new UnauthorizedAccessException("Invalid token.");
 
             var user = await _userManager.FindByIdAsync(userId);
 
             if (user == null)
                 throw new UnauthorizedAccessException("User no longer exists.");
 
-            return user.ToUserDto();
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return user.ToUserDto(roles.ToList());
         }
 
         public async Task<UserDto> UpdateMyProfileAsync(ClaimsPrincipal principal, UpdateUserDto dto)
@@ -39,16 +38,42 @@ namespace g_flame_youth.Services
             var user = await _userManager.GetUserAsync(principal);
 
             if (user == null)
-                throw new UnauthorizedAccessException("User not found");
+                throw new UnauthorizedAccessException("User not found.");
 
-            user = dto.ToAppUser(user);
+            user.ApplyUpdate(dto);
 
             var result = await _userManager.UpdateAsync(user);
 
             if (!result.Succeeded)
-                throw new InvalidOperationException("Profile update failed");
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new InvalidOperationException(errors);
+            }
 
-            return user.ToUserDto();
+            var roles = await _userManager.GetRolesAsync(user);
+            return user.ToUserDto(roles.ToList());
+        }
+
+        public async Task<string> ChangePasswordAsync(ClaimsPrincipal principal, ChangePasswordDto dto)
+        {
+            var appUser = await _userManager.GetUserAsync(principal);
+
+            if (appUser == null)
+                throw new UnauthorizedAccessException("User not found.");
+
+            var result = await _userManager.ChangePasswordAsync(
+                appUser,
+                dto.CurrentPassword,
+                dto.NewPassword
+            );
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new InvalidOperationException(errors);
+            }
+
+            return "Password changed successfully.";
         }
     }
 }

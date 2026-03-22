@@ -1,4 +1,4 @@
-namespace g_flame_youth.Models
+namespace GlobalFlameMinistry.API.Models
 {
     public enum ContactMessageType
     {

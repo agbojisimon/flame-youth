@@ -1,9 +1,10 @@
-using g_flame_youth.DTOs.PrayerRequest;
-using g_flame_youth.Helpers;
-using g_flame_youth.Interfaces;
-using g_flame_youth.Mappers;
+using GlobalFlameMinistry.API.DTOs.Common;
+using GlobalFlameMinistry.API.DTOs.PrayerRequest;
+using GlobalFlameMinistry.API.Helpers;
+using GlobalFlameMinistry.API.Interfaces;
+using GlobalFlameMinistry.API.Mappers;
 
-namespace g_flame_youth.Services
+namespace GlobalFlameMinistry.API.Services
 {
     public class PrayerRequestService : IPrayerRequestService
     {
@@ -12,41 +13,58 @@ namespace g_flame_youth.Services
         {
             _prayerRepo = prayerRepo;
         }
-        public async Task<PrayerRequestResponseDto> CreatePrayerAsync(CreatePrayerDto createDto)
+
+        public async Task<PrayerRequestResponseDto> CreateAsync(CreatePrayerDto dto, string? name, string? email, string? appUserId)
         {
-            var prayer = createDto.ToPrayerRequestFromCreateDto();
-            prayer.CreatedAt = DateTime.UtcNow;
+            var request = dto.ToPrayerFromCreateDto(name, email, appUserId);
 
-            await _prayerRepo.CreatePrayerAsync(prayer);
+            var created = await _prayerRepo.CreateAsync(request);
 
-            return prayer.ToPrayerRequestResponseDto();
+            return created.ToPrayerResponseDto();
         }
 
-        public async Task<bool> DeletePrayerAsync(int id)
+        public async Task<PagedResult<PrayerRequestResponseDto>> GetAllAsync(PrayerRequestQueryObject query)
         {
-            var prayer = _prayerRepo.GetByIdAsync(id);
+            var requests = await _prayerRepo.GetAllAsync(query);
+            var totalCount = await _prayerRepo.GetCountAsync(query);
 
-            if (prayer == null)
-                return false;
-
-            return await _prayerRepo.DeleteAsync(id);
+            return new PagedResult<PrayerRequestResponseDto>
+            {
+                Items = requests.ToDtoList(),
+                TotalCount = totalCount,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize
+            };
         }
 
         public async Task<PrayerRequestResponseDto?> GetByIdAsync(int id)
         {
-            var prayer = await _prayerRepo.GetByIdAsync(id);
+            var request = await _prayerRepo.GetByIdAsync(id);
 
-            if (prayer == null)
+            if (request is null)
                 return null;
 
-            return prayer.ToPrayerRequestResponseDto();
+            return request.ToPrayerResponseDto();
         }
 
-        public async Task<List<PrayerRequestResponseDto>> GetPrayerRequestsAsync(PrayerReqeustQueryObject query)
+        public async Task<PrayerRequestResponseDto?> GetByTokenAsync(string token)
         {
-            var prayers = await _prayerRepo.GetPrayerRequestsAsync(query);
+            var request = await _prayerRepo.GetByTokenAsync(token);
 
-            return prayers.Select(p => p.ToPrayerRequestResponseDto()).ToList();
+            if (request is null)
+                return null;
+
+            return request.ToPrayerResponseDto();
+        }
+
+        public async Task<PrayerRequestResponseDto?> MarkAsAttendedAsync(int id, UpdatePrayerRequestDto dto)
+        {
+            var updated = await _prayerRepo.UpdateAsync(id, dto);
+
+            if (updated is null)
+                return null;
+
+            return updated.ToPrayerResponseDto();
         }
     }
 }

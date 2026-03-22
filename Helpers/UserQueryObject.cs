@@ -1,6 +1,6 @@
-using g_flame_youth.Helpers.Queries;
+using GlobalFlameMinistry.API.Helpers.Queries;
 
-namespace g_flame_youth.Helpers
+namespace GlobalFlameMinistry.API.Helpers
 {
     public class UserQueryObject : BaseQueryObject
     {

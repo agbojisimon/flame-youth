@@ -1,6 +1,6 @@
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.Models;
 
-namespace g_flame_youth.Interfaces
+namespace GlobalFlameMinistry.API.Interfaces
 {
     public interface ITokenService
     {

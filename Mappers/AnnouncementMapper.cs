@@ -1,35 +1,49 @@
-using g_flame_youth.DTOs.Announcement;
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.DTOs.Announcement;
+using GlobalFlameMinistry.API.Models;
 
-namespace g_flame_youth.Mappers
+namespace GlobalFlameMinistry.API.Mappers
 {
     public static class AnnouncementMapper
     {
-        public static AnnouncementDto ToAnnouncementDto(this Announcement announcementModel)
+        public static AnnouncementDto ToAnnouncementDto(this Announcement announcement)
         {
-            if (announcementModel == null)
-            {
-                throw new ArgumentNullException(nameof(announcementModel));
-            }
             return new AnnouncementDto
             {
-                Id = announcementModel.Id,
-                Title = announcementModel.Title,
-                Content = announcementModel.Content,
-                Category = announcementModel.Category,
-                CreatedById = announcementModel.CreatedById,
-                CreatedOn = announcementModel.CreatedOn,
+                Id = announcement.Id,
+                Title = announcement.Title,
+                Content = announcement.Content,
+                CreatedById = announcement.CreatedById,
+                Module = announcement.Module,
+                Category = announcement.Category,
+                IsPublished = announcement.IsPublished,
+                CreatedOn = announcement.CreatedOn,
+                UpdatedOn = announcement.UpdatedOn
             };
         }
-        public static Announcement ToAnnouncementFromCreateDto(this CreateAnnouncementDto createAnnouncementDto)
+        public static Announcement ToAnnouncementFromCreateDto(this CreateAnnouncementDto createDto, string createdById)
         {
             return new Announcement
             {
-                Title = createAnnouncementDto.Title,
-                Content = createAnnouncementDto.Content,
-                Category = createAnnouncementDto.Category,
+                Title = createDto.Title,
+                Content = createDto.Content,
+                Module = createDto.Module,
+                Category = createDto.Category,
+                IsPublished = createDto.IsPublished,
+                CreatedById = createdById,
                 CreatedOn = DateTime.UtcNow
             };
+        }
+        public static void ApplyUpdate(this Announcement announcement, UpdateAnnouncementDto updateDto)
+        {
+            announcement.Title = updateDto.Title;
+            announcement.Content = updateDto.Content;
+            announcement.Category = updateDto.Category;
+            announcement.IsPublished = updateDto.IsPublished;
+            announcement.UpdatedOn = DateTime.UtcNow;
+        }
+        public static List<AnnouncementDto> ToDtoList(this IEnumerable<Announcement> announcements)
+        {
+            return announcements.Select(a => a.ToAnnouncementDto()).ToList();
         }
     }
 }

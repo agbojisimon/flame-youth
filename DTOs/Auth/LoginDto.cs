@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace g_flame_youth.DTOs.Account
+namespace GlobalFlameMinistry.API.DTOs.Account
 {
     public class LoginDto
     {

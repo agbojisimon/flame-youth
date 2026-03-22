@@ -1,7 +1,7 @@
-using g_flame_youth.DTOs.Event;
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.DTOs.Event;
+using GlobalFlameMinistry.API.Models;
 
-namespace g_flame_youth.Mappers
+namespace GlobalFlameMinistry.API.Mappers
 {
     public static class EventMapper
     {
@@ -16,22 +16,49 @@ namespace g_flame_youth.Mappers
                 EndDate = eventModel.EndDate,
                 Location = eventModel.Location,
                 ImageUrl = eventModel.ImageUrl,
-                CreatedOn = eventModel.CreatedOn
+                Module = eventModel.Module,
+                IsCancelled = eventModel.IsCancelled,
+                AcceptsRegistrations = eventModel.AcceptsRegistrations,
+                AcceptsDonations = eventModel.AcceptsDonations,
+                DonationLabel = eventModel.DonationLabel,
+                CreatedOn = eventModel.CreatedOn,
+                UpdatedOn = eventModel.UpdatedOn
             };
         }
-
-        public static Event ToEventFromCreateDto(this CreateEventDto createEventDto)
+        public static Event ToModel(this CreateEventDto createDto)
         {
             return new Event
             {
-                Title = createEventDto.Title,
-                Description = createEventDto.Description,
-                StartDate = createEventDto.StartDate,
-                EndDate = createEventDto.EndDate,
-                Location = createEventDto.Location,
-                ImageUrl = createEventDto.ImageUrl,
+                Title = createDto.Title,
+                Description = createDto.Description,
+                StartDate = createDto.StartDate,
+                EndDate = createDto.EndDate,
+                Location = createDto.Location,
+                ImageUrl = createDto.ImageUrl,
+                Module = createDto.Module,
+                AcceptsRegistrations = createDto.AcceptsRegistrations,
+                AcceptsDonations = createDto.AcceptsDonations,
+                DonationLabel = createDto.DonationLabel,
                 CreatedOn = DateTime.UtcNow
             };
+        }
+        public static void ApplyUpdate(this Event eventModel, UpdateEventDto dto)
+        {
+            eventModel.Title = dto.Title;
+            eventModel.Description = dto.Description;
+            eventModel.StartDate = dto.StartDate;
+            eventModel.EndDate = dto.EndDate;
+            eventModel.Location = dto.Location;
+            eventModel.ImageUrl = dto.ImageUrl;
+            eventModel.IsCancelled = dto.IsCancelled;
+            eventModel.AcceptsRegistrations = dto.AcceptsRegistrations;
+            eventModel.AcceptsDonations = dto.AcceptsDonations;
+            eventModel.DonationLabel = dto.DonationLabel;
+            eventModel.UpdatedOn = DateTime.UtcNow;
+        }
+        public static List<EventResponseDto> ToDtoList(this IEnumerable<Event> events)
+        {
+            return events.Select(e => e.ToEventResponseDto()).ToList();
         }
     }
 }

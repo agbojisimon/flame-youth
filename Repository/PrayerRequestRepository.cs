@@ -1,10 +1,11 @@
-using g_flame_youth.Data;
-using g_flame_youth.Helpers;
-using g_flame_youth.Interfaces;
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.Data;
+using GlobalFlameMinistry.API.DTOs.PrayerRequest;
+using GlobalFlameMinistry.API.Helpers;
+using GlobalFlameMinistry.API.Interfaces;
+using GlobalFlameMinistry.API.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace g_flame_youth.Repository
+namespace GlobalFlameMinistry.API.Repository
 {
     public class PrayerRequestRepository : IPrayerRequestRepository
     {
@@ -14,48 +15,99 @@ namespace g_flame_youth.Repository
             _context = context;
         }
 
-        public async Task CreatePrayerAsync(PrayerRequest request)
+        public async Task<PrayerRequest> CreateAsync(PrayerRequest request)
         {
-            await _context.AddAsync(request);
+            await _context.PrayerRequests.AddAsync(request);
             await _context.SaveChangesAsync();
+
+            return request;
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> ExistsAsync(int id)
         {
-            var prayer = await _context.PrayerRequests.FirstOrDefaultAsync(p => p.id == id);
+            return await _context.PrayerRequests.AnyAsync(r => r.Id == id);
+        }
 
-            if (prayer == null)
-                return false;
+        public async Task<List<PrayerRequest>> GetAllAsync(PrayerRequestQueryObject query)
+        {
+            var requests = _context.PrayerRequests.AsQueryable();
 
-            await _context.SaveChangesAsync();
-            return true;
+            if (!string.IsNullOrWhiteSpace(query.Name))
+                requests = requests.Where(r =>
+                    r.Name != null &&
+                    r.Name.ToLower().Contains(query.Name.ToLower()));
+
+            if (query.IsAttendedTo.HasValue)
+                requests = requests.Where(r => r.IsAttendedTo == query.IsAttendedTo.Value);
+
+            if (query.FromDate.HasValue)
+                requests = requests.Where(r => r.CreatedAt >= query.FromDate.Value);
+
+            if (query.ToDate.HasValue)
+                requests = requests.Where(r => r.CreatedAt <= query.ToDate.Value);
+
+            requests = query.SortBy?.ToLower() switch
+            {
+                "name" => query.IsDescending
+                    ? requests.OrderByDescending(r => r.Name)
+                    : requests.OrderBy(r => r.Name),
+
+                "createdat" => query.IsDescending
+                    ? requests.OrderByDescending(r => r.CreatedAt)
+                    : requests.OrderBy(r => r.CreatedAt),
+                _ => requests.OrderByDescending(r => r.CreatedAt)
+            };
+
+            return await requests
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .ToListAsync();
         }
 
         public async Task<PrayerRequest?> GetByIdAsync(int id)
         {
-            return await _context.PrayerRequests.FirstOrDefaultAsync(p => p.id == id);
+            return await _context.PrayerRequests
+                .FirstOrDefaultAsync(r => r.Id == id);
         }
 
-        public async Task<List<PrayerRequest>> GetPrayerRequestsAsync(PrayerReqeustQueryObject query)
+        public async Task<PrayerRequest?> GetByTokenAsync(string token)
         {
-            var prayers = _context.PrayerRequests.AsQueryable();
+            return await _context.PrayerRequests
+                .FirstOrDefaultAsync(r => r.AnonymousToken == token);
+        }
 
-            if (!string.IsNullOrWhiteSpace(query.Content))
-            {
-                prayers = prayers.Where(e => e.Content.Contains(query.Content));
-            }
-            if (!string.IsNullOrWhiteSpace(query.SortBy))
-            {
-                prayers = query.SortBy.Equals("CreatedAt", StringComparison.OrdinalIgnoreCase) ? (query.IsDescending ? prayers.OrderByDescending(p => p.CreatedAt) : prayers.OrderBy(p => p.CreatedAt)) : prayers;
-            }
-            else
-            {
-                prayers = prayers.OrderByDescending(p => p.CreatedAt);
-            }
+        public async Task<int> GetCountAsync(PrayerRequestQueryObject query)
+        {
+            var requests = _context.PrayerRequests.AsQueryable();
 
-            var skip = (query.PageNumber - 1) * query.PageSize;
+            if (!string.IsNullOrWhiteSpace(query.Name))
+                requests = requests.Where(r =>
+                    r.Name != null &&
+                    r.Name.ToLower().Contains(query.Name.ToLower()));
 
-            return await prayers.Skip(skip).Take(query.PageSize).ToListAsync();
+            if (query.IsAttendedTo.HasValue)
+                requests = requests.Where(r => r.IsAttendedTo == query.IsAttendedTo.Value);
+
+            if (query.FromDate.HasValue)
+                requests = requests.Where(r => r.CreatedAt >= query.FromDate.Value);
+
+            if (query.ToDate.HasValue)
+                requests = requests.Where(r => r.CreatedAt <= query.ToDate.Value);
+
+            return await requests.CountAsync();
+        }
+
+        public async Task<PrayerRequest?> UpdateAsync(int id, UpdatePrayerRequestDto dto)
+        {
+            var request = await _context.PrayerRequests.FindAsync(id);
+
+            if (request is null)
+                return null;
+
+            request.IsAttendedTo = dto.IsAttendedTo;
+
+            await _context.SaveChangesAsync();
+            return request;
         }
     }
 }

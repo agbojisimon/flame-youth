@@ -1,5 +1,4 @@
-
-namespace g_flame_youth.Models
+namespace GlobalFlameMinistry.API.Models
 {
     public class Announcement
     {
@@ -7,9 +6,11 @@ namespace g_flame_youth.Models
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public string CreatedById { get; set; } = string.Empty;
+        public string Module { get; set; } = "Ministry";
+        public string Category { get; set; } = string.Empty;
+        public bool IsPublished { get; set; } = false;
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedOn { get; set; }
-        public string Category { get; set; } = string.Empty;
         public bool IsDeleted { get; set; } = false;
         public DateTime? DeletedOn { get; set; }
     }

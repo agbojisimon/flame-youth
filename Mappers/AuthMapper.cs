@@ -1,31 +1,39 @@
-using g_flame_youth.DTOs.Account;
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.DTOs.Account;
+using GlobalFlameMinistry.API.Models;
 
-namespace g_flame_youth.Mappers
+namespace GlobalFlameMinistry.API.Mappers
 {
     public static class AuthMapper
     {
-        public static AppUser ToAppUser(this RegisterDto registerDto)
+        // RegisterDto → AppUser model
+        public static AppUser ToAppUser(this RegisterDto dto)
         {
             return new AppUser
             {
-                FirstName = registerDto.FirstName,
-                LastName = registerDto.LastName,
-                UserName = registerDto.UserName,
-                Email = registerDto.Email,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                UserName = dto.UserName,
+                Email = dto.Email,
                 CreatedOn = DateTime.UtcNow
             };
         }
 
-        public static NewUserDto ToNewUserDto(AppUser user, string token)
+        // AppUser → NewUserDto — used ONLY after login
+        // Includes JWT token and refresh token
+        public static NewUserDto ToNewUserDto(this AppUser user, string token, string refreshToken, List<string>? roles = null)
         {
             return new NewUserDto
             {
+                Id = user.Id,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                UserName = user.UserName,
-                Email = user.Email,
-                Token = token
+                FullName = user.FullName,
+                UserName = user.UserName ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                Module = user.Module,
+                Roles = roles ?? new List<string>(),
+                Token = token,
+                RefreshToken = refreshToken
             };
         }
     }

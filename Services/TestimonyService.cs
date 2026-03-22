@@ -1,9 +1,10 @@
-using g_flame_youth.DTOs.Testimony;
-using g_flame_youth.Helpers;
-using g_flame_youth.Interfaces;
-using g_flame_youth.Mappers;
+using GlobalFlameMinistry.API.DTOs.Common;
+using GlobalFlameMinistry.API.DTOs.Testimony;
+using GlobalFlameMinistry.API.Helpers;
+using GlobalFlameMinistry.API.Interfaces;
+using GlobalFlameMinistry.API.Mappers;
 
-namespace g_flame_youth.Services
+namespace GlobalFlameMinistry.API.Services
 {
     public class TestimonyService : ITestimonyService
     {
@@ -13,38 +14,66 @@ namespace g_flame_youth.Services
             _testimonyRepo = testimonyRepo;
         }
 
-        public async Task<TestimonyResponseDto> CreateTestimonyAsync(CreateTestimonyDto createDto, string userId)
+        public async Task<TestimonyResponseDto> CreateAsync(CreateTestimonyDto createDto, string? name, string? appUserId)
         {
-            var testimony = createDto.ToTestimonyFromCreateDto();
+            var testimony = createDto.ToTestimonyFromCreateDto(name, appUserId);
 
-            testimony.AppUserId = userId;
-            testimony.CreatedAt = DateTime.UtcNow;
+            var created = await _testimonyRepo.CreateAsync(testimony);
 
-            await _testimonyRepo.CreateTestimonyAsync(testimony);
-
-            return testimony.ToTestimonyResponseDto();
+            return created.ToTestimonyResponseDto();
         }
 
-        public Task<bool> DeleteTestimonyAsync(int Id)
+        public async Task<bool> DeleteAsync(int id)
         {
-            return _testimonyRepo.DeleteTestimonyAsync(Id);
+            return await _testimonyRepo.DeleteAsync(id);
         }
 
-        public async Task<List<TestimonyResponseDto>> GetTestimoniesAsync(TestimonyQueryObject query)
+        public async Task<PagedResult<TestimonyResponseDto>> GetAllAsync(TestimonyQueryObject query)
         {
-            var testimonies = await _testimonyRepo.GetTestimoniesAsync(query);
+            var testimonies = await _testimonyRepo.GetAllAsync(query);
+            var totalCount = await _testimonyRepo.GetAllCountAsync(query);
 
-            return testimonies.Select(t => t.ToTestimonyResponseDto()).ToList();
+            return new PagedResult<TestimonyResponseDto>
+            {
+                Items = testimonies.ToDtoList(),
+                TotalCount = totalCount,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize
+            };
         }
 
-        public async Task<TestimonyResponseDto?> GetTestimonyByIdAsync(int Id)
+        public async Task<PagedResult<TestimonyResponseDto>> GetApprovedAsync(TestimonyQueryObject query)
         {
-            var testimony = await _testimonyRepo.GetTestimonyByIdAsync(Id);
+            var testimonies = await _testimonyRepo.GetApprovedAsync(query);
+            var totalCount = await _testimonyRepo.GetApprovedCountAsync(query);
 
-            if (testimony == null)
+            return new PagedResult<TestimonyResponseDto>
+            {
+                Items = testimonies.ToDtoList(),
+                TotalCount = totalCount,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize
+            };
+        }
+
+        public async Task<TestimonyResponseDto?> GetByIdAsync(int id)
+        {
+            var testimony = await _testimonyRepo.GetByIdAsync(id);
+
+            if (testimony is null)
                 return null;
 
             return testimony.ToTestimonyResponseDto();
+        }
+
+        public async Task<TestimonyResponseDto?> UpdateStatusAsync(int id, UpdateTestimonyDto updateDto)
+        {
+            var updated = await _testimonyRepo.UpdateStatusAsync(id, updateDto);
+
+            if (updated is null)
+                return null;
+
+            return updated.ToTestimonyResponseDto();
         }
     }
 }

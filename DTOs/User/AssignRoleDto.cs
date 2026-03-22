@@ -1,13 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
-namespace g_flame_youth.DTOs.User
+namespace GlobalFlameMinistry.API.DTOs.User
 {
     public class AssignRoleDto
     {
-        public string userId { get; set; } = string.Empty;
+        [Required]
+        public string UserId { get; set; } = string.Empty;
+        [Required]
         public string Role { get; set; } = string.Empty;
     }
 }

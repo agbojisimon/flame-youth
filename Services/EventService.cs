@@ -1,71 +1,65 @@
+using GlobalFlameMinistry.API.DTOs.Common;
+using GlobalFlameMinistry.API.DTOs.Event;
+using GlobalFlameMinistry.API.Helpers;
+using GlobalFlameMinistry.API.Interfaces;
+using GlobalFlameMinistry.API.Mappers;
 
-using g_flame_youth.DTOs.Event;
-using g_flame_youth.Helpers;
-using g_flame_youth.Interfaces;
-using g_flame_youth.Mappers;
-
-namespace g_flame_youth.Services
+namespace GlobalFlameMinistry.API.Services
 {
     public class EventService : IEventService
     {
-        private readonly IEvenRepository _eventRepo;
-        public EventService(IEvenRepository eventRepo)
+        private readonly IEventRepository _eventRepo;
+        public EventService(IEventRepository eventRepo)
         {
             _eventRepo = eventRepo;
         }
-        public async Task<EventResponseDto> CreateEventAsync(CreateEventDto createDto)
+
+        public async Task<EventResponseDto> CreateAsync(CreateEventDto createDto)
         {
-            var events = createDto.ToEventFromCreateDto();
-            events.CreatedOn = DateTime.UtcNow;
+            var evt = createDto.ToModel();
 
-            await _eventRepo.CreateEventAsync(events);
+            var created = await _eventRepo.CreateAsync(evt);
 
-            return events.ToEventResponseDto();
+            return created.ToEventResponseDto();
         }
 
-        public async Task<bool> DeleteEventAsync(int Id)
+        public async Task<bool> DeleteAsync(int id)
         {
-            var events = await _eventRepo.GetEventByIdAsync(Id);
-
-            if (events == null)
-                return false;
-
-            return await _eventRepo.DeleteEventAsync(Id);
+            return await _eventRepo.DeleteAsync(id);
         }
 
-        public async Task<EventResponseDto?> GetEventByIdAsync(int Id)
+        public async Task<PagedResult<EventResponseDto>> GetAllAsync(EventQueryObject query)
         {
-            var events = await _eventRepo.GetEventByIdAsync(Id);
+            var events = await _eventRepo.GetAllAsync(query);
+            var totalCount = await _eventRepo.GetCountAsync(query);
 
-            if (events == null)
+            return new PagedResult<EventResponseDto>
+            {
+                Items = events.ToDtoList(),
+                TotalCount = totalCount,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize
+            };
+        }
+
+        public async Task<EventResponseDto?> GetByIdAsync(int id)
+        {
+            var evt = await _eventRepo.GetByIdAsync(id);
+
+            if (evt is null)
                 return null;
 
-            return events.ToEventResponseDto();
+            return evt.ToEventResponseDto();
         }
 
-        public async Task<List<EventResponseDto>> GetEventsAsync(EventQueryObject query)
+        public async Task<EventResponseDto?> UpdateAsync(int id, UpdateEventDto updateDto)
         {
-            var events = await _eventRepo.GetEventsAsync(query);
+            var updated = await _eventRepo.UpdateAsync(id, updateDto);
 
-            return events.Select(e => e.ToEventResponseDto()).ToList();
-        }
-
-        public async Task<EventResponseDto?> UpdateEventAsync(int Id, UpdateEventDto updateDto)
-        {
-            var events = await _eventRepo.GetEventByIdAsync(Id);
-
-            if (events == null)
+            if (updated is null)
                 return null;
 
-            events.Title = updateDto.Title;
-            events.Description = updateDto.Description;
-            events.StartDate = updateDto.StartDate;
-            events.EndDate = updateDto.EndDate;
-            events.ImageUrl = updateDto.ImageUrl;
-            events.UpdatedOn = DateTime.UtcNow;
-
-            await _eventRepo.UpdateEventAsync(events);
-            return events.ToEventResponseDto();
+            return updated.ToEventResponseDto();
         }
     }
 }

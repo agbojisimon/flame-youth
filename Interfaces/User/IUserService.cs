@@ -1,8 +1,8 @@
-using g_flame_youth.DTOs.Account;
-using g_flame_youth.DTOs.User;
-using g_flame_youth.Helpers;
+using GlobalFlameMinistry.API.DTOs.Account;
+using GlobalFlameMinistry.API.DTOs.User;
+using GlobalFlameMinistry.API.Helpers;
 
-namespace g_flame_youth.Interfaces
+namespace GlobalFlameMinistry.API.Interfaces
 {
     public interface IUserService
     {

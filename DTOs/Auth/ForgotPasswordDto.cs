@@ -1,8 +1,10 @@
-
-namespace g_flame_youth.DTOs.Auth
+using System.ComponentModel.DataAnnotations;
+namespace GlobalFlameMinistry.API.DTOs.Auth
 {
     public class ForgotPasswordDto
     {
-        public string Email { get; set; }
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Please provide a valid email")]
+        public string Email { get; set; } = string.Empty;
     }
 }

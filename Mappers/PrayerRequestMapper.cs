@@ -1,29 +1,43 @@
-using g_flame_youth.DTOs.PrayerRequest;
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.DTOs.PrayerRequest;
+using GlobalFlameMinistry.API.Models;
 
-namespace g_flame_youth.Mappers
+namespace GlobalFlameMinistry.API.Mappers
 {
     public static class PrayerRequestMapper
     {
-        public static PrayerRequestResponseDto ToPrayerRequestResponseDto(this PrayerRequest prayerModel)
+        public static PrayerRequestResponseDto ToPrayerResponseDto(this PrayerRequest prayerModel)
         {
             return new PrayerRequestResponseDto
             {
-                id = prayerModel.id,
+                Id = prayerModel.Id,
+                Name = prayerModel.Name ?? "Anonymous",
+                Email = prayerModel.Email,
                 Content = prayerModel.Content,
                 Attachment = prayerModel.Attachment,
+                AnonymousToken = prayerModel.AnonymousToken,
+                IsAttendedTo = prayerModel.IsAttendedTo,
+                AppUserId = prayerModel.AppUserId,
                 CreatedAt = prayerModel.CreatedAt
             };
         }
 
-        public static PrayerRequest ToPrayerRequestFromCreateDto(this CreatePrayerDto createDto)
+        public static PrayerRequest ToPrayerFromCreateDto(this CreatePrayerDto createDto, string? name, string? email, string? appUserId)
         {
             return new PrayerRequest
             {
+                Name = name,
+                Email = email,
                 Content = createDto.Content,
                 Attachment = createDto.Attachment,
-                CreatedAt = DateTime.UtcNow,
+                AppUserId = appUserId,
+                AnonymousToken = Guid.NewGuid().ToString(),
+                IsAttendedTo = false,
+                CreatedAt = DateTime.UtcNow
             };
+        }
+        public static List<PrayerRequestResponseDto> ToDtoList(this IEnumerable<PrayerRequest> requests)
+        {
+            return requests.Select(r => r.ToPrayerResponseDto()).ToList();
         }
     }
 }

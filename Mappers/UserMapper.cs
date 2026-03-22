@@ -1,37 +1,43 @@
-using g_flame_youth.DTOs.Account;
-using g_flame_youth.DTOs.User;
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.DTOs.User;
+using GlobalFlameMinistry.API.Models;
 
-namespace g_flame_youth.Mappers
+namespace GlobalFlameMinistry.API.Mappers
 {
     public static class UserMapper
     {
-        public static UserDto ToUserDto(this AppUser user)
+        // AppUser → UserDto — used for profile views and admin user management
+        public static UserDto ToUserDto(this AppUser user, List<string>? roles = null)
         {
             return new UserDto
             {
                 Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                FullName = user.FullName,
                 UserName = user.UserName ?? string.Empty,
                 Email = user.Email ?? string.Empty,
-                FullName = user.FullName,
-                CreatedOn = user.CreatedOn
+                ProfilePictureUrl = user.ProfilePictureUrl,
+                Module = user.Module,
+                EmailConfirmed = user.EmailConfirmed,
+                CreatedOn = user.CreatedOn,
+                Roles = roles ?? new List<string>()
             };
         }
-        public static AppUser ToAppUser(this RegisterDto registerDto, AppUser user)
-        {
-            user.FirstName = registerDto.FirstName;
-            user.LastName = registerDto.LastName;
-            user.UserName = registerDto.UserName;
-            user.Email = registerDto.Email;
-            return user;
-        }
-        public static AppUser ToAppUser(this UpdateUserDto dto, AppUser user)
+
+        // Applies UpdateUserDto fields onto existing AppUser
+        public static void ApplyUpdate(this AppUser user, UpdateUserDto dto)
         {
             user.FirstName = dto.FirstName;
             user.LastName = dto.LastName;
-            user.UserName = dto.UserName;
-            user.Email = dto.Email;
-            return user;
+
+            if (!string.IsNullOrWhiteSpace(dto.UserName))
+                user.UserName = dto.UserName;
+
+            if (!string.IsNullOrWhiteSpace(dto.ProfilePictureUrl))
+                user.ProfilePictureUrl = dto.ProfilePictureUrl;
+
+            if (!string.IsNullOrWhiteSpace(dto.Module))
+                user.Module = dto.Module;
         }
     }
 }

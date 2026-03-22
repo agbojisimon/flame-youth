@@ -1,11 +1,10 @@
-using System.Security.Claims;
-using g_flame_youth.DTOs.PrayerRequest;
-using g_flame_youth.Helpers;
-using g_flame_youth.Interfaces;
+using GlobalFlameMinistry.API.DTOs.PrayerRequest;
+using GlobalFlameMinistry.API.Helpers;
+using GlobalFlameMinistry.API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace g_flame_youth.Controllers.Admin
+namespace GlobalFlameMinistry.API.Controllers.Admin
 {
     [Route("api/admin/prayer-requests")]
     [ApiController]
@@ -18,57 +17,34 @@ namespace g_flame_youth.Controllers.Admin
             _prayerService = prayerService;
         }
 
-        [HttpGet("prayer-requests")]
-        public async Task<IActionResult> GetAllPrayerRequest([FromQuery] PrayerReqeustQueryObject query)
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] PrayerRequestQueryObject query)
         {
-            var prayers = await _prayerService.GetPrayerRequestsAsync(query);
+            var result = await _prayerService.GetAllAsync(query);
 
-            return Ok(new ApiResponse<List<PrayerRequestResponseDto>>
-            {
-                isSuccess = true,
-                Message = prayers.Count == 0
-                ? "No prayer request is available at the moment"
-                : "Prayer requests retrieved successfully",
-                Data = prayers,
-            });
+            return Ok(result);
         }
 
         [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetPrayerById([FromRoute] int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            var prayer = await _prayerService.GetByIdAsync(id);
+            var request = await _prayerService.GetByIdAsync(id);
 
-            if (prayer == null)
-                return NotFound($"Prayer request with ID {id} is not found");
+            if (request is null)
+                return NotFound("Prayer request not found");
 
-            return Ok(new ApiResponse<PrayerRequestResponseDto?>
-            {
-                isSuccess = true,
-                Message = "Prayer request retrieved successfully",
-                Data = prayer
-            });
+            return Ok(request);
         }
 
-        [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeletePrayer([FromRoute] int id)
+        [HttpPatch("{id:int}/attend")]
+        public async Task<IActionResult> MarkAsAttended(int id, [FromBody] UpdatePrayerRequestDto dto)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _prayerService.MarkAsAttendedAsync(id, dto);
 
-            if (userId == null)
-                return NotFound("User ID not found");
+            if (result is null)
+                return NotFound("Prayer request not found");
 
-            var isDeleted = await _prayerService.DeletePrayerAsync(id);
-
-            if (!isDeleted)
-                return NotFound($"Prayer request with ID {id} not found.");
-
-            return Ok(new ApiResponse<string>
-            {
-                isSuccess = true,
-                Message = "Prayer request deleted successfully",
-                Data = $"Prayer request with ID {id} has been deleted."
-            });
+            return Ok(result);
         }
     }
 }

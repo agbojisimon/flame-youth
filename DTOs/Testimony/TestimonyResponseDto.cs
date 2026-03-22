@@ -1,5 +1,4 @@
-
-namespace g_flame_youth.DTOs.Testimony
+namespace GlobalFlameMinistry.API.DTOs.Testimony
 {
     public class TestimonyResponseDto
     {
@@ -7,7 +6,8 @@ namespace g_flame_youth.DTOs.Testimony
         public string FullName { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public string? Attachment { get; set; }
-        public bool Status { get; set; }
+        public string Status { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 }

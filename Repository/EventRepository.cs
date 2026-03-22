@@ -1,70 +1,161 @@
-using g_flame_youth.Data;
-using g_flame_youth.Helpers;
-using g_flame_youth.Interfaces;
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.Data;
+using GlobalFlameMinistry.API.DTOs.Event;
+using GlobalFlameMinistry.API.Helpers;
+using GlobalFlameMinistry.API.Interfaces;
+using GlobalFlameMinistry.API.Mappers;
+using GlobalFlameMinistry.API.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace g_flame_youth.Repository
+namespace GlobalFlameMinistry.API.Repository
 {
-    public class EventRepository : IEvenRepository
+    public class EventRepository : IEventRepository
     {
         public readonly AppDbContext _context;
         public EventRepository(AppDbContext context)
         {
             _context = context;
         }
-        public async Task CreateEventAsync(Event newEvent)
+
+        public async Task<Event> CreateAsync(Event eventModel)
         {
-            await _context.Events.AddAsync(newEvent);
+            await _context.Events.AddAsync(eventModel);
             await _context.SaveChangesAsync();
+
+            return eventModel;
         }
 
-        public async Task<bool> DeleteEventAsync(int Id)
+        public async Task<bool> DeleteAsync(int id)
         {
-            var events = await _context.Events.FirstOrDefaultAsync(e => e.Id == Id);
+            var evt = await _context.Events.FindAsync(id);
+            if (evt is null) return false;
 
-            if (events == null)
-                return false;
-
-            events.IsDeleted = true;
-            events.DeletedOn = DateTime.UtcNow;
+            // Soft delete
+            evt.IsDeleted = true;
+            evt.DeletedOn = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return true;
         }
 
-        public async Task<Event?> GetEventByIdAsync(int Id)
+        public async Task<bool> ExistsAsync(int id)
         {
-            return await _context.Events.FirstOrDefaultAsync(e => e.Id == Id && !e.IsDeleted);
+            return await _context.Events.AnyAsync(e => e.Id == id);
         }
 
-        public async Task<List<Event>> GetEventsAsync(EventQueryObject query)
+        public async Task<List<Event>> GetAllAsync(EventQueryObject query)
         {
-            var events = _context.Events.Where(e => !e.IsDeleted && !e.IsCancelled).AsQueryable();
+            var events = _context.Events.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(query.Title))
-            {
-                events = events.Where(e => e.Title.Contains(query.Title));
-            }
-            if (!string.IsNullOrWhiteSpace(query.SortBy))
-            {
-                events = query.SortBy.Equals("CreatedOn", StringComparison.OrdinalIgnoreCase) ? (query.IsDescending ? events.OrderByDescending(a => a.CreatedOn) : events.OrderBy(a => a.CreatedOn)) : events;
-            }
-            else
-            {
-                events = events.OrderByDescending(a => a.CreatedOn);
-            }
+                events = events.Where(e =>
+                    e.Title.ToLower().Contains(query.Title.ToLower()));
 
-            var skip = (query.PageNumber - 1) * query.PageSize;
+            if (!string.IsNullOrWhiteSpace(query.Module))
+                events = events.Where(e => e.Module == query.Module);
 
-            return await events.Skip(skip).Take(query.PageSize).ToListAsync();
+            if (!string.IsNullOrWhiteSpace(query.Location))
+                events = events.Where(e =>
+                    e.Location.ToLower().Contains(query.Location.ToLower()));
+
+            if (query.IsCancelled.HasValue)
+                events = events.Where(e => e.IsCancelled == query.IsCancelled.Value);
+
+            if (query.UpcomingOnly.HasValue && query.UpcomingOnly.Value)
+                events = events.Where(e => e.StartDate > DateTime.UtcNow);
+
+            if (query.OngoingOnly.HasValue && query.OngoingOnly.Value)
+                events = events.Where(e =>
+                    e.StartDate <= DateTime.UtcNow &&
+                    e.EndDate >= DateTime.UtcNow);
+
+            if (query.PastOnly.HasValue && query.PastOnly.Value)
+                events = events.Where(e => e.EndDate < DateTime.UtcNow);
+
+            if (query.FromDate.HasValue)
+                events = events.Where(e => e.StartDate >= query.FromDate.Value);
+
+            if (query.ToDate.HasValue)
+                events = events.Where(e => e.StartDate <= query.ToDate.Value);
+
+            events = query.SortBy?.ToLower() switch
+            {
+                "title" => query.IsDescending
+                    ? events.OrderByDescending(e => e.Title)
+                    : events.OrderBy(e => e.Title),
+
+                "startdate" => query.IsDescending
+                    ? events.OrderByDescending(e => e.StartDate)
+                    : events.OrderBy(e => e.StartDate),
+
+                "location" => query.IsDescending
+                    ? events.OrderByDescending(e => e.Location)
+                    : events.OrderBy(e => e.Location),
+
+                "createdon" => query.IsDescending
+                    ? events.OrderByDescending(e => e.CreatedOn)
+                    : events.OrderBy(e => e.CreatedOn),
+
+                _ => events.OrderBy(e => e.StartDate)
+            };
+
+            return await events
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .ToListAsync();
         }
 
-        public async Task UpdateEventAsync(Event updatedEvent)
+        public async Task<Event?> GetByIdAsync(int id)
         {
-            _context.Events.Update(updatedEvent);
+            return await _context.Events.FirstOrDefaultAsync(e => e.Id == id);
+        }
 
+        public async Task<int> GetCountAsync(EventQueryObject query)
+        {
+            var events = _context.Events.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query.Title))
+                events = events.Where(e =>
+                    e.Title.ToLower().Contains(query.Title.ToLower()));
+
+            if (!string.IsNullOrWhiteSpace(query.Module))
+                events = events.Where(e => e.Module == query.Module);
+
+            if (!string.IsNullOrWhiteSpace(query.Location))
+                events = events.Where(e =>
+                    e.Location.ToLower().Contains(query.Location.ToLower()));
+
+            if (query.IsCancelled.HasValue)
+                events = events.Where(e => e.IsCancelled == query.IsCancelled.Value);
+
+            if (query.UpcomingOnly.HasValue && query.UpcomingOnly.Value)
+                events = events.Where(e => e.StartDate > DateTime.UtcNow);
+
+            if (query.OngoingOnly.HasValue && query.OngoingOnly.Value)
+                events = events.Where(e =>
+                    e.StartDate <= DateTime.UtcNow &&
+                    e.EndDate >= DateTime.UtcNow);
+
+            if (query.PastOnly.HasValue && query.PastOnly.Value)
+                events = events.Where(e => e.EndDate < DateTime.UtcNow);
+
+            if (query.FromDate.HasValue)
+                events = events.Where(e => e.StartDate >= query.FromDate.Value);
+
+            if (query.ToDate.HasValue)
+                events = events.Where(e => e.StartDate <= query.ToDate.Value);
+
+            return await events.CountAsync();
+        }
+
+        public async Task<Event?> UpdateAsync(int id, UpdateEventDto updateDto)
+        {
+            var eventModel = await _context.Events.FindAsync(id);
+            if (eventModel is null) return null;
+
+            eventModel.ApplyUpdate(updateDto);
             await _context.SaveChangesAsync();
+
+            return eventModel;
         }
     }
 }

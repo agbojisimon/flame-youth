@@ -1,13 +1,17 @@
-using g_flame_youth.Helpers;
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.DTOs.PrayerRequest;
+using GlobalFlameMinistry.API.Helpers;
+using GlobalFlameMinistry.API.Models;
 
-namespace g_flame_youth.Interfaces
+namespace GlobalFlameMinistry.API.Interfaces
 {
     public interface IPrayerRequestRepository
     {
-        Task<List<PrayerRequest>> GetPrayerRequestsAsync(PrayerReqeustQueryObject qeury);
+        Task<List<PrayerRequest>> GetAllAsync(PrayerRequestQueryObject query);
+        Task<int> GetCountAsync(PrayerRequestQueryObject query);
         Task<PrayerRequest?> GetByIdAsync(int id);
-        Task CreatePrayerAsync(PrayerRequest request);
-        Task<bool> DeleteAsync(int id);
+        Task<PrayerRequest?> GetByTokenAsync(string token);
+        Task<PrayerRequest> CreateAsync(PrayerRequest request);
+        Task<PrayerRequest?> UpdateAsync(int id, UpdatePrayerRequestDto dto);
+        Task<bool> ExistsAsync(int id);
     }
 }

@@ -1,11 +1,11 @@
 using System.Net;
 using System.Net.Mail;
 using System.Text;
-using g_flame_youth.Configuration;
-using g_flame_youth.Interfaces.Email;
+using GlobalFlameMinistry.API.Configuration;
+using GlobalFlameMinistry.API.Interfaces.Email;
 using Microsoft.Extensions.Options;
 
-namespace g_flame_youth.Services
+namespace GlobalFlameMinistry.API.Services
 {
     public class EmailSender : IEmailSender
     {
@@ -29,6 +29,7 @@ namespace g_flame_youth.Services
             msg.Headers.Add("Mail", "App Mail");
             msg.Priority = MailPriority.High;
             msg.DeliveryNotificationOptions = DeliveryNotificationOptions.OnFailure;
+
             return msg;
         }
         public async Task SendEmailAsync(string email, string subject, string htmlMessage)

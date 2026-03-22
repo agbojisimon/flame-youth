@@ -1,10 +1,11 @@
-using g_flame_youth.Data;
-using g_flame_youth.Helpers;
-using g_flame_youth.Interfaces;
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.Data;
+using GlobalFlameMinistry.API.DTOs.Contact;
+using GlobalFlameMinistry.API.Helpers;
+using GlobalFlameMinistry.API.Interfaces;
+using GlobalFlameMinistry.API.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace g_flame_youth.Repository
+namespace GlobalFlameMinistry.API.Repository
 {
     public class ContactRepository : IContactRepository
     {
@@ -14,87 +15,142 @@ namespace g_flame_youth.Repository
             _context = context;
         }
 
-        public async Task CreateContactAsync(Contact contact)
+        public async Task<Contact> CreateAsync(Contact contact)
         {
             await _context.Contacts.AddAsync(contact);
+
             await _context.SaveChangesAsync();
+
+            return contact;
         }
 
-        public async Task<bool> DeleteContactAsync(int Id)
+        public async Task<bool> DeleteAsync(int id)
         {
-            var contact = await _context.Contacts.FirstOrDefaultAsync(c => c.Id == Id);
+            var contact = await _context.Contacts.FindAsync(id);
 
-            if (contact == null)
+            if (contact is null)
                 return false;
 
+            // Soft delete
             contact.IsDeleted = true;
 
             await _context.SaveChangesAsync();
+
             return true;
         }
 
-        public async Task<Contact?> GetContactByIdAsync(int Id)
+        public async Task<bool> ExistsAsync(int id)
         {
-            return await _context.Contacts.FirstOrDefaultAsync(c => c.Id == Id && !c.IsDeleted);
+            return await _context.Contacts.AnyAsync(c => c.Id == id);
         }
 
-        public async Task<List<Contact>> GetContactsAsync(ContactQueryObject query)
+        public async Task<List<Contact>> GetAllAsync(ContactQueryObject query)
         {
-            IQueryable<Contact> contacts = _context.Contacts.Where(c => !c.IsDeleted);
+            var contacts = _context.Contacts.AsQueryable();
+
+            // FILTERS 
 
             if (!string.IsNullOrWhiteSpace(query.FullName))
-            {
-                contacts = contacts.Where(c => c.FullName.Contains(query.FullName));
-            }
+                contacts = contacts.Where(c =>
+                    c.FullName.ToLower().Contains(query.FullName.ToLower()));
 
             if (!string.IsNullOrWhiteSpace(query.Email))
-            {
-                contacts = contacts.Where(c => c.Email.Contains(query.Email));
-            }
-
-            if (!string.IsNullOrWhiteSpace(query.PhoneNumber))
-            {
-                contacts = contacts.Where(c => c.PhoneNumber!.Contains(query.PhoneNumber));
-            }
-
-            if (!string.IsNullOrWhiteSpace(query.Message))
-            {
-                contacts = contacts.Where(c => c.Message.Contains(query.Message));
-            }
+                contacts = contacts.Where(c =>
+                    c.Email.ToLower().Contains(query.Email.ToLower()));
 
             if (query.Type.HasValue)
-            {
                 contacts = contacts.Where(c => c.Type == query.Type.Value);
-            }
 
             if (query.Status.HasValue)
-            {
                 contacts = contacts.Where(c => c.Status == query.Status.Value);
-            }
 
-            if (query.CreatedFrom.HasValue)
+            if (query.FromDate.HasValue)
+                contacts = contacts.Where(c => c.CreatedAt >= query.FromDate.Value);
+
+            if (query.ToDate.HasValue)
+                contacts = contacts.Where(c => c.CreatedAt <= query.ToDate.Value);
+
+            // SORTING
+
+            contacts = query.SortBy?.ToLower() switch
             {
-                contacts = contacts.Where(c => c.CreatedAt >= query.CreatedFrom.Value);
-            }
+                "fullname" => query.IsDescending
+                    ? contacts.OrderByDescending(c => c.FullName)
+                    : contacts.OrderBy(c => c.FullName),
 
-            if (query.CreatedTo.HasValue)
-            {
-                contacts = contacts.Where(c => c.CreatedAt <= query.CreatedTo.Value);
-            }
+                "email" => query.IsDescending
+                    ? contacts.OrderByDescending(c => c.Email)
+                    : contacts.OrderBy(c => c.Email),
 
-            if (!string.IsNullOrWhiteSpace(query.SortBy) &&
-                query.SortBy.Equals("CreatedAt", StringComparison.OrdinalIgnoreCase))
-            {
-                contacts = query.IsDescending ? contacts.OrderByDescending(c => c.CreatedAt) : contacts.OrderBy(c => c.CreatedAt);
-            }
-            else
-            {
-                contacts = contacts.OrderByDescending(c => c.CreatedAt);
-            }
+                "type" => query.IsDescending
+                    ? contacts.OrderByDescending(c => c.Type)
+                    : contacts.OrderBy(c => c.Type),
 
-            int skip = (query.PageNumber - 1) * query.PageSize;
+                "status" => query.IsDescending
+                    ? contacts.OrderByDescending(c => c.Status)
+                    : contacts.OrderBy(c => c.Status),
 
-            return await contacts.Skip(skip).Take(query.PageSize).ToListAsync();
+                "createdat" => query.IsDescending
+                    ? contacts.OrderByDescending(c => c.CreatedAt)
+                    : contacts.OrderBy(c => c.CreatedAt),
+
+                // Default — newest first so admin sees latest messages
+                _ => contacts.OrderByDescending(c => c.CreatedAt)
+            };
+
+            // PAGINATION
+            return await contacts
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .ToListAsync();
+        }
+
+        public async Task<Contact?> GetByIdAsync(int id)
+        {
+            return await _context.Contacts.FirstOrDefaultAsync(c => c.Id == id);
+        }
+
+        public async Task<int> GetCountAsync(ContactQueryObject query)
+        {
+            var contacts = _context.Contacts.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query.FullName))
+                contacts = contacts.Where(c =>
+                    c.FullName.ToLower().Contains(query.FullName.ToLower()));
+
+            if (!string.IsNullOrWhiteSpace(query.Email))
+                contacts = contacts.Where(c =>
+                    c.Email.ToLower().Contains(query.Email.ToLower()));
+
+            if (query.Type.HasValue)
+                contacts = contacts.Where(c => c.Type == query.Type.Value);
+
+            if (query.Status.HasValue)
+                contacts = contacts.Where(c => c.Status == query.Status.Value);
+
+            if (query.FromDate.HasValue)
+                contacts = contacts.Where(c => c.CreatedAt >= query.FromDate.Value);
+
+            if (query.ToDate.HasValue)
+                contacts = contacts.Where(c => c.CreatedAt <= query.ToDate.Value);
+
+            return await contacts.CountAsync();
+        }
+
+        public async Task<Contact?> UpdateStatusAsync(int id, UpdateContactDto updateDto)
+        {
+            var contact = await _context.Contacts.FindAsync(id);
+
+            if (contact is null)
+                return null;
+
+            // Only field admin can update is Status
+            // New → Read → Responded → Closed
+            contact.Status = updateDto.Status;
+
+            await _context.SaveChangesAsync();
+
+            return contact;
         }
     }
 }

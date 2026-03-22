@@ -1,5 +1,5 @@
 
-namespace g_flame_youth.Helpers.Queries
+namespace GlobalFlameMinistry.API.Helpers.Queries
 {
     public class BaseQueryObject
     {

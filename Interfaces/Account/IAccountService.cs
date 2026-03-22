@@ -1,11 +1,12 @@
 using System.Security.Claims;
-using g_flame_youth.DTOs.User;
+using GlobalFlameMinistry.API.DTOs.User;
 
-namespace g_flame_youth.Interfaces.Account
+namespace GlobalFlameMinistry.API.Interfaces.Account
 {
     public interface IAccountService
     {
         Task<UserDto> GetMyProfileAsync(ClaimsPrincipal user);
         Task<UserDto> UpdateMyProfileAsync(ClaimsPrincipal user, UpdateUserDto dto);
+        Task<string> ChangePasswordAsync(ClaimsPrincipal user, ChangePasswordDto dto);
     }
 }

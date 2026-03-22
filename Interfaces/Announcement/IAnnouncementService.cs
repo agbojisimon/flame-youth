@@ -1,14 +1,15 @@
-using g_flame_youth.DTOs.Announcement;
-using g_flame_youth.Helpers;
+using GlobalFlameMinistry.API.DTOs.Announcement;
+using GlobalFlameMinistry.API.DTOs.Common;
+using GlobalFlameMinistry.API.Helpers;
 
-namespace g_flame_youth.Interfaces
+namespace GlobalFlameMinistry.API.Interfaces
 {
     public interface IAnnouncementService
     {
-        Task<List<AnnouncementDto>> GetAnnouncementsAsync(AnnouncementQueryObject query);
-        Task<AnnouncementDto?> GetAnnouncementByIdAsync(int Id);
-        Task<AnnouncementDto> CreateAnnouncementAsync(CreateAnnouncementDto createDto, string userId);
-        Task<AnnouncementDto?> UpdateAnnouncementAsync(int Id, UpdateAnnouncementDto updateDto);
-        Task<bool> DeleteAnnouncementAsync(int Id);
+        Task<PagedResult<AnnouncementDto>> GetAllAsync(AnnouncementQueryObject query);
+        Task<AnnouncementDto?> GetByIdAsync(int id);
+        Task<AnnouncementDto> CreateAsync(CreateAnnouncementDto dto, string createdById);
+        Task<AnnouncementDto?> UpdateAsync(int id, UpdateAnnouncementDto dto);
+        Task<bool> DeleteAsync(int id);
     }
 }

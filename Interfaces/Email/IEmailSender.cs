@@ -1,5 +1,5 @@
 
-namespace g_flame_youth.Interfaces.Email
+namespace GlobalFlameMinistry.API.Interfaces.Email
 {
     public interface IEmailSender
     {

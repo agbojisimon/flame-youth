@@ -1,14 +1,18 @@
 using System.Text;
-using g_flame_youth.Configuration;
-using g_flame_youth.Data;
-using g_flame_youth.Fillters;
-using g_flame_youth.Interfaces;
-using g_flame_youth.Interfaces.Account;
-using g_flame_youth.Interfaces.Auth;
-using g_flame_youth.Interfaces.Email;
-using g_flame_youth.Models;
-using g_flame_youth.Repository;
-using g_flame_youth.Services;
+using GlobalFlameMinistry.API.Configuration;
+using GlobalFlameMinistry.API.Data;
+using GlobalFlameMinistry.API.Fillters;
+using GlobalFlameMinistry.API.Filters;
+using GlobalFlameMinistry.API.Interfaces;
+using GlobalFlameMinistry.API.Interfaces.Account;
+using GlobalFlameMinistry.API.Interfaces.Admin;
+using GlobalFlameMinistry.API.Interfaces.Auth;
+using GlobalFlameMinistry.API.Interfaces.Email;
+using GlobalFlameMinistry.API.Models;
+using GlobalFlameMinistry.API.Repositories;
+using GlobalFlameMinistry.API.Repository;
+using GlobalFlameMinistry.API.Services;
+using GlobalFlameMinistry.API.Services.Admin;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -17,12 +21,58 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// CONTROLLER + FILTER + JSON CONFIGURATION
+builder.Services.AddControllers(options =>
+{
+    // Global filters apply to every controller automatically
+    options.Filters.Add<ApiResponseFilter>();
+    options.Filters.Add<GlobalExceptionFilter>();
+    options.Filters.Add<ValidationFilter>();
+})
+.AddNewtonsoftJson(options =>
+{
+    // Prevents circular reference errors when EF Core navigations are serialized
+    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+});
 
+// SWAGGER CONFIGURATION
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(option =>
+{
+    option.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Global Flame Ministry API",
+        Version = "v1"
+    });
+
+    // Adds the Authorize button in Swagger so you can test JWT-protected routes
+    option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Enter your JWT token here. Example: Bearer {token}",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+
+    option.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// CORS POLICY
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
@@ -31,50 +81,26 @@ builder.Services.AddCors(options =>
             .AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod();
+        // In production replace AllowAnyOrigin() with your actual frontend URL
+        // Example: .WithOrigins("https://globalflameministry.com")
     });
 });
 
-builder.Services.AddSwaggerGen(option =>
-{
-    option.SwaggerDoc("v1", new OpenApiInfo { Title = "G-Flame Youth API", Version = "v1" });
-    option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Description = "Please enter a valid token",
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        BearerFormat = "JWT",
-        Scheme = "Bearer"
-    });
-    option.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type=ReferenceType.SecurityScheme,
-                    Id="Bearer"
-                }
-            },
-            new string[]{}
-        }
-    });
-});
-builder.Services.AddControllers().AddNewtonsoftJson(options =>
-{
-    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
-});
+// DATABASE CONTEXT
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+// IDENTITY CONFIGURATION
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
+    // Email must be confirmed before login is allowed
     options.SignIn.RequireConfirmedEmail = true;
     options.SignIn.RequireConfirmedAccount = true;
     options.User.RequireUniqueEmail = true;
+
+    // Password rules
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
@@ -85,15 +111,18 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
+//JWT AUTHENTICATION
 builder.Services.AddAuthentication(options =>
 {
+    // Set JWT Bearer as the default scheme for everything
     options.DefaultAuthenticateScheme =
     options.DefaultChallengeScheme =
     options.DefaultForbidScheme =
     options.DefaultScheme =
     options.DefaultSignInScheme =
     options.DefaultSignOutScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
+})
+.AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -102,68 +131,77 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidAudience = builder.Configuration["JWT:Audience"],
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SigningKey"])),
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["JWT:SigningKey"]!)),
         ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero,
+        // Zero means tokens expire exactly on time — no grace period
+        ClockSkew = TimeSpan.Zero
     };
 });
 
-builder.Services.AddControllers(options =>
-{
-    // Register the filter globally so it applies to ALL controllers
-    options.Filters.Add<ApiResponseFilter>();
-    options.Filters.Add<GlobalExceptionFilter>();
-    options.Filters.Add<ValidationFilter>();
-});
-
+//EMAIL SETTINGS AND DEPENDENCY INJECTION
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddScoped<IEmailSender, EmailSender>();
+
+//APPLICATION SERVICES
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IEvenRepository, EventRepository>();
+builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IPrayerRequestRepository, PrayerRequestRepository>();
 builder.Services.AddScoped<IPrayerRequestService, PrayerRequestService>();
-builder.Services.AddScoped<IDevotionalRepository, DevotionalRepository>();
-builder.Services.AddScoped<IDevotionalService, DevotionalService>();
 builder.Services.AddScoped<ITestimonyRepository, TestimonyRepository>();
 builder.Services.AddScoped<ITestimonyService, TestimonyService>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IContactService, ContactService>();
-builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+builder.Services.AddScoped<ISermonRepository, SermonRepository>();
+builder.Services.AddScoped<ISermonService, SermonService>();
+builder.Services.AddScoped<IEventRegistrationRepository, EventRegistrationRepository>();
+builder.Services.AddScoped<IEventRegistrationService, EventRegistrationService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
 
-    using (var scope = app.Services.CreateScope())
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    try
     {
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        var roles = new[] { "Admin", "Member" };
+        var context = services.GetRequiredService<AppDbContext>();
+        var userManager = services.GetRequiredService<UserManager<AppUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-        foreach (var role in roles)
-        {
-            if (!await roleManager.RoleExistsAsync(role))
-                await roleManager.CreateAsync(new IdentityRole(role));
-        }
+        // Auto-apply any pending migrations on startup
+        await DataSeeder.SeedAdminAsync(userManager, roleManager);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database");
     }
 }
 
+// MIDDLEWARE PIPELINE
+// ORDER MATTERS — don't rearrange these
 app.UseHttpsRedirection();
 
 app.UseCors("DevCors");
 
 app.UseAuthentication();
-
+// Who are you?
 app.UseAuthorization();
-
+// What are you allowed to do?
 app.MapControllers();
 
 app.Run();

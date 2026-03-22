@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace g_flame_youth.DTOs.Account
+namespace GlobalFlameMinistry.API.DTOs.Account
 {
     public class RegisterDto
     {

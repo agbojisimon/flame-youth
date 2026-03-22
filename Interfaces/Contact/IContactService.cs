@@ -1,14 +1,17 @@
+using GlobalFlameMinistry.API.DTOs.Common;
+using GlobalFlameMinistry.API.DTOs.Contact;
+using GlobalFlameMinistry.API.Helpers;
 
-using g_flame_youth.DTOs.Contact;
-using g_flame_youth.Helpers;
-
-namespace g_flame_youth.Interfaces
+namespace GlobalFlameMinistry.API.Interfaces
 {
     public interface IContactService
     {
-        Task<List<ContactResponseDto>> GetContactsAsync(ContactQueryObject query);
-        Task<ContactResponseDto?> GetContactByIdAsync(int Id);
-        Task<ContactResponseDto> CreateContactAsync(CreateContactDto createDto);
-        Task<bool> DeleteContactAsync(int Id);
+        Task<PagedResult<ContactResponseDto>> GetAllAsync(ContactQueryObject query);
+        Task<ContactResponseDto?> GetByIdAsync(int id);
+        Task<ContactResponseDto?> UpdateStatusAsync(int id, UpdateContactDto dto);
+        Task<bool> DeleteAsync(int id);
+
+        // Anyone can contact
+        Task<ContactResponseDto> CreateAsync(CreateContactDto dto);
     }
 }

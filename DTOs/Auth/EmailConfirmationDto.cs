@@ -1,9 +1,12 @@
-
-namespace g_flame_youth.DTOs.Auth
+using System.ComponentModel.DataAnnotations;
+namespace GlobalFlameMinistry.API.DTOs.Auth
 {
     public class EmailConfirmationDto
     {
-        public string Email { get; set; }
-        public string Token { get; set; }
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+        [Required]
+        public string Token { get; set; } = string.Empty;
     }
 }

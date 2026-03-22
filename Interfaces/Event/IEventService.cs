@@ -1,14 +1,15 @@
-using g_flame_youth.DTOs.Event;
-using g_flame_youth.Helpers;
+using GlobalFlameMinistry.API.DTOs.Common;
+using GlobalFlameMinistry.API.DTOs.Event;
+using GlobalFlameMinistry.API.Helpers;
 
-namespace g_flame_youth.Interfaces
+namespace GlobalFlameMinistry.API.Interfaces
 {
     public interface IEventService
     {
-        Task<List<EventResponseDto>> GetEventsAsync(EventQueryObject query);
-        Task<EventResponseDto?> GetEventByIdAsync(int Id);
-        Task<EventResponseDto> CreateEventAsync(CreateEventDto createDto);
-        Task<EventResponseDto?> UpdateEventAsync(int Id, UpdateEventDto updateDto);
-        Task<bool> DeleteEventAsync(int Id);
+        Task<PagedResult<EventResponseDto>> GetAllAsync(EventQueryObject query);
+        Task<EventResponseDto?> GetByIdAsync(int id);
+        Task<EventResponseDto> CreateAsync(CreateEventDto dto);
+        Task<EventResponseDto?> UpdateAsync(int id, UpdateEventDto dto);
+        Task<bool> DeleteAsync(int id);
     }
 }

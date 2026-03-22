@@ -1,17 +1,15 @@
-using g_flame_youth.Helpers.Queries;
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.Helpers.Queries;
+using GlobalFlameMinistry.API.Models;
 
-namespace g_flame_youth.Helpers
+namespace GlobalFlameMinistry.API.Helpers
 {
     public class ContactQueryObject : BaseQueryObject
     {
-        public string? FullName { get; set; } = null;
-        public string? Message { get; set; } = null;
-        public string? Email { get; set; } = null;
-        public string? PhoneNumber { get; set; } = null;
+        public string? FullName { get; set; }
+        public string? Email { get; set; }
         public ContactMessageType? Type { get; set; }
         public ContactMessageStatus? Status { get; set; }
-        public DateTime? CreatedFrom { get; set; }
-        public DateTime? CreatedTo { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
     }
 }

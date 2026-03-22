@@ -1,12 +1,11 @@
-using System.Security.Claims;
-using g_flame_youth.Helpers;
-using g_flame_youth.Interfaces;
+using GlobalFlameMinistry.API.DTOs.Contact;
+using GlobalFlameMinistry.API.Helpers;
+using GlobalFlameMinistry.API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-namespace g_flame_youth.Controllers.Admin
+namespace GlobalFlameMinistry.API.Controllers.Admin
 {
-    [Route("api/admin/contact")]
+    [Route("api/admin/contacts")]
     [ApiController]
     [Authorize(Roles = "Admin")]
     public class AdminContactController : ControllerBase
@@ -17,44 +16,48 @@ namespace g_flame_youth.Controllers.Admin
             _contactService = contactService;
         }
 
+        // GET /api/ministry/contacts
+        // Admin only — private messages sent to the church
         [HttpGet]
-        public async Task<IActionResult> GetAllContacts([FromQuery] ContactQueryObject query)
+        public async Task<IActionResult> GetAll([FromQuery] ContactQueryObject query)
         {
-            var contacts = await _contactService.GetContactsAsync(query);
-
-            return Ok(contacts);
+            var result = await _contactService.GetAllAsync(query);
+            return Ok(result);
         }
 
-        [HttpGet("{Id:int}")]
-        public async Task<IActionResult> GetContactByIdAsync([FromRoute] int Id)
+        // Admin only
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            var contact = await _contactService.GetContactByIdAsync(Id);
+            var contact = await _contactService.GetByIdAsync(id);
 
-            if (contact == null)
-                return NotFound($"Contacts with ID {Id} is not found");
+            if (contact is null)
+                return NotFound("Contact message not found");
 
             return Ok(contact);
         }
 
-        [HttpDelete("{Id:int}")]
-        public async Task<IActionResult> DeleteContactAsync([FromRoute] int Id)
+        [HttpPatch("{id:int}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateContactDto updateDto)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _contactService.UpdateStatusAsync(id, updateDto);
 
-            if (userId == null)
-                return NotFound("User ID not found");
+            if (result is null)
+                return NotFound("Contact message not found");
 
-            var isDeleted = await _contactService.DeleteContactAsync(Id);
+            return Ok(result);
+        }
 
-            if (!isDeleted)
-                return NotFound($"Prayer request with ID {Id} not found.");
+        // Admin only
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var deleted = await _contactService.DeleteAsync(id);
 
-            return Ok(new ApiResponse<string>
-            {
-                isSuccess = true,
-                Message = "Contact request deleted successfully",
-                Data = $"Contact request with ID {Id} has been deleted."
-            });
+            if (!deleted)
+                return NotFound("Contact message not found");
+
+            return Ok("Contact message deleted successfully");
         }
     }
 }

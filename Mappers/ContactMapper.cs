@@ -1,9 +1,8 @@
 
-using g_flame_youth.DTOs.Contact;
-using g_flame_youth.Models;
-using Microsoft.EntityFrameworkCore.Migrations.Internal;
+using GlobalFlameMinistry.API.DTOs.Contact;
+using GlobalFlameMinistry.API.Models;
 
-namespace g_flame_youth.Mappers
+namespace GlobalFlameMinistry.API.Mappers
 {
     public static class ContactMapper
     {
@@ -16,8 +15,8 @@ namespace g_flame_youth.Mappers
                 Email = contactModel.Email,
                 PhoneNumber = contactModel.PhoneNumber,
                 Message = contactModel.Message,
-                Type = contactModel.Type,
-                Status = contactModel.Status,
+                Type = contactModel.Type.ToString(),
+                Status = contactModel.Status.ToString(),
                 CreatedAt = contactModel.CreatedAt
             };
         }
@@ -31,8 +30,13 @@ namespace g_flame_youth.Mappers
                 PhoneNumber = createDto.PhoneNumber,
                 Message = createDto.Message,
                 Type = createDto.Type,
+                Status = ContactMessageStatus.New,
                 CreatedAt = DateTime.UtcNow
             };
+        }
+        public static List<ContactResponseDto> ToDtoList(this IEnumerable<Contact> contacts)
+        {
+            return contacts.Select(c => c.ToContactResponsDto()).ToList();
         }
     }
 }

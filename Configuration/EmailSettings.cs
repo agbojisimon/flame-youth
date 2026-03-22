@@ -1,5 +1,4 @@
-
-namespace g_flame_youth.Configuration
+namespace GlobalFlameMinistry.API.Configuration
 {
     public class EmailSettings
     {

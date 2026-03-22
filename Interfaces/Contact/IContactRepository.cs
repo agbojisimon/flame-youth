@@ -1,13 +1,17 @@
-using g_flame_youth.Helpers;
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.DTOs.Contact;
+using GlobalFlameMinistry.API.Helpers;
+using GlobalFlameMinistry.API.Models;
 
-namespace g_flame_youth.Interfaces
+namespace GlobalFlameMinistry.API.Interfaces
 {
     public interface IContactRepository
     {
-        Task<List<Contact>> GetContactsAsync(ContactQueryObject query);
-        Task<Contact?> GetContactByIdAsync(int Id);
-        Task CreateContactAsync(Contact contact);
-        Task<bool> DeleteContactAsync(int Id);
+        Task<List<Contact>> GetAllAsync(ContactQueryObject query);
+        Task<int> GetCountAsync(ContactQueryObject query);
+        Task<Contact?> GetByIdAsync(int id);
+        Task<Contact> CreateAsync(Contact contact);
+        Task<Contact?> UpdateStatusAsync(int id, UpdateContactDto dto);
+        Task<bool> DeleteAsync(int id);
+        Task<bool> ExistsAsync(int id);
     }
 }

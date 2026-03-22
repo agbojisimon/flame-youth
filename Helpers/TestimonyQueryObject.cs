@@ -1,17 +1,13 @@
-using g_flame_youth.Helpers.Queries;
+using GlobalFlameMinistry.API.Helpers.Queries;
+using GlobalFlameMinistry.API.Models;
 
-namespace g_flame_youth.Helpers
+namespace GlobalFlameMinistry.API.Helpers
 {
     public class TestimonyQueryObject : BaseQueryObject
     {
-        public string? AppUserId { get; set; }
-
-        public bool? Status { get; set; }
-
-        public DateTime? CreatedAfter { get; set; }
-
-        public DateTime? CreatedBefore { get; set; }
-
-        public string? SearchTerm { get; set; }
+        public string? FullName { get; set; }
+        public TestimonyStatus? Status { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
     }
 }

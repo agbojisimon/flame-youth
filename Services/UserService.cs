@@ -1,70 +1,22 @@
-using g_flame_youth.DTOs.Account;
-using g_flame_youth.DTOs.User;
-using g_flame_youth.Helpers;
-using g_flame_youth.Interfaces;
-using g_flame_youth.Mappers;
-using g_flame_youth.Models;
+using GlobalFlameMinistry.API.DTOs.Account;
+using GlobalFlameMinistry.API.DTOs.User;
+using GlobalFlameMinistry.API.Helpers;
+using GlobalFlameMinistry.API.Helpers.Queries;
+using GlobalFlameMinistry.API.Interfaces;
+using GlobalFlameMinistry.API.Mappers;
+using GlobalFlameMinistry.API.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace g_flame_youth.Services
+namespace GlobalFlameMinistry.API.Services
 {
     public class UserService : IUserService
     {
         private readonly UserManager<AppUser> _userManager;
+
         public UserService(UserManager<AppUser> userManager)
         {
             _userManager = userManager;
-        }
-
-        public async Task<bool> AssignRoleAsync(string userId, string role)
-        {
-            var allowedRoles = new[] { "Member", "Admin" };
-            if (!allowedRoles.Contains(role))
-                return false;
-
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-                return false;
-
-            var currentRoles = await _userManager.GetRolesAsync(user);
-            await _userManager.RemoveFromRolesAsync(user, currentRoles);
-
-            var result = await _userManager.AddToRoleAsync(user, role);
-            return result.Succeeded;
-        }
-        public async Task<UserDto> CreateUserAsync(RegisterDto registerDto)
-        {
-            var appUser = new AppUser()
-            {
-                FirstName = registerDto.FirstName,
-                LastName = registerDto.LastName,
-                UserName = registerDto.UserName,
-                Email = registerDto.Email,
-                CreatedOn = DateTime.UtcNow
-            };
-
-            var createResult = await _userManager.CreateAsync(appUser, registerDto.Password);
-
-            if (!createResult.Succeeded)
-                throw new InvalidOperationException("User creation failed.");
-
-            var roleResult = await _userManager.AddToRoleAsync(appUser, "Member");
-
-            if (!roleResult.Succeeded)
-                throw new InvalidOperationException("Role assignment failed.");
-
-            return appUser.ToUserDto();
-        }
-
-        public async Task<bool> DeleteUserAsync(string userId)
-        {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-                return false;
-
-            var result = await _userManager.DeleteAsync(user);
-            return result.Succeeded;
         }
 
         public async Task<List<UserDto>> GetUsersAsync(UserQueryObject query)
@@ -72,64 +24,129 @@ namespace g_flame_youth.Services
             var usersQuery = _userManager.Users.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(query.Email))
-            {
-                usersQuery = usersQuery.Where(u => u.Email.Contains(query.Email));
-            }
+                usersQuery = usersQuery.Where(u =>
+                    (u.Email ?? "").ToLower().Contains(query.Email.ToLower()));
 
             if (!string.IsNullOrWhiteSpace(query.FullName))
-            {
                 usersQuery = usersQuery.Where(u =>
-                    (u.FirstName + " " + u.LastName).Contains(query.FullName));
-            }
+                    ((u.FirstName ?? "") + " " + (u.LastName ?? ""))
+                    .ToLower().Contains(query.FullName.ToLower()));
 
-            if (!string.IsNullOrWhiteSpace(query.SortBy) &&
-                query.SortBy.Equals("Email", StringComparison.OrdinalIgnoreCase))
+            usersQuery = query.SortBy?.ToLower() switch
             {
-                usersQuery = query.IsDescending
+                "email" => query.IsDescending
                     ? usersQuery.OrderByDescending(u => u.Email)
-                    : usersQuery.OrderBy(u => u.Email);
-            }
-            else
+                    : usersQuery.OrderBy(u => u.Email),
+
+                "firstname" => query.IsDescending
+                    ? usersQuery.OrderByDescending(u => u.FirstName)
+                    : usersQuery.OrderBy(u => u.FirstName),
+
+                _ => usersQuery.OrderByDescending(u => u.CreatedOn)
+            };
+
+            var users = await usersQuery
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .ToListAsync();
+
+            // Get roles for each user
+            var result = new List<UserDto>();
+            foreach (var user in users)
             {
-                usersQuery = usersQuery.OrderByDescending(u => u.CreatedOn);
+                var roles = await _userManager.GetRolesAsync(user);
+                result.Add(user.ToUserDto(roles.ToList()));
             }
 
-            var skip = (query.PageNumber - 1) * query.PageSize;
-
-            var users = await usersQuery.Skip(skip).Take(query.PageSize).ToListAsync();
-
-            return users.Select(u => u.ToUserDto()).ToList();
+            return result;
         }
 
         public async Task<UserDto?> GetUserByIdAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return null;
 
-            return user == null ? null : user.ToUserDto();
+            var roles = await _userManager.GetRolesAsync(user);
+            return user.ToUserDto(roles.ToList());
         }
 
-        public async Task<UserDto?> UpdateUserAsync(string userId, UpdateUserDto updateDto)
+        public async Task<UserDto> CreateUserAsync(RegisterDto dto)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            // Check if email already exists
+            var existing = await _userManager.FindByEmailAsync(dto.Email);
+            if (existing != null)
+                throw new ApplicationException("A user with this email already exists.");
 
-            if (user == null)
-                return null;
-
-            user = updateDto.ToAppUser(user);
-
-            var updateResult = await _userManager.UpdateAsync(user);
-            if (!updateResult.Succeeded)
-                throw new InvalidOperationException("User update failed.");
-
-            if (!string.IsNullOrWhiteSpace(updateDto.Password))
+            var user = new AppUser
             {
-                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                var passwordResult = await _userManager.ResetPasswordAsync(user, token, updateDto.Password);
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                UserName = dto.UserName,
+                Email = dto.Email,
+                // Admin-created users have email confirmed automatically
+                EmailConfirmed = true,
+                CreatedOn = DateTime.UtcNow
+            };
 
-                if (!passwordResult.Succeeded) throw new InvalidOperationException("Password update failed.");
+            var result = await _userManager.CreateAsync(user, dto.Password);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new ApplicationException(errors);
             }
 
-            return user.ToUserDto();
+            await _userManager.AddToRoleAsync(user, "Member");
+
+            var roles = await _userManager.GetRolesAsync(user);
+            return user.ToUserDto(roles.ToList());
+        }
+
+        public async Task<UserDto?> UpdateUserAsync(string userId, UpdateUserDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return null;
+
+            user.ApplyUpdate(dto);
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new ApplicationException(errors);
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            return user.ToUserDto(roles.ToList());
+        }
+
+        public async Task<bool> DeleteUserAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return false;
+
+            var result = await _userManager.DeleteAsync(user);
+            return result.Succeeded;
+        }
+
+        public async Task<bool> AssignRoleAsync(string userId, string role)
+        {
+            // Only allow valid roles — prevent arbitrary role assignment
+            var allowedRoles = new[] { "Admin", "Member", "YouthMember" };
+
+            if (!allowedRoles.Contains(role))
+                throw new ApplicationException($"Invalid role. Allowed roles: {string.Join(", ", allowedRoles)}");
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return false;
+
+            // Remove all current roles then assign the new one
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+
+            var result = await _userManager.AddToRoleAsync(user, role);
+            return result.Succeeded;
         }
     }
 }

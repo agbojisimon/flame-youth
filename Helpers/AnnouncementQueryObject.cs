@@ -1,9 +1,14 @@
-using g_flame_youth.Helpers.Queries;
+using GlobalFlameMinistry.API.Helpers.Queries;
 
-namespace g_flame_youth.Helpers
+namespace GlobalFlameMinistry.API.Helpers
 {
     public class AnnouncementQueryObject : BaseQueryObject
     {
-        public string? Title { get; set; } = null;
+        public string? Title { get; set; }
+        public string? Module { get; set; }
+        public string? Category { get; set; }
+        public bool? IsPublished { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
     }
 }
