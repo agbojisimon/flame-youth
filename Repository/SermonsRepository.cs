@@ -107,26 +107,32 @@ namespace GlobalFlameMinistry.API.Repositories
         {
             await _context.Sermons.AddAsync(sermon);
             await _context.SaveChangesAsync();
+
             return sermon;
         }
 
         public async Task<Sermon?> UpdateAsync(int id, UpdateSermonDto dto)
         {
             var sermon = await _context.Sermons.FindAsync(id);
-            if (sermon is null) return null;
+
+            if (sermon is null)
+                return null;
 
             sermon.ApplyUpdate(dto);
             await _context.SaveChangesAsync();
+
             return sermon;
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
             var sermon = await _context.Sermons.FindAsync(id);
-            if (sermon is null) return false;
+            if (sermon is null)
+                return false;
 
             _context.Sermons.Remove(sermon);
             await _context.SaveChangesAsync();
+
             return true;
         }
 

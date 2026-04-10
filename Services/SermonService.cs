@@ -35,7 +35,10 @@ namespace GlobalFlameMinistry.API.Services
         public async Task<SermonResponseDto?> GetByIdAsync(int id)
         {
             var sermon = await _repository.GetByIdAsync(id);
-            if (sermon is null) return null;
+
+            if (sermon is null)
+                return null;
+
             return sermon.ToDto();
         }
 
@@ -64,7 +67,10 @@ namespace GlobalFlameMinistry.API.Services
         public async Task<SermonResponseDto?> UpdateAsync(int id, UpdateSermonDto dto)
         {
             var updated = await _repository.UpdateAsync(id, dto);
-            if (updated is null) return null;
+
+            if (updated is null)
+                return null;
+
             return updated.ToDto();
         }
 

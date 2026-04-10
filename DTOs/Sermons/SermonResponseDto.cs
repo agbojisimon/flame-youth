@@ -7,6 +7,7 @@ namespace GlobalFlameMinistry.API.DTOs.Sermon
         public string Speaker { get; set; } = string.Empty;
         public string Series { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public string? SpeakerImageUrl { get; set; }
         public string? ImageUrl { get; set; }
         public string? VideoUrl { get; set; }
         public string? AudioUrl { get; set; }

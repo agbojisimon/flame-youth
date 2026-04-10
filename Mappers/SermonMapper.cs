@@ -14,6 +14,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 Speaker = sermon.Speaker,
                 Series = sermon.Series,
                 Description = sermon.Description,
+                SpeakerImageUrl = sermon.SpeakerImageUrl,
                 ImageUrl = sermon.ImageUrl,
                 VideoUrl = sermon.VideoUrl,
                 AudioUrl = sermon.AudioUrl,
@@ -32,6 +33,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 Speaker = dto.Speaker,
                 Series = dto.Series,
                 Description = dto.Description,
+                SpeakerImageUrl = dto.SpeakerImageUrl,
                 ImageUrl = dto.ImageUrl,
                 VideoUrl = dto.VideoUrl,
                 AudioUrl = dto.AudioUrl,
@@ -47,6 +49,7 @@ namespace GlobalFlameMinistry.API.Mappers
             sermon.Speaker = dto.Speaker;
             sermon.Series = dto.Series;
             sermon.Description = dto.Description;
+            sermon.SpeakerImageUrl = dto.SpeakerImageUrl;
             sermon.ImageUrl = dto.ImageUrl;
             sermon.VideoUrl = dto.VideoUrl;
             sermon.AudioUrl = dto.AudioUrl;

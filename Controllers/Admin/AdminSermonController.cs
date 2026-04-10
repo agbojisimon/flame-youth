@@ -29,7 +29,10 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
         public async Task<IActionResult> GetById(int id)
         {
             var sermon = await _service.GetByIdAsync(id);
-            if (sermon is null) return NotFound("Sermon not found");
+
+            if (sermon is null)
+                return NotFound("Sermon not found");
+
             return Ok(sermon);
         }
 
@@ -44,7 +47,10 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
         public async Task<IActionResult> Update(int id, [FromBody] UpdateSermonDto dto)
         {
             var sermon = await _service.UpdateAsync(id, dto);
-            if (sermon is null) return NotFound("Sermon not found");
+
+            if (sermon is null)
+                return NotFound("Sermon not found");
+
             return Ok(sermon);
         }
 
@@ -52,7 +58,10 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
         public async Task<IActionResult> Delete(int id)
         {
             var deleted = await _service.DeleteAsync(id);
-            if (!deleted) return NotFound("Sermon not found");
+
+            if (!deleted)
+                return NotFound("Sermon not found");
+
             return Ok("Sermon deleted successfully");
         }
     }
