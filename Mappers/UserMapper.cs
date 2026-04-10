@@ -20,24 +20,9 @@ namespace GlobalFlameMinistry.API.Mappers
                 Module = user.Module,
                 EmailConfirmed = user.EmailConfirmed,
                 CreatedOn = user.CreatedOn,
-                Roles = roles ?? new List<string>()
+                Roles = roles ?? new List<string>(),
+                IsYouthMember = roles?.Contains("YouthMember") ?? false
             };
-        }
-
-        // Applies UpdateUserDto fields onto existing AppUser
-        public static void ApplyUpdate(this AppUser user, UpdateUserDto dto)
-        {
-            user.FirstName = dto.FirstName;
-            user.LastName = dto.LastName;
-
-            if (!string.IsNullOrWhiteSpace(dto.UserName))
-                user.UserName = dto.UserName;
-
-            if (!string.IsNullOrWhiteSpace(dto.ProfilePictureUrl))
-                user.ProfilePictureUrl = dto.ProfilePictureUrl;
-
-            if (!string.IsNullOrWhiteSpace(dto.Module))
-                user.Module = dto.Module;
         }
     }
 }

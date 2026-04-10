@@ -1,4 +1,3 @@
-using GlobalFlameMinistry.API.DTOs.Account;
 using GlobalFlameMinistry.API.DTOs.User;
 using GlobalFlameMinistry.API.Helpers;
 
@@ -8,8 +7,6 @@ namespace GlobalFlameMinistry.API.Interfaces
     {
         Task<List<UserDto>> GetUsersAsync(UserQueryObject query);
         Task<UserDto?> GetUserByIdAsync(string userId);
-        Task<UserDto> CreateUserAsync(RegisterDto registerDto);
-        Task<UserDto?> UpdateUserAsync(string userId, UpdateUserDto updateDto);
         Task<bool> DeleteUserAsync(string userId);
         Task<bool> AssignRoleAsync(string userId, string role);
     }

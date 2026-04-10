@@ -1,4 +1,3 @@
-using GlobalFlameMinistry.API.DTOs.Account;
 using GlobalFlameMinistry.API.DTOs.User;
 using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Interfaces;
@@ -36,29 +35,14 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             return Ok(user);
         }
 
-        // POST /api/admin/users
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] RegisterDto dto)
-        {
-            var user = await _userService.CreateUserAsync(dto);
-            return Ok(user);
-        }
-
-        // PUT /api/admin/users/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, [FromBody] UpdateUserDto dto)
-        {
-            var user = await _userService.UpdateUserAsync(id, dto);
-            if (user == null) return NotFound("User not found");
-            return Ok(user);
-        }
-
         // DELETE /api/admin/users/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
             var deleted = await _userService.DeleteUserAsync(id);
-            if (!deleted) return NotFound("User not found");
+            if (!deleted)
+                return NotFound("User not found");
+
             return Ok("User deleted successfully");
         }
 

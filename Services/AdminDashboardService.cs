@@ -1,5 +1,6 @@
 using GlobalFlameMinistry.API.Data;
 using GlobalFlameMinistry.API.DTOs.Admin;
+using GlobalFlameMinistry.API.Interfaces;
 using GlobalFlameMinistry.API.Interfaces.Admin;
 using GlobalFlameMinistry.API.Models;
 using Microsoft.AspNetCore.Identity;
@@ -11,11 +12,13 @@ namespace GlobalFlameMinistry.API.Services.Admin
     {
         private readonly AppDbContext _context;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IDonationRepository _donationRepo;
 
-        public AdminDashboardService(AppDbContext context, UserManager<AppUser> userManager)
+        public AdminDashboardService(AppDbContext context, UserManager<AppUser> userManager, IDonationRepository donationRepo)
         {
             _context = context;
             _userManager = userManager;
+            _donationRepo = donationRepo;
         }
 
         public async Task<DashboardStatsDto> GetDashboardStatsAsync()
@@ -85,6 +88,16 @@ namespace GlobalFlameMinistry.API.Services.Admin
             var draftSermons = await _context.Sermons
                 .CountAsync(s => !s.IsPublished);
 
+            // DONATIONS
+            var (totalAmount, completedDonations, pendingDonations) =
+                await _donationRepo.GetSummaryAsync();
+
+            // BOOKS
+            var totalBooks = await _context.Books.CountAsync();
+            var publishedBooks = await _context.Books.CountAsync(b => b.IsPublished);
+            var draftBooks = await _context.Books.CountAsync(b => !b.IsPublished);
+            var featuredBooks = await _context.Books.CountAsync(b => b.IsFeatured);
+
             return new DashboardStatsDto
             {
                 // Users
@@ -132,6 +145,17 @@ namespace GlobalFlameMinistry.API.Services.Admin
                 TotalSermons = totalSermons,
                 PublishedSermons = publishedSermons,
                 DraftSermons = draftSermons,
+
+                // Donations
+                TotalAmountReceived = totalAmount,
+                CompletedDonations = completedDonations,
+                PendingDonations = pendingDonations,
+
+                // Books
+                TotalBooks = totalBooks,
+                PublishedBooks = publishedBooks,
+                DraftBooks = draftBooks,
+                FeaturedBooks = featuredBooks,
             };
         }
     }

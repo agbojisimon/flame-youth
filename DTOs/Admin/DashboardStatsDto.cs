@@ -39,9 +39,24 @@ namespace GlobalFlameMinistry.API.DTOs.Admin
         public int ReadContacts { get; set; }
         public int RespondedContacts { get; set; }
         public int ClosedContacts { get; set; }
+
+        // EVENTS REGISTRATION
         public int TotalEventRegistrations { get; set; }
+
+        // SERMONS
         public int TotalSermons { get; set; }
         public int PublishedSermons { get; set; }
         public int DraftSermons { get; set; }
+
+        // DONATIONS
+        public decimal TotalAmountReceived { get; set; }
+        public int CompletedDonations { get; set; }
+        public int PendingDonations { get; set; }
+
+        // BOOKS
+        public int TotalBooks { get; set; }
+        public int PublishedBooks { get; set; }
+        public int DraftBooks { get; set; }
+        public int FeaturedBooks { get; set; }
     }
 }
