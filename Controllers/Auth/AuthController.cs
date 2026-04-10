@@ -3,7 +3,6 @@ using GlobalFlameMinistry.API.DTOs.Auth;
 using GlobalFlameMinistry.API.Interfaces.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 
 namespace GlobalFlameMinistry.API.Controllers.Members
 {

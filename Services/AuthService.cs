@@ -6,7 +6,6 @@ using GlobalFlameMinistry.API.Interfaces.Email;
 using GlobalFlameMinistry.API.Mappers;
 using GlobalFlameMinistry.API.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
 
 namespace GlobalFlameMinistry.API.Services
 {
@@ -54,7 +53,7 @@ namespace GlobalFlameMinistry.API.Services
             var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedToken = Uri.EscapeDataString(emailToken);
 
-            // ✅ Fixed — uses BackendUrl from config
+            // Fixed — uses BackendUrl from config
             var backendUrl = _config["App:BackendUrl"];
             var confirmationLink =
                 $"{backendUrl}/api/auth/confirm-email?email={user.Email}&token={encodedToken}";

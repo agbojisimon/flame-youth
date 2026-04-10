@@ -33,7 +33,8 @@ namespace GlobalFlameMinistry.API.Mappers
                 Module = user.Module,
                 Roles = roles ?? new List<string>(),
                 Token = token,
-                RefreshToken = refreshToken
+                RefreshToken = refreshToken,
+                IsYouthMember = roles?.Contains("YouthMember") ?? false
             };
         }
     }
