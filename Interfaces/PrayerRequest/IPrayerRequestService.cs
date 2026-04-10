@@ -11,5 +11,6 @@ namespace GlobalFlameMinistry.API.Interfaces
         Task<PrayerRequestResponseDto> CreateAsync(CreatePrayerDto dto, string? name, string? email, string? appUserId);
         Task<PrayerRequestResponseDto?> GetByTokenAsync(string token);
         Task<PrayerRequestResponseDto?> MarkAsAttendedAsync(int id, UpdatePrayerRequestDto dto);
+        Task<bool> DeleteAsync(int id);
     }
 }

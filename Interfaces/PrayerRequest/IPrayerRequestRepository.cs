@@ -12,6 +12,7 @@ namespace GlobalFlameMinistry.API.Interfaces
         Task<PrayerRequest?> GetByTokenAsync(string token);
         Task<PrayerRequest> CreateAsync(PrayerRequest request);
         Task<PrayerRequest?> UpdateAsync(int id, UpdatePrayerRequestDto dto);
+        Task<bool> DeleteAsync(int id);
         Task<bool> ExistsAsync(int id);
     }
 }

@@ -46,5 +46,25 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
 
             return Ok(result);
         }
+
+        [HttpDelete("{id:int}/permanent")]
+        public async Task<IActionResult> HardDelete(int id)
+        {
+            var existing = await _prayerService.GetByIdAsync(id);
+
+            if (existing is null)
+                return NotFound("Prayer request not found");
+
+            if (!existing.IsAttendedTo)
+                return BadRequest(
+                    "Only attended prayer requests can be permanently deleted.");
+
+            var deleted = await _prayerService.DeleteAsync(id);
+
+            if (!deleted)
+                return NotFound("Prayer request not found");
+
+            return Ok("Prayer request permanently deleted");
+        }
     }
 }

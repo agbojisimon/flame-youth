@@ -109,5 +109,21 @@ namespace GlobalFlameMinistry.API.Repository
             await _context.SaveChangesAsync();
             return request;
         }
+
+        // Add this method to your existing PrayerRequestRepository
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            // IgnoreQueryFilters bypasses the soft-delete filter so we can find deleted records too
+            var request = await _context.PrayerRequests.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == id);
+
+            if (request is null)
+                return false;
+
+            _context.PrayerRequests.Remove(request);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
     }
 }
