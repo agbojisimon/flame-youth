@@ -7,14 +7,12 @@ namespace GlobalFlameMinistry.API.Data
 {
     public class AppDbContext : IdentityDbContext<AppUser>
     {
-        // Strongly typed options — tells EF Core exactly which DbContext this config belongs to
-        public AppDbContext(DbContextOptions<AppDbContext> dbContextOptions) : base(dbContextOptions)
+        public AppDbContext(DbContextOptions<AppDbContext> dbContextOptions)
+            : base(dbContextOptions)
         {
         }
 
-        // ─── DB SETS ──────────────────────────────────────────────────────────
-        // Each one = one table in SQL Server
-        // Devotional is GONE — removed as requested
+        // ── DB SETS ────────────────────────────────────────────────────────────
         public DbSet<Announcement> Announcements { get; set; }
         public DbSet<Event> Events { get; set; }
         public DbSet<EventRegistration> EventRegistrations { get; set; }
@@ -23,32 +21,33 @@ namespace GlobalFlameMinistry.API.Data
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<Donation> Donations { get; set; }
         public DbSet<Sermon> Sermons { get; set; }
+        public DbSet<Book> Books { get; set; }
+        public DbSet<BulkEmailMessage> BulkEmailMessages { get; set; }
+        public DbSet<MinistryDepartment> MinistryDepartments { get; set; }
+        public DbSet<CounsellingRequest> CounsellingRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            // Sets up all Identity tables — always call this first
             base.OnModelCreating(builder);
 
-            // ─── APP USER ─────────────────────────────────────────────────────
-            // FullName is [NotMapped] so EF ignores it automatically
-            // Just enforcing unique email at DB level as extra safety net
+            // ── APP USER ───────────────────────────────────────────────────────
             builder.Entity<AppUser>(entity =>
             {
                 entity.HasIndex(u => u.Email).IsUnique();
                 entity.Property(u => u.FirstName).IsRequired().HasMaxLength(100);
                 entity.Property(u => u.LastName).IsRequired().HasMaxLength(100);
+                entity.Property(u => u.ProfilePictureUrl).HasMaxLength(500);
                 entity.Property(u => u.RefreshToken).HasMaxLength(500);
                 entity.Property(u => u.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
             });
 
-            // ─── ANNOUNCEMENT ─────────────────────────────────────────────────
+            // ── ANNOUNCEMENT ───────────────────────────────────────────────────
             builder.Entity<Announcement>(entity =>
             {
                 entity.HasKey(a => a.Id);
                 entity.Property(a => a.Title).IsRequired().HasMaxLength(200);
                 entity.Property(a => a.Content).IsRequired();
                 entity.Property(a => a.CreatedById).IsRequired();
-                // "Ministry" or "Youth"
                 entity.Property(a => a.Module).IsRequired().HasMaxLength(50).HasDefaultValue("Ministry");
                 entity.Property(a => a.Category).HasMaxLength(100);
                 entity.Property(a => a.IsPublished).HasDefaultValue(false);
@@ -57,7 +56,7 @@ namespace GlobalFlameMinistry.API.Data
                 entity.HasQueryFilter(a => !a.IsDeleted);
             });
 
-            // ─── EVENT ────────────────────────────────────────────────────────
+            // ── EVENT ──────────────────────────────────────────────────────────
             builder.Entity<Event>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -75,36 +74,52 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(e => e.IsDeleted).HasDefaultValue(false);
                 entity.Property(e => e.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
                 entity.HasQueryFilter(e => !e.IsDeleted);
+                entity.HasOne(e => e.Ministry)
+                      .WithMany(m => m.Events)
+                      .HasForeignKey(e => e.MinistryId)
+                      .OnDelete(DeleteBehavior.SetNull)
+                      .IsRequired(false);
             });
 
+            // ── EVENT REGISTRATION ─────────────────────────────────────────────
             builder.Entity<EventRegistration>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.FullName).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Email).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+                entity.Property(e => e.AppUserId).HasMaxLength(450).IsRequired(false);
+
                 entity.HasOne(e => e.Event)
-                    .WithMany()
-                    .HasForeignKey(e => e.EventId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                      .WithMany()
+                      .HasForeignKey(e => e.EventId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.AppUserId)
+                      .OnDelete(DeleteBehavior.SetNull)
+                      .IsRequired(false);
             });
 
-            // ─── PRAYER REQUEST ───────────────────────────────────────────────
+            // ── PRAYER REQUEST ─────────────────────────────────────────────────
             builder.Entity<PrayerRequest>(entity =>
             {
                 entity.HasKey(p => p.Id);
-                entity.Property(p => p.Name).HasMaxLength(150);   // No .IsRequired()
-                entity.Property(p => p.Email).HasMaxLength(200);   // No .IsRequired()
+                entity.Property(p => p.Name).IsRequired().HasMaxLength(150);
+                entity.Property(p => p.Email).IsRequired().HasMaxLength(200);
+                entity.Property(p => p.Topic).HasMaxLength(50);
                 entity.Property(p => p.Content).IsRequired().HasMaxLength(1000);
+                entity.Property(p => p.PhoneNumber).HasMaxLength(20);
+                entity.Property(p => p.PreferredContact).HasMaxLength(20).HasDefaultValue("Email");
                 entity.Property(p => p.Attachment).HasMaxLength(500);
                 entity.Property(p => p.IsAttendedTo).HasDefaultValue(false);
-                // AnonymousToken must be unique — each prayer request gets its own token
+                entity.Property(p => p.IsDeleted).HasDefaultValue(false);
                 entity.Property(p => p.AnonymousToken).IsRequired().HasMaxLength(100);
                 entity.HasIndex(p => p.AnonymousToken).IsUnique();
                 entity.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.HasQueryFilter(p => !p.IsDeleted);
 
-                // Optional relationship — logged-in users get linked, anonymous users don't
-                // SetNull = if user account is deleted, prayer request stays but UserId = null
                 entity.HasOne(p => p.User)
                       .WithMany()
                       .HasForeignKey(p => p.AppUserId)
@@ -112,37 +127,27 @@ namespace GlobalFlameMinistry.API.Data
                       .IsRequired(false);
             });
 
-            // ─── TESTIMONY ────────────────────────────────────────────────────
+            // ── TESTIMONY ──────────────────────────────────────────────────────
             builder.Entity<Testimony>(entity =>
             {
                 entity.HasKey(t => t.Id);
-
-                // Name is optional — anonymous users don't have to identify themselves
                 entity.Property(t => t.FullName).HasMaxLength(150);
-
                 entity.Property(t => t.Content).IsRequired().HasMaxLength(2000);
                 entity.Property(t => t.Attachment).HasMaxLength(500);
-
-                // Store enum as int — 0=Pending, 1=Approved, 2=Rejected
                 entity.Property(t => t.Status)
-                    .HasDefaultValue(TestimonyStatus.Pending)
-                    .HasConversion<int>();
-
+                      .HasDefaultValue(TestimonyStatus.Pending)
+                      .HasConversion<int>();
                 entity.Property(t => t.IsDeleted).HasDefaultValue(false);
                 entity.Property(t => t.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-
-                // Optional relationship — SetNull because anonymous users have no account
-                // If a linked user deletes their account, the testimony stays but AppUserId becomes null
                 entity.HasOne(t => t.User)
-                    .WithMany(u => u.Testimonies)
-                    .HasForeignKey(t => t.AppUserId)
-                    .OnDelete(DeleteBehavior.SetNull)
-                    .IsRequired(false);
-
+                      .WithMany(u => u.Testimonies)
+                      .HasForeignKey(t => t.AppUserId)
+                      .OnDelete(DeleteBehavior.SetNull)
+                      .IsRequired(false);
                 entity.HasQueryFilter(t => !t.IsDeleted);
             });
 
-            // ─── CONTACT ──────────────────────────────────────────────────────
+            // ── CONTACT ────────────────────────────────────────────────────────
             builder.Entity<Contact>(entity =>
             {
                 entity.HasKey(c => c.Id);
@@ -150,36 +155,30 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(c => c.Email).IsRequired().HasMaxLength(200);
                 entity.Property(c => c.PhoneNumber).HasMaxLength(20);
                 entity.Property(c => c.Message).IsRequired().HasColumnType("nvarchar(max)");
-                // Enum stored as int in DB — 1=New, 2=Read, 3=Responded, 4=Closed
                 entity.Property(c => c.Status).IsRequired().HasDefaultValue(ContactMessageStatus.New);
-                // Enum stored as int — 1=General, 2=JoinRequest, 3=Counselling, 4=Feedback
                 entity.Property(c => c.Type).IsRequired().HasDefaultValue(ContactMessageType.General);
                 entity.Property(c => c.IsDeleted).HasDefaultValue(false);
                 entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-                // Index for faster date-based queries on admin dashboard
                 entity.HasIndex(c => c.CreatedAt);
-                // Soft delete filter
                 entity.HasQueryFilter(c => !c.IsDeleted);
             });
 
-            // ─── DONATION ─────────────────────────────────────────────────────
+            // ── DONATION ───────────────────────────────────────────────────────
             builder.Entity<Donation>(entity =>
             {
                 entity.HasKey(d => d.Id);
                 entity.Property(d => d.DonorName).IsRequired().HasMaxLength(150);
                 entity.Property(d => d.DonorEmail).IsRequired().HasMaxLength(200);
-                // decimal(18,2) = precise money storage — never use float for currency
                 entity.Property(d => d.Amount).IsRequired().HasColumnType("decimal(18,2)");
                 entity.Property(d => d.Currency).HasMaxLength(10).HasDefaultValue("NGN");
-                // Unique — each payment gateway transaction has one unique reference
                 entity.Property(d => d.TransactionReference).IsRequired().HasMaxLength(200);
                 entity.HasIndex(d => d.TransactionReference).IsUnique();
                 entity.Property(d => d.Status).IsRequired().HasMaxLength(50).HasDefaultValue("Pending");
-                entity.Property(d => d.Module).IsRequired().HasMaxLength(50).HasDefaultValue("Ministry");
-                entity.Property(d => d.DonatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(d => d.SubaccountCode).HasMaxLength(100);
+                entity.Property(d => d.EventTitle).HasMaxLength(300);
+                entity.Property(d => d.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(d => d.AppUserId).HasMaxLength(450).IsRequired(false);
 
-                // Optional FK — logged-in users get linked, guests don't
-                // SetNull = donation record survives even if user account is deleted
                 entity.HasOne(d => d.User)
                       .WithMany()
                       .HasForeignKey(d => d.AppUserId)
@@ -187,11 +186,90 @@ namespace GlobalFlameMinistry.API.Data
                       .IsRequired(false);
             });
 
-            // ─── SEED ROLES ──────────────────────────────────────────────────
-            // These 3 roles are baked in from day 1
-            // Admin = full dashboard access
-            // Member = ministry access (logged in)
-            // YouthMember = unlocks /api/youth/* routes
+            // ── BOOK ───────────────────────────────────────────────────────────
+            builder.Entity<Book>(entity =>
+            {
+                entity.HasKey(b => b.Id);
+                entity.Property(b => b.Title).IsRequired().HasMaxLength(200);
+                entity.Property(b => b.Author).IsRequired().HasMaxLength(150);
+                entity.Property(b => b.Description).HasMaxLength(5000);
+                entity.Property(b => b.CoverImageUrl).HasMaxLength(500);
+                entity.Property(b => b.AmazonUrl).HasMaxLength(500);
+                entity.Property(b => b.SelarUrl).HasMaxLength(500);
+                entity.Property(b => b.Price).HasColumnType("decimal(18,2)");
+                entity.Property(b => b.Currency).HasMaxLength(10).HasDefaultValue("NGN");
+                entity.Property(b => b.IsFeatured).HasDefaultValue(false);
+                entity.Property(b => b.IsPublished).HasDefaultValue(false);
+                entity.Property(b => b.IsDeleted).HasDefaultValue(false);
+                entity.Property(b => b.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
+                entity.HasQueryFilter(b => !b.IsDeleted);
+            });
+
+            // ── BULK EMAIL ─────────────────────────────────────────────────────
+            builder.Entity<BulkEmailMessage>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Subject).IsRequired().HasMaxLength(300);
+                entity.Property(e => e.HtmlBody).IsRequired().HasColumnType("nvarchar(max)");
+                entity.Property(e => e.TargetGroup).HasMaxLength(20).HasDefaultValue("All");
+                entity.Property(e => e.CustomEmailsJson).HasColumnType("nvarchar(max)");
+                entity.Property(e => e.Status).HasMaxLength(20).HasDefaultValue("Scheduled");
+                entity.Property(e => e.TotalRecipients).HasDefaultValue(0);
+                entity.Property(e => e.SuccessCount).HasDefaultValue(0);
+                entity.Property(e => e.FailedCount).HasDefaultValue(0);
+                entity.Property(e => e.CreatedByUserId).HasMaxLength(450);
+                entity.Property(e => e.CreatedByName).HasMaxLength(200);
+                entity.Property(e => e.ErrorMessage).HasColumnType("nvarchar(max)");
+                entity.Property(e => e.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // ── MINISTRY DEPARTMENT ────────────────────────────────────────────
+            builder.Entity<MinistryDepartment>(entity =>
+            {
+                entity.HasKey(m => m.Id);
+                entity.Property(m => m.Name).IsRequired().HasMaxLength(200);
+                entity.Property(m => m.Slug).IsRequired().HasMaxLength(200);
+                entity.Property(m => m.ShortDescription).IsRequired().HasMaxLength(500);
+                entity.Property(m => m.Description).HasColumnType("nvarchar(max)");
+                entity.Property(m => m.CoverImageUrl).HasMaxLength(500);
+                entity.Property(m => m.LeaderName).HasMaxLength(200);
+                entity.Property(m => m.LeaderTitle).HasMaxLength(200);
+                entity.Property(m => m.LeaderImageUrl).HasMaxLength(500);
+                entity.Property(m => m.ContactEmail).HasMaxLength(200);
+                entity.Property(m => m.DisplayOrder).HasDefaultValue(0);
+                entity.Property(m => m.IsPublished).HasDefaultValue(false);
+                entity.Property(m => m.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
+                entity.HasIndex(m => m.Slug).IsUnique();
+            });
+
+            // ── COUNSELLING REQUEST ────────────────────────────────────────────
+            builder.Entity<CounsellingRequest>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.FullName).IsRequired().HasMaxLength(200);
+                entity.Property(c => c.Email).IsRequired().HasMaxLength(200);
+                entity.Property(c => c.PhoneNumber).HasMaxLength(20);
+                entity.Property(c => c.Topic).IsRequired().HasMaxLength(200);
+                entity.Property(c => c.Message).IsRequired().HasColumnType("nvarchar(max)");
+                entity.Property(c => c.PreferredContact).HasMaxLength(20).HasDefaultValue("Email");
+                entity.Property(c => c.AssignedTo).HasMaxLength(200);
+                entity.Property(c => c.AssignedToEmail).HasMaxLength(200);
+                entity.Property(c => c.Status)
+                      .HasDefaultValue(CounsellingStatus.New)
+                      .HasConversion<int>();
+                entity.Property(c => c.AppUserId).HasMaxLength(450).IsRequired(false);
+                entity.Property(c => c.IsDeleted).HasDefaultValue(false);
+                entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.HasQueryFilter(c => !c.IsDeleted);
+
+                entity.HasOne(c => c.User)
+                      .WithMany()
+                      .HasForeignKey(c => c.AppUserId)
+                      .OnDelete(DeleteBehavior.SetNull)
+                      .IsRequired(false);
+            });
+
+            // ── SEED ROLES ─────────────────────────────────────────────────────
             builder.Entity<IdentityRole>().HasData(
                 new IdentityRole
                 {
