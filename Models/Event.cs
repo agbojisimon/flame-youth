@@ -14,6 +14,8 @@ namespace GlobalFlameMinistry.API.Models
         public bool AcceptsRegistrations { get; set; } = true;
         public bool AcceptsDonations { get; set; } = true;
         public string? DonationLabel { get; set; }
+        public int? MinistryId { get; set; }
+        public MinistryDepartment? Ministry { get; set; }
         public bool IsDeleted { get; set; } = false;
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedOn { get; set; }

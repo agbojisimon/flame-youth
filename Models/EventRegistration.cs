@@ -5,6 +5,8 @@ namespace GlobalFlameMinistry.API.Models
         public int Id { get; set; }
         public int EventId { get; set; }
         public Event Event { get; set; } = null!;
+        public string? AppUserId { get; set; }
+        public AppUser? User { get; set; }
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }

@@ -16,6 +16,9 @@ namespace GlobalFlameMinistry.API.Mappers
                 EndDate = eventModel.EndDate,
                 Location = eventModel.Location,
                 ImageUrl = eventModel.ImageUrl,
+                MinistryId = eventModel.MinistryId,
+                MinistryName = eventModel.Ministry?.Name,
+                MinistrySlug = eventModel.Ministry?.Slug,
                 Module = eventModel.Module,
                 IsCancelled = eventModel.IsCancelled,
                 AcceptsRegistrations = eventModel.AcceptsRegistrations,
@@ -35,6 +38,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 EndDate = createDto.EndDate,
                 Location = createDto.Location,
                 ImageUrl = createDto.ImageUrl,
+                MinistryId = createDto.MinistryId,
                 Module = createDto.Module,
                 AcceptsRegistrations = createDto.AcceptsRegistrations,
                 AcceptsDonations = createDto.AcceptsDonations,
@@ -50,6 +54,7 @@ namespace GlobalFlameMinistry.API.Mappers
             eventModel.EndDate = dto.EndDate;
             eventModel.Location = dto.Location;
             eventModel.ImageUrl = dto.ImageUrl;
+            eventModel.MinistryId = dto.MinistryId;
             eventModel.IsCancelled = dto.IsCancelled;
             eventModel.AcceptsRegistrations = dto.AcceptsRegistrations;
             eventModel.AcceptsDonations = dto.AcceptsDonations;

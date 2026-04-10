@@ -20,6 +20,7 @@ namespace GlobalFlameMinistry.API.DTOs.Event
         public string Location { get; set; } = string.Empty;
 
         public string? ImageUrl { get; set; }
+        public int? MinistryId { get; set; }
 
         [Required]
         [RegularExpression("^(Ministry|Youth)$",

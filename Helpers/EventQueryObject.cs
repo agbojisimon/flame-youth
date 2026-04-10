@@ -6,6 +6,7 @@ namespace GlobalFlameMinistry.API.Helpers
     public class EventQueryObject : BaseQueryObject
     {
         public string? Title { get; set; }
+        public int? MinistryId { get; set; }
         public string? Module { get; set; }
         public string? Location { get; set; }
         public bool? IsCancelled { get; set; }

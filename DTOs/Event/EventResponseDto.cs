@@ -7,6 +7,9 @@ public class EventResponseDto
     public DateTime EndDate { get; set; }
     public string Location { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
+    public int? MinistryId { get; set; }
+    public string? MinistryName { get; set; }
+    public string? MinistrySlug { get; set; }
     public string Module { get; set; } = string.Empty;
     public bool IsCancelled { get; set; }
     public bool AcceptsRegistrations { get; set; }

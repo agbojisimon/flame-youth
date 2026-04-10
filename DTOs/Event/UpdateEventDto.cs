@@ -23,6 +23,7 @@ namespace GlobalFlameMinistry.API.DTOs.Event
 
         [StringLength(500, ErrorMessage = "Image URL cannot exceed 500 characters")]
         public string? ImageUrl { get; set; }
+        public int? MinistryId { get; set; }
         public bool IsCancelled { get; set; } = false;
         public bool AcceptsRegistrations { get; set; } = true;
         public bool AcceptsDonations { get; set; } = true;

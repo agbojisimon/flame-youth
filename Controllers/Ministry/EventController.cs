@@ -40,12 +40,12 @@ namespace GlobalFlameMinistry.API.Controllers.Ministry
 
         // POST /api/ministry/events/{id}/register
         [HttpPost("{id:int}/register")]
-        public async Task<IActionResult> Register(
-            int id,
-            [FromBody] RegisterForEventDto dto)
+        public async Task<IActionResult> Register(int id, [FromBody] RegisterForEventDto dto)
         {
             var evt = await _service.GetByIdAsync(id);
-            if (evt is null) return NotFound("Event not found");
+            if (evt is null)
+                return NotFound("Event not found");
+
             if (evt.IsCancelled)
                 return BadRequest("This event has been cancelled.");
 

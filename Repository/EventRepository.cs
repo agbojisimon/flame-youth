@@ -46,6 +46,8 @@ namespace GlobalFlameMinistry.API.Repository
         {
             var events = _context.Events.AsQueryable();
 
+            events = events.Include(e => e.Ministry);
+
             if (!string.IsNullOrWhiteSpace(query.Title))
                 events = events.Where(e =>
                     e.Title.ToLower().Contains(query.Title.ToLower()));
@@ -70,6 +72,9 @@ namespace GlobalFlameMinistry.API.Repository
 
             if (query.PastOnly.HasValue && query.PastOnly.Value)
                 events = events.Where(e => e.EndDate < DateTime.UtcNow);
+
+            if (query.MinistryId.HasValue)
+                events = events.Where(e => e.MinistryId == query.MinistryId.Value);
 
             if (query.FromDate.HasValue)
                 events = events.Where(e => e.StartDate >= query.FromDate.Value);
@@ -113,6 +118,8 @@ namespace GlobalFlameMinistry.API.Repository
         {
             var events = _context.Events.AsQueryable();
 
+            events = events.Include(e => e.Ministry);
+
             if (!string.IsNullOrWhiteSpace(query.Title))
                 events = events.Where(e =>
                     e.Title.ToLower().Contains(query.Title.ToLower()));
@@ -123,6 +130,9 @@ namespace GlobalFlameMinistry.API.Repository
             if (!string.IsNullOrWhiteSpace(query.Location))
                 events = events.Where(e =>
                     e.Location.ToLower().Contains(query.Location.ToLower()));
+
+            if (query.MinistryId.HasValue)
+                events = events.Where(e => e.MinistryId == query.MinistryId.Value);
 
             if (query.IsCancelled.HasValue)
                 events = events.Where(e => e.IsCancelled == query.IsCancelled.Value);
