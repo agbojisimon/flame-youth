@@ -10,7 +10,6 @@ namespace GlobalFlameMinistry.API.Interfaces.Counselling
         Task<PagedResult<CounsellingResponseDto>> GetAllAsync(CounsellingQueryObject query);
         Task<CounsellingResponseDto?> GetByIdAsync(int id);
         Task<CounsellingResponseDto> CreateAsync(CreateCounsellingRequestDto dto, string? appUserId);
-        Task<CounsellingResponseDto?> AssignAsync(int id, AssignCounsellorDto dto);
         Task<CounsellingResponseDto?> UpdateStatusAsync(int id, CounsellingStatus status);
         Task<bool> DeleteAsync(int id);
     }

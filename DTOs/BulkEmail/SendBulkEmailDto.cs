@@ -7,6 +7,7 @@ namespace GlobalFlameMinistry.API.DTOs.BulkEmail
         [Required(ErrorMessage = "Subject is required")]
         [StringLength(300)]
         public string Subject { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; }
         [Required(ErrorMessage = "Message body is required")]
         public string HtmlBody { get; set; } = string.Empty;
         public string TargetGroup { get; set; } = "All";

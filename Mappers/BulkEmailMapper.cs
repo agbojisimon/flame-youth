@@ -38,6 +38,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 TotalRecipients = totalRecipients,
                 ScheduledAt = dto.ScheduledAt.HasValue
                     ? dto.ScheduledAt.Value.ToUniversalTime() : null,
+                ImageUrl = dto.ImageUrl,
                 CreatedByUserId = adminUserId,
                 CreatedByName = adminName,
                 CreatedOn = DateTime.UtcNow,

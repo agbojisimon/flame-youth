@@ -32,17 +32,10 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetByIdAsync(id);
-            if (result is null) return NotFound("Counselling request not found");
-            return Ok(result);
-        }
 
-        // PUT /api/admin/counselling/5/assign
-        [HttpPut("{id:int}/assign")]
-        public async Task<IActionResult> Assign(
-            int id, [FromBody] AssignCounsellorDto dto)
-        {
-            var result = await _service.AssignAsync(id, dto);
-            if (result is null) return NotFound("Counselling request not found");
+            if (result is null)
+                return NotFound("Counselling request not found");
+
             return Ok(result);
         }
 

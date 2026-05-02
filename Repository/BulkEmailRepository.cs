@@ -25,8 +25,7 @@ namespace GlobalFlameMinistry.API.Repository
 
         public async Task<BulkEmailMessage?> GetByIdAsync(int id)
         {
-            return await _context.BulkEmailMessages
-                .FirstOrDefaultAsync(e => e.Id == id);
+            return await _context.BulkEmailMessages.FirstOrDefaultAsync(e => e.Id == id);
         }
 
         public async Task<List<BulkEmailMessage>> GetAllAsync(BulkEmailQueryObject query)

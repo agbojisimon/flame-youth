@@ -4,6 +4,7 @@ namespace GlobalFlameMinistry.API.Models
     {
         public int Id { get; set; }
         public string Subject { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; }
         public string HtmlBody { get; set; } = string.Empty;
         public string TargetGroup { get; set; } = "All";
         public string? CustomEmailsJson { get; set; }

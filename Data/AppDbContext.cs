@@ -38,7 +38,7 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(u => u.LastName).IsRequired().HasMaxLength(100);
                 entity.Property(u => u.ProfilePictureUrl).HasMaxLength(500);
                 entity.Property(u => u.RefreshToken).HasMaxLength(500);
-                entity.Property(u => u.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(u => u.CreatedOn).HasDefaultValueSql("NOW()");
             });
 
             // ── ANNOUNCEMENT ───────────────────────────────────────────────────
@@ -52,7 +52,7 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(a => a.Category).HasMaxLength(100);
                 entity.Property(a => a.IsPublished).HasDefaultValue(false);
                 entity.Property(a => a.IsDeleted).HasDefaultValue(false);
-                entity.Property(a => a.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(a => a.CreatedOn).HasDefaultValueSql("NOW()");
                 entity.HasQueryFilter(a => !a.IsDeleted);
             });
 
@@ -72,7 +72,7 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(e => e.AcceptsDonations).HasDefaultValue(true);
                 entity.Property(e => e.DonationLabel).HasMaxLength(200);
                 entity.Property(e => e.IsDeleted).HasDefaultValue(false);
-                entity.Property(e => e.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(e => e.CreatedOn).HasDefaultValueSql("NOW()");
                 entity.HasQueryFilter(e => !e.IsDeleted);
                 entity.HasOne(e => e.Ministry)
                       .WithMany(m => m.Events)
@@ -117,7 +117,7 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(p => p.IsDeleted).HasDefaultValue(false);
                 entity.Property(p => p.AnonymousToken).IsRequired().HasMaxLength(100);
                 entity.HasIndex(p => p.AnonymousToken).IsUnique();
-                entity.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(p => p.CreatedAt).HasDefaultValueSql("NOW()");
                 entity.HasQueryFilter(p => !p.IsDeleted);
 
                 entity.HasOne(p => p.User)
@@ -138,7 +138,7 @@ namespace GlobalFlameMinistry.API.Data
                       .HasDefaultValue(TestimonyStatus.Pending)
                       .HasConversion<int>();
                 entity.Property(t => t.IsDeleted).HasDefaultValue(false);
-                entity.Property(t => t.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(t => t.CreatedAt).HasDefaultValueSql("NOW()");
                 entity.HasOne(t => t.User)
                       .WithMany(u => u.Testimonies)
                       .HasForeignKey(t => t.AppUserId)
@@ -154,11 +154,11 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(c => c.FullName).IsRequired().HasMaxLength(150);
                 entity.Property(c => c.Email).IsRequired().HasMaxLength(200);
                 entity.Property(c => c.PhoneNumber).HasMaxLength(20);
-                entity.Property(c => c.Message).IsRequired().HasColumnType("nvarchar(max)");
+                entity.Property(c => c.Message).IsRequired().HasColumnType("text");
                 entity.Property(c => c.Status).IsRequired().HasDefaultValue(ContactMessageStatus.New);
                 entity.Property(c => c.Type).IsRequired().HasDefaultValue(ContactMessageType.General);
                 entity.Property(c => c.IsDeleted).HasDefaultValue(false);
-                entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(c => c.CreatedAt).HasDefaultValueSql("NOW()");
                 entity.HasIndex(c => c.CreatedAt);
                 entity.HasQueryFilter(c => !c.IsDeleted);
             });
@@ -169,14 +169,14 @@ namespace GlobalFlameMinistry.API.Data
                 entity.HasKey(d => d.Id);
                 entity.Property(d => d.DonorName).IsRequired().HasMaxLength(150);
                 entity.Property(d => d.DonorEmail).IsRequired().HasMaxLength(200);
-                entity.Property(d => d.Amount).IsRequired().HasColumnType("decimal(18,2)");
+                entity.Property(d => d.Amount).IsRequired().HasColumnType("numeric(18,2)");
                 entity.Property(d => d.Currency).HasMaxLength(10).HasDefaultValue("NGN");
                 entity.Property(d => d.TransactionReference).IsRequired().HasMaxLength(200);
                 entity.HasIndex(d => d.TransactionReference).IsUnique();
                 entity.Property(d => d.Status).IsRequired().HasMaxLength(50).HasDefaultValue("Pending");
                 entity.Property(d => d.SubaccountCode).HasMaxLength(100);
                 entity.Property(d => d.EventTitle).HasMaxLength(300);
-                entity.Property(d => d.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(d => d.CreatedAt).HasDefaultValueSql("NOW()");
                 entity.Property(d => d.AppUserId).HasMaxLength(450).IsRequired(false);
 
                 entity.HasOne(d => d.User)
@@ -196,12 +196,12 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(b => b.CoverImageUrl).HasMaxLength(500);
                 entity.Property(b => b.AmazonUrl).HasMaxLength(500);
                 entity.Property(b => b.SelarUrl).HasMaxLength(500);
-                entity.Property(b => b.Price).HasColumnType("decimal(18,2)");
+                entity.Property(b => b.Price).HasColumnType("numeric(18,2)");
                 entity.Property(b => b.Currency).HasMaxLength(10).HasDefaultValue("NGN");
                 entity.Property(b => b.IsFeatured).HasDefaultValue(false);
                 entity.Property(b => b.IsPublished).HasDefaultValue(false);
                 entity.Property(b => b.IsDeleted).HasDefaultValue(false);
-                entity.Property(b => b.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(b => b.CreatedOn).HasDefaultValueSql("NOW()");
                 entity.HasQueryFilter(b => !b.IsDeleted);
             });
 
@@ -210,17 +210,17 @@ namespace GlobalFlameMinistry.API.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Subject).IsRequired().HasMaxLength(300);
-                entity.Property(e => e.HtmlBody).IsRequired().HasColumnType("nvarchar(max)");
+                entity.Property(e => e.HtmlBody).IsRequired().HasColumnType("text");
                 entity.Property(e => e.TargetGroup).HasMaxLength(20).HasDefaultValue("All");
-                entity.Property(e => e.CustomEmailsJson).HasColumnType("nvarchar(max)");
+                entity.Property(e => e.CustomEmailsJson).HasColumnType("text");
                 entity.Property(e => e.Status).HasMaxLength(20).HasDefaultValue("Scheduled");
                 entity.Property(e => e.TotalRecipients).HasDefaultValue(0);
                 entity.Property(e => e.SuccessCount).HasDefaultValue(0);
                 entity.Property(e => e.FailedCount).HasDefaultValue(0);
                 entity.Property(e => e.CreatedByUserId).HasMaxLength(450);
                 entity.Property(e => e.CreatedByName).HasMaxLength(200);
-                entity.Property(e => e.ErrorMessage).HasColumnType("nvarchar(max)");
-                entity.Property(e => e.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(e => e.ErrorMessage).HasColumnType("text");
+                entity.Property(e => e.CreatedOn).HasDefaultValueSql("NOW()");
             });
 
             // ── MINISTRY DEPARTMENT ────────────────────────────────────────────
@@ -230,7 +230,7 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(m => m.Name).IsRequired().HasMaxLength(200);
                 entity.Property(m => m.Slug).IsRequired().HasMaxLength(200);
                 entity.Property(m => m.ShortDescription).IsRequired().HasMaxLength(500);
-                entity.Property(m => m.Description).HasColumnType("nvarchar(max)");
+                entity.Property(m => m.Description).HasColumnType("text");
                 entity.Property(m => m.CoverImageUrl).HasMaxLength(500);
                 entity.Property(m => m.LeaderName).HasMaxLength(200);
                 entity.Property(m => m.LeaderTitle).HasMaxLength(200);
@@ -238,7 +238,7 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(m => m.ContactEmail).HasMaxLength(200);
                 entity.Property(m => m.DisplayOrder).HasDefaultValue(0);
                 entity.Property(m => m.IsPublished).HasDefaultValue(false);
-                entity.Property(m => m.CreatedOn).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(m => m.CreatedOn).HasDefaultValueSql("NOW()");
                 entity.HasIndex(m => m.Slug).IsUnique();
             });
 
@@ -250,7 +250,7 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(c => c.Email).IsRequired().HasMaxLength(200);
                 entity.Property(c => c.PhoneNumber).HasMaxLength(20);
                 entity.Property(c => c.Topic).IsRequired().HasMaxLength(200);
-                entity.Property(c => c.Message).IsRequired().HasColumnType("nvarchar(max)");
+                entity.Property(c => c.Message).IsRequired().HasColumnType("text");
                 entity.Property(c => c.PreferredContact).HasMaxLength(20).HasDefaultValue("Email");
                 entity.Property(c => c.AssignedTo).HasMaxLength(200);
                 entity.Property(c => c.AssignedToEmail).HasMaxLength(200);
@@ -259,7 +259,7 @@ namespace GlobalFlameMinistry.API.Data
                       .HasConversion<int>();
                 entity.Property(c => c.AppUserId).HasMaxLength(450).IsRequired(false);
                 entity.Property(c => c.IsDeleted).HasDefaultValue(false);
-                entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(c => c.CreatedAt).HasDefaultValueSql("NOW()");
                 entity.HasQueryFilter(c => !c.IsDeleted);
 
                 entity.HasOne(c => c.User)

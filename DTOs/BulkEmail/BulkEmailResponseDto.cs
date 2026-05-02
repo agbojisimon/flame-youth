@@ -4,6 +4,7 @@ namespace GlobalFlameMinistry.API.DTOs.BulkEmail
     {
         public int Id { get; set; }
         public string Subject { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; }
         public string TargetGroup { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public int TotalRecipients { get; set; }

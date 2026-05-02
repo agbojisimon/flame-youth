@@ -1,5 +1,4 @@
 using GlobalFlameMinistry.API.Data;
-using GlobalFlameMinistry.API.DTOs.Counselling;
 using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Interfaces.Counselling;
 using GlobalFlameMinistry.API.Models;
@@ -111,23 +110,6 @@ namespace GlobalFlameMinistry.API.Repository
         public async Task<CounsellingRequest?> GetByIdAsync(int id)
         {
             return await _context.CounsellingRequests.FirstOrDefaultAsync(c => c.Id == id);
-        }
-
-        public async Task<CounsellingRequest?> AssignAsync(int id, AssignCounsellorDto dto)
-        {
-            var request = await _context.CounsellingRequests.FindAsync(id);
-
-            if (request is null)
-                return null;
-
-            request.AssignedTo = dto.AssignedTo;
-            request.AssignedToEmail = dto.AssignedToEmail;
-            request.Status = CounsellingStatus.Assigned;
-            request.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-
-            return request;
         }
 
         public async Task<CounsellingRequest?> UpdateStatusAsync(int id, CounsellingStatus status)

@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text;
 using GlobalFlameMinistry.API.Configuration;
 using GlobalFlameMinistry.API.Data;
@@ -18,11 +19,15 @@ using GlobalFlameMinistry.API.Services;
 using GlobalFlameMinistry.API.Services.Admin;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Heroku dynamically assigns a port — we must listen on it
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 // CONTROLLER + FILTER + JSON CONFIGURATION
 builder.Services.AddControllers(options =>
@@ -92,7 +97,7 @@ builder.Services.AddCors(options =>
 // DATABASE CONTEXT
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
 // IDENTITY CONFIGURATION
@@ -142,6 +147,18 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+{
+    options.TokenLifespan = TimeSpan.FromHours(1); // Match what email says
+});
+
+builder.Services.AddHttpClient("BrevoClient", client =>
+{
+    client.BaseAddress = new Uri("https://api.brevo.com/v3/");
+    client.DefaultRequestHeaders.Accept
+        .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+});
+
 //EMAIL SETTINGS AND DEPENDENCY INJECTION
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddScoped<IEmailSender, EmailSender>();
@@ -170,9 +187,9 @@ builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddHttpClient<IDonationService, DonationService>();
 builder.Services.AddScoped<IDonationRepository, DonationRepository>();
 builder.Services.AddScoped<IAdminDonationService, AdminDonationService>();
-builder.Services.Configure<BrevoSettings>(builder.Configuration.GetSection("BrevoSettings"));
+builder.Services.Configure<BrevoSettings>(builder.Configuration.GetSection("Brevo"));
 builder.Services.AddScoped<IBulkEmailRepository, BulkEmailRepository>();
-builder.Services.AddHttpClient<IBulkEmailService, BulkEmailService>();
+builder.Services.AddScoped<IBulkEmailService, BulkEmailService>();
 builder.Services.AddHostedService<EmailSchedulerService>();
 builder.Services.AddScoped<IMinistryRepository, MinistryRepository>();
 builder.Services.AddScoped<IMinistryService, MinistryService>();
@@ -182,11 +199,6 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
 using (var scope = app.Services.CreateScope())
 {
@@ -198,7 +210,9 @@ using (var scope = app.Services.CreateScope())
         var userManager = services.GetRequiredService<UserManager<AppUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
+
         // Auto-apply any pending migrations on startup
+        await context.Database.MigrateAsync();
         await DataSeeder.SeedAdminAsync(userManager, roleManager);
     }
     catch (Exception ex)
@@ -210,7 +224,13 @@ using (var scope = app.Services.CreateScope())
 
 // MIDDLEWARE PIPELINE
 // ORDER MATTERS — don't rearrange these
-app.UseHttpsRedirection();
+app.UseSwagger();
+app.UseSwaggerUI();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("DevCors");
 

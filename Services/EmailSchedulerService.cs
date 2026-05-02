@@ -27,13 +27,28 @@ namespace GlobalFlameMinistry.API.Services
 
                     await emailService.ProcessScheduledEmailsAsync();
                 }
+                catch (OperationCanceledException)
+                {
+                    // App is shutting down — this is expected, exit cleanly
+                    break;
+                }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error in EmailSchedulerService");
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Shutdown during delay — also expected
+                    break;
+                }
             }
+
+            _logger.LogInformation("Email Scheduler Service stopped.");
         }
     }
 }

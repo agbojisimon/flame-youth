@@ -10,7 +10,6 @@ namespace GlobalFlameMinistry.API.Interfaces.Counselling
         Task<int> GetCountAsync(CounsellingQueryObject query);
         Task<CounsellingRequest?> GetByIdAsync(int id);
         Task<CounsellingRequest> CreateAsync(CounsellingRequest request);
-        Task<CounsellingRequest?> AssignAsync(int id, AssignCounsellorDto dto);
         Task<CounsellingRequest?> UpdateStatusAsync(int id, CounsellingStatus status);
         Task<bool> DeleteAsync(int id);
     }

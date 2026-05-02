@@ -1,4 +1,6 @@
 appsettings.Development.json
+appsettings.Secrets.json
+appsettings.Local.json
 bin/
 obj/
 .vscode/
