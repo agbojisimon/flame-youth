@@ -83,14 +83,16 @@ builder.Services.AddSwaggerGen(option =>
 // CORS POLICY
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("DevCors", policy =>
+    options.AddPolicy("ProductionCors", policy =>
     {
         policy
-            .AllowAnyOrigin()
+            .WithOrigins(
+                "https://globalflameministry.org",
+                "https://www.globalflameministry.org",
+                "http://localhost:5173" // keep for local development
+            )
             .AllowAnyHeader()
             .AllowAnyMethod();
-        // In production replace AllowAnyOrigin() with your actual frontend URL
-        // Example: .WithOrigins("https://globalflameministry.com")
     });
 });
 
@@ -232,7 +234,7 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.UseCors("DevCors");
+app.UseCors("ProductionCors");
 
 app.UseAuthentication();
 // Who are you?
