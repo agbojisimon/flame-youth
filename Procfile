@@ -1,1 +1,1 @@
-web: dotnet GlobalFlameMinistry.API.dll
+web: cd bin/publish && ./GlobalFlameMinistry.API --urls http://*:$PORT
