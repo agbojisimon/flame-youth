@@ -57,7 +57,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Contact message not found");
 
-            return Ok("Contact message deleted successfully");
+            return NoContent();
         }
     }
 }

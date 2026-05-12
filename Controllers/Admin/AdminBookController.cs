@@ -70,7 +70,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Book not found");
 
-            return Ok("Book deleted successfully");
+            return NoContent();
         }
     }
 }

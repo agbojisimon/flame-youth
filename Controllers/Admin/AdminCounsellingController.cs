@@ -61,7 +61,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Counselling request not found");
 
-            return Ok("Counselling request deleted");
+            return StatusCode(204);
         }
     }
 }

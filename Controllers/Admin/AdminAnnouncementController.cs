@@ -74,7 +74,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Announcement not found");
 
-            return Ok("Announcement deleted successfully");
+            return NoContent();
         }
     }
 }
