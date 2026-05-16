@@ -112,7 +112,7 @@ namespace GlobalFlameMinistry.API.Services
                 <body>
                   <div class='container'>
                     <div class='header'>
-                      <h1>Global Flame Ministries</h1>
+                      <h1>Global Flame</h1>
                       <p>Event Registration Confirmed</p>
                     </div>
 
@@ -143,12 +143,12 @@ namespace GlobalFlameMinistry.API.Services
 
                       <p style='margin-top: 32px; color: #333;'>
                         God bless you,<br/>
-                        <strong>Global Flame Ministries Team</strong>
+                        <strong>Global Flame Team</strong>
                       </p>
                     </div>
 
                     <div class='footer'>
-                      <p>© {DateTime.UtcNow.Year} Global Flame Ministries. All rights reserved.</p>
+                      <p>© {DateTime.UtcNow.Year} Global Flame. All rights reserved.</p>
                       <p>
                         Zarmaganda, Diye, Off Rayfield Road, Jos, Plateau State, Nigeria
                       </p>

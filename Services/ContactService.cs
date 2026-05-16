@@ -32,6 +32,15 @@ namespace GlobalFlameMinistry.API.Services
                 Console.WriteLine($"[ContactService] Failed to send confirmation email: {ex.Message}");
             }
 
+            try
+            {
+                await SendAdminNotificationAsync(created.FullName, created.Email, created.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ContactService] Failed to send admin notification email: {ex.Message}");
+            }
+
             return created.ToContactResponsDto();
         }
 
@@ -39,7 +48,7 @@ namespace GlobalFlameMinistry.API.Services
         {
             var firstName = fullName.Split(' ')[0]; // Just use their first name — feels more personal
 
-            var subject = "We've received your message — Global Flame Ministries";
+            var subject = "We've received your message — Global Flame";
 
             var body = $"""
                 <div style="font-family: Georgia, serif; max-width: 600px; margin: auto; padding: 40px; background: #ffffff;">
@@ -59,7 +68,7 @@ namespace GlobalFlameMinistry.API.Services
                   <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;" />
 
                   <p style="color: #94a3b8; font-size: 13px;">
-                    Global Flame Ministries · Zarmaganda, Diye, Off Rayfield Road, Jos, Plateau State, Nigeria.<br/>
+                    Global Flame Ministry · Zarmaganda, Diye, Off Rayfield Road, Jos, Plateau State, Nigeria.<br/>
                     Weekends at 9am, 11am & 6pm
                   </p>
                 </div>
@@ -68,7 +77,44 @@ namespace GlobalFlameMinistry.API.Services
             await _emailSender.SendEmailAsync(toEmail, subject, body);
         }
 
-        // ... rest of your methods stay the same
+        private async Task SendAdminNotificationAsync(string fullName, string senderEmail, string message)
+        {
+            var subject = "New Contact Form Submission";
+
+            var body = $"""
+                <div style="font-family: Georgia, serif; max-width: 600px; margin: auto; padding: 40px; background: #ffffff;">
+                  
+                  <h2 style="color: #0f172a; font-size: 20px; margin-bottom: 16px;">
+                    New Contact Form Submission
+                  </h2>
+
+                  <p style="color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+                    Someone has submitted the contact form on the website. Here are the details:
+                  </p>
+
+                  <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #a855f7; margin-bottom: 24px;">
+                    <p style="color: #475569; font-size: 14px; margin: 0 0 12px 0;">
+                      <strong>Sender Name:</strong><br/>
+                      {fullName}
+                    </p>
+                    <p style="color: #475569; font-size: 14px; margin: 0 0 12px 0;">
+                      <strong>Email Address:</strong><br/>
+                      <a href="mailto:{senderEmail}">{senderEmail}</a>
+                    </p>
+                    <p style="color: #475569; font-size: 14px; margin: 0;">
+                      <strong>Message:</strong><br/>
+                      {message}
+                    </p>
+                  </div>
+
+                  <p style="color: #94a3b8; font-size: 13px;">
+                    Global Flame Ministry · Jos, Plateau State, Nigeria
+                  </p>
+                </div>
+                """;
+
+            await _emailSender.SendEmailAsync("info@globalflameministry.org", subject, body);
+        }
         public async Task<bool> DeleteAsync(int id)
             => await _contactRepo.DeleteAsync(id);
 
@@ -89,14 +135,16 @@ namespace GlobalFlameMinistry.API.Services
         public async Task<ContactResponseDto?> GetByIdAsync(int id)
         {
             var contact = await _contactRepo.GetByIdAsync(id);
-            if (contact is null) return null;
+            if (contact is null)
+                return null;
             return contact.ToContactResponsDto();
         }
 
         public async Task<ContactResponseDto?> UpdateStatusAsync(int id, UpdateContactDto dto)
         {
             var updated = await _contactRepo.UpdateStatusAsync(id, dto);
-            if (updated is null) return null;
+            if (updated is null)
+                return null;
             return updated.ToContactResponsDto();
         }
     }

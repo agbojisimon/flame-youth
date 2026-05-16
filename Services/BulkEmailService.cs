@@ -311,11 +311,11 @@ namespace GlobalFlameMinistry.API.Services
 
                    // ── HEADER with logo ──
                    "<tr><td style='background:linear-gradient(135deg,#a21caf,#7c3aed);padding:28px 40px;text-align:center;'>" +
-                   "<img src='" + logoUrl + "' alt='Global Flame Ministry' " +
-                   "style='width:56px;height:56px;border-radius:50%;object-fit:cover;" +
-                   "display:block;margin:0 auto 12px;border:2px solid rgba(255,255,255,0.3);'/>" +
-                   "<h1 style='color:#ffffff;margin:0;font-size:20px;font-weight:bold;letter-spacing:1px;'>GLOBAL FLAME MINISTRY</h1>" +
-                   "<p style='color:rgba(255,255,255,0.8);margin:4px 0 0;font-size:9px;'>Raising a people of power who will manifest the kingdom and the realities of the fullness of Christ through the Spirit</p>" +
+                   "<img src='" + logoUrl + "' alt='Global Flame' " +
+                   "style='width:48px;height:48px;object-fit:cover;" +
+                   "display:block;margin:0 auto 12px;'/>" +
+                   "<h1 style='color:#ffffff;margin:0;font-size:20px;font-weight:bold;letter-spacing:1px;'>GLOBAL FLAME</h1>" +
+                   "<p style='color:rgba(255,255,255,0.8);margin:4px 0 0;font-size:9px;'>Raising a people of power who will manifest the kingdom</p>" +
                    "</td></tr>" +
 
                    // ── SUBJECT BAR ──

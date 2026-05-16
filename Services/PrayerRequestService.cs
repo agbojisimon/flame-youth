@@ -101,7 +101,7 @@ namespace GlobalFlameMinistry.API.Services
         private async Task SendConfirmationEmailAsync(string toEmail, string fullName)
         {
             var firstName = fullName.Split(' ')[0];
-            var subject = "Prayer Request Received — Global Flame Ministry";
+            var subject = "Prayer Request Received — Global Flame";
             var body = $@"
         <div style='font-family: Georgia, serif; max-width: 600px; margin: auto;
             padding: 40px; background: #ffffff;'>
@@ -123,7 +123,7 @@ namespace GlobalFlameMinistry.API.Services
           </blockquote>
           <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;' />
           <p style='color: #94a3b8; font-size: 13px;'>
-            Global Flame Ministry &middot; Jos, Plateau State, Nigeria
+            Global Flame &middot; Jos, Plateau State, Nigeria
           </p>
         </div>";
 
@@ -202,7 +202,7 @@ namespace GlobalFlameMinistry.API.Services
           </p>
           <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;' />
           <p style='color: #94a3b8; font-size: 13px;'>
-            Global Flame Ministry &middot; Jos, Plateau State, Nigeria<br/>
+            Global Flame &middot; Jos, Plateau State, Nigeria<br/>
             Reply directly to
             <a href='mailto:{requesterEmail}'>{requesterEmail}</a> to contact the requester.
           </p>
