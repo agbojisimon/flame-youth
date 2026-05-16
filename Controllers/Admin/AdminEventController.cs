@@ -35,7 +35,8 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
         public async Task<IActionResult> GetById(int id)
         {
             var evt = await _service.GetByIdAsync(id);
-            if (evt is null) return NotFound("Event not found");
+            if (evt is null)
+                return NotFound("Event not found");
             return Ok(evt);
         }
 
@@ -77,7 +78,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Event not found");
 
-            return Ok("Event deleted successfully");
+            return NoContent();
         }
     }
 }

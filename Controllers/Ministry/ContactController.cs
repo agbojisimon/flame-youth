@@ -20,7 +20,7 @@ namespace GlobalFlameMinistry.API.Controllers.Ministry
         public async Task<IActionResult> Create([FromBody] CreateContactDto dto)
         {
             var result = await _contactService.CreateAsync(dto);
-            return Ok(result);
+            return CreatedAtAction("GetById", "AdminContact", new { id = result.Id }, result);
         }
     }
 }

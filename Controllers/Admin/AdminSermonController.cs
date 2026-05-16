@@ -62,7 +62,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Sermon not found");
 
-            return Ok("Sermon deleted successfully");
+            return NoContent();
         }
     }
 }

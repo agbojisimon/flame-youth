@@ -26,7 +26,7 @@ namespace GlobalFlameMinistry.API.Controllers.Ministry
 
             var result = await _service.CreateAsync(dto, appUserId);
 
-            return Ok(new
+            return CreatedAtAction("GetById", "AdminCounselling", new { id = result.Id }, new
             {
                 isSuccess = true,
                 message = "Your counselling request has been received. " +

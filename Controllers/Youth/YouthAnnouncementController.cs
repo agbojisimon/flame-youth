@@ -102,7 +102,7 @@ namespace GlobalFlameMinistry.API.Controllers.Youth
             if (!deleted)
                 return NotFound("Announcement not found");
 
-            return Ok("Youth announcement deleted successfully");
+            return NoContent();
         }
     }
 }

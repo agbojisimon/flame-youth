@@ -59,7 +59,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Testimony not found");
 
-            return Ok("Testimony deleted successfully");
+            return NoContent();
         }
 
         [HttpGet("all")]

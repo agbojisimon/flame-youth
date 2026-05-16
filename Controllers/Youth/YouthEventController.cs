@@ -111,7 +111,7 @@ namespace GlobalFlameMinistry.API.Controllers.Youth
 
             var deleted = await _eventService.DeleteAsync(id);
             if (!deleted) return NotFound("Event not found");
-            return Ok("Youth event deleted successfully");
+            return NoContent();
         }
     }
 }

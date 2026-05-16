@@ -31,7 +31,10 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
         public async Task<IActionResult> GetById(string id)
         {
             var user = await _userService.GetUserByIdAsync(id);
-            if (user == null) return NotFound("User not found");
+
+            if (user == null)
+                return NotFound("User not found");
+
             return Ok(user);
         }
 
@@ -43,7 +46,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("User not found");
 
-            return Ok("User deleted successfully");
+            return NoContent();
         }
 
         // POST /api/admin/users/assign-role

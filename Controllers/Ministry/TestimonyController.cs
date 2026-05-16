@@ -40,7 +40,7 @@ namespace GlobalFlameMinistry.API.Controllers.Members
             }
 
             var result = await _testimonyService.CreateAsync(createDto, name, appUserId);
-            return Ok(result);
+            return CreatedAtAction("GetById", "AdminTestimony", new { id = result.Id }, result);
         }
     }
 }

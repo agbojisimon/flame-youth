@@ -70,7 +70,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Ministry not found");
 
-            return Ok("Ministry deleted successfully");
+            return NoContent();
         }
     }
 }

@@ -58,7 +58,7 @@ namespace GlobalFlameMinistry.API.Controllers.Ministry
 
             var result = await _prayerService.CreateAsync(createDto, name, email, appUserId);
 
-            return Ok(new
+            return CreatedAtAction("GetById", "AdminPrayerRequest", new { id = result.Id }, new
             {
                 isSuccess = true,
                 message = "Your prayer request has been received. " +
