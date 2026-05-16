@@ -167,6 +167,9 @@ builder.Services.AddHttpClient("BrevoClient", client =>
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 
+// MEMORY CACHE
+builder.Services.AddMemoryCache();
+
 //APPLICATION SERVICES
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
