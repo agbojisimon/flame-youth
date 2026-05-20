@@ -24,6 +24,8 @@ namespace GlobalFlameMinistry.API.Data
         public DbSet<Book> Books { get; set; }
         public DbSet<BulkEmailMessage> BulkEmailMessages { get; set; }
         public DbSet<MinistryDepartment> MinistryDepartments { get; set; }
+        public DbSet<BlogPost> BlogPosts { get; set; }
+        public DbSet<BlogPostBlock> BlogPostBlocks { get; set; }
         public DbSet<CounsellingRequest> CounsellingRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -240,6 +242,47 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(m => m.IsPublished).HasDefaultValue(false);
                 entity.Property(m => m.CreatedOn).HasDefaultValueSql("NOW()");
                 entity.HasIndex(m => m.Slug).IsUnique();
+            });
+
+            // ── BLOG POST ───────────────────────────────────────────────────────
+            builder.Entity<BlogPost>(entity =>
+            {
+                entity.HasKey(p => p.Id);
+                entity.Property(p => p.Title).IsRequired().HasMaxLength(200);
+                entity.Property(p => p.Slug).IsRequired().HasMaxLength(200);
+                entity.Property(p => p.Excerpt).HasMaxLength(500);
+                entity.Property(p => p.CoverImageUrl).HasMaxLength(500);
+                entity.Property(p => p.Module).IsRequired().HasMaxLength(50);
+                entity.Property(p => p.IsPublished).HasDefaultValue(false);
+                entity.Property(p => p.IsDeleted).HasDefaultValue(false);
+                entity.Property(p => p.CreatedOn).HasDefaultValueSql("NOW()");
+                entity.Property(p => p.UpdatedOn).IsRequired(false);
+                entity.Property(p => p.DeletedOn).IsRequired(false);
+                entity.Property(p => p.AuthorId).HasMaxLength(450).IsRequired(false);
+                entity.HasIndex(p => p.Slug).IsUnique();
+
+                entity.HasOne(p => p.Author)
+                      .WithMany()
+                      .HasForeignKey(p => p.AuthorId)
+                      .OnDelete(DeleteBehavior.SetNull)
+                      .IsRequired(false);
+
+                entity.HasMany(p => p.Blocks)
+                      .WithOne(b => b.BlogPost)
+                      .HasForeignKey(b => b.BlogPostId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasQueryFilter(p => !p.IsDeleted);
+            });
+
+            // ── BLOG POST BLOCK ─────────────────────────────────────────────────
+            builder.Entity<BlogPostBlock>(entity =>
+            {
+                entity.HasKey(b => b.Id);
+                entity.Property(b => b.BlockType).IsRequired().HasMaxLength(50);
+                entity.Property(b => b.Content).HasColumnType("text");
+                entity.Property(b => b.ImageUrl).HasMaxLength(500);
+                entity.Property(b => b.DisplayOrder).IsRequired();
             });
 
             // ── COUNSELLING REQUEST ────────────────────────────────────────────

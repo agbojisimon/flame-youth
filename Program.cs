@@ -203,6 +203,8 @@ builder.Services.AddScoped<IMinistryService, MinistryService>();
 builder.Services.AddScoped<ICounsellingRepository, CounsellingRepository>();
 builder.Services.AddScoped<ICounsellingService, CounsellingService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IBlogPostRepository, BlogPostRepository>();
+builder.Services.AddScoped<IBlogPostService, BlogPostService>();
 
 var app = builder.Build();
 
