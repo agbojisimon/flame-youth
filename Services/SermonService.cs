@@ -38,7 +38,7 @@ namespace GlobalFlameMinistry.API.Services
             // Force published only for public
             query.IsPublished = true;
 
-            string cacheKey = CACHE_KEY_PUBLISHED_SERMONS;
+            string cacheKey = $"{CACHE_KEY_PUBLISHED_SERMONS}_p{query.PageNumber}_s{query.PageSize}_{query.SortBy}_{query.IsDescending}";
 
             // Attempt to retrieve from cache
             if (_memoryCache.TryGetValue(cacheKey, out PagedResult<SermonResponseDto>? cachedResult))
