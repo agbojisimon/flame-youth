@@ -1,4 +1,5 @@
 using GlobalFlameMinistry.API.DTOs.Announcement;
+using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Models;
 
 namespace GlobalFlameMinistry.API.Mappers
@@ -10,6 +11,7 @@ namespace GlobalFlameMinistry.API.Mappers
             return new AnnouncementDto
             {
                 Id = announcement.Id,
+                Slug = announcement.Slug,
                 Title = announcement.Title,
                 Content = announcement.Content,
                 CreatedById = announcement.CreatedById,
@@ -25,6 +27,7 @@ namespace GlobalFlameMinistry.API.Mappers
             return new Announcement
             {
                 Title = createDto.Title,
+                Slug = SlugHelper.Generate(createDto.Title, 0),
                 Content = createDto.Content,
                 Module = createDto.Module,
                 Category = createDto.Category,

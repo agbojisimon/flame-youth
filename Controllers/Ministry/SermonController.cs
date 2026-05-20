@@ -33,5 +33,15 @@ namespace GlobalFlameMinistry.API.Controllers.Ministry
             if (!sermon.IsPublished) return NotFound("Sermon not found");
             return Ok(sermon);
         }
+
+        // GET /api/ministry/sermons/{slug}
+        [HttpGet("{slug}")]
+        public async Task<IActionResult> GetBySlug(string slug)
+        {
+            var sermon = await _service.GetBySlugAsync(slug);
+            if (sermon is null) return NotFound("Sermon not found");
+            if (!sermon.IsPublished) return NotFound("Sermon not found");
+            return Ok(sermon);
+        }
     }
 }

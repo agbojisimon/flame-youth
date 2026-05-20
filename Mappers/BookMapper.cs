@@ -1,4 +1,5 @@
 using GlobalFlameMinistry.API.DTOs.Books;
+using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Models;
 
 namespace GlobalFlameMinistry.API.Mappers
@@ -10,6 +11,7 @@ namespace GlobalFlameMinistry.API.Mappers
             return new BookResponseDto
             {
                 Id = bookModel.Id,
+                Slug = bookModel.Slug,
                 Title = bookModel.Title,
                 Author = bookModel.Author,
                 Description = bookModel.Description,
@@ -30,6 +32,7 @@ namespace GlobalFlameMinistry.API.Mappers
             return new Book
             {
                 Title = createDto.Title,
+                Slug = SlugHelper.Generate(createDto.Title, 0),
                 Author = createDto.Author,
                 Description = createDto.Description,
                 CoverImageUrl = createDto.CoverImageUrl,

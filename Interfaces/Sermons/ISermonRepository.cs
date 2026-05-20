@@ -9,6 +9,7 @@ namespace GlobalFlameMinistry.API.Interfaces
         Task<List<Sermon>> GetAllAsync(SermonQueryObject query);
         Task<int> GetCountAsync(SermonQueryObject query);
         Task<Sermon?> GetByIdAsync(int id);
+        Task<Sermon?> GetBySlugAsync(string slug);
         Task<Sermon> CreateAsync(Sermon sermon);
         Task<Sermon?> UpdateAsync(int id, UpdateSermonDto dto);
         Task<bool> DeleteAsync(int id);

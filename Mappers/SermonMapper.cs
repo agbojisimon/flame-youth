@@ -1,4 +1,5 @@
 using GlobalFlameMinistry.API.DTOs.Sermon;
+using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Models;
 
 namespace GlobalFlameMinistry.API.Mappers
@@ -10,6 +11,7 @@ namespace GlobalFlameMinistry.API.Mappers
             return new SermonResponseDto
             {
                 Id = sermon.Id,
+                Slug = sermon.Slug,
                 Title = sermon.Title,
                 Speaker = sermon.Speaker,
                 Series = sermon.Series,
@@ -30,6 +32,7 @@ namespace GlobalFlameMinistry.API.Mappers
             return new Sermon
             {
                 Title = dto.Title,
+                Slug = SlugHelper.Generate(dto.Title, 0),
                 Speaker = dto.Speaker,
                 Series = dto.Series,
                 Description = dto.Description,

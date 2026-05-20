@@ -123,6 +123,16 @@ namespace GlobalFlameMinistry.API.Services
         }
 
         /// <summary>
+        /// Gets an event by slug.
+        /// </summary>
+        public async Task<EventResponseDto?> GetBySlugAsync(string slug)
+        {
+            var evt = await _eventRepo.GetBySlugAsync(slug);
+            if (evt is null) return null;
+            return evt.ToEventResponseDto();
+        }
+
+        /// <summary>
         /// Updates an existing event (admin endpoint). Invalidates related event caches.
         /// </summary>
         public async Task<EventResponseDto?> UpdateAsync(int id, UpdateEventDto updateDto)

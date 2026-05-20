@@ -103,9 +103,16 @@ namespace GlobalFlameMinistry.API.Repositories
         public async Task<Sermon?> GetByIdAsync(int id)
             => await _context.Sermons.FirstOrDefaultAsync(s => s.Id == id);
 
+        public async Task<Sermon?> GetBySlugAsync(string slug)
+            => await _context.Sermons.FirstOrDefaultAsync(s => s.Slug == slug);
+
         public async Task<Sermon> CreateAsync(Sermon sermon)
         {
             await _context.Sermons.AddAsync(sermon);
+            await _context.SaveChangesAsync();
+
+            // Update slug to include ID for uniqueness/readability
+            sermon.Slug = GlobalFlameMinistry.API.Helpers.SlugHelper.Generate(sermon.Title, sermon.Id);
             await _context.SaveChangesAsync();
 
             return sermon;
@@ -119,6 +126,10 @@ namespace GlobalFlameMinistry.API.Repositories
                 return null;
 
             sermon.ApplyUpdate(dto);
+            await _context.SaveChangesAsync();
+
+            // If title changed, ensure slug is updated to reflect new title and id
+            sermon.Slug = GlobalFlameMinistry.API.Helpers.SlugHelper.Generate(sermon.Title, sermon.Id);
             await _context.SaveChangesAsync();
 
             return sermon;

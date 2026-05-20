@@ -8,6 +8,7 @@ namespace GlobalFlameMinistry.API.Interfaces
     {
         Task<PagedResult<EventResponseDto>> GetAllAsync(EventQueryObject query);
         Task<EventResponseDto?> GetByIdAsync(int id);
+        Task<EventResponseDto?> GetBySlugAsync(string slug);
         Task<EventResponseDto> CreateAsync(CreateEventDto dto);
         Task<EventResponseDto?> UpdateAsync(int id, UpdateEventDto dto);
         Task<bool> DeleteAsync(int id);

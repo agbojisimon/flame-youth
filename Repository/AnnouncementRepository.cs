@@ -19,6 +19,10 @@ namespace GlobalFlameMinistry.API.Repository
         {
             await _context.Announcements.AddAsync(announcement);
             await _context.SaveChangesAsync();
+            // Update slug to include ID
+            announcement.Slug = GlobalFlameMinistry.API.Helpers.SlugHelper.Generate(announcement.Title, announcement.Id);
+            await _context.SaveChangesAsync();
+
             return announcement;
         }
 
@@ -94,6 +98,11 @@ namespace GlobalFlameMinistry.API.Repository
             return await _context.Announcements.FirstOrDefaultAsync(a => a.Id == id);
         }
 
+        public async Task<Announcement?> GetBySlugAsync(string slug)
+        {
+            return await _context.Announcements.FirstOrDefaultAsync(a => a.Slug == slug);
+        }
+
         public async Task<int> GetCountAsync(AnnouncementQueryObject query)
         {
             var announcements = _context.Announcements.AsQueryable();
@@ -129,6 +138,10 @@ namespace GlobalFlameMinistry.API.Repository
             // ApplyUpdate is the mapper extension method — keeps this clean
             announcement.ApplyUpdate(updateDto);
 
+            await _context.SaveChangesAsync();
+
+            // Refresh slug in case title changed
+            announcement.Slug = GlobalFlameMinistry.API.Helpers.SlugHelper.Generate(announcement.Title, announcement.Id);
             await _context.SaveChangesAsync();
 
             return announcement;

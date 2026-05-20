@@ -47,6 +47,8 @@ namespace GlobalFlameMinistry.API.Data
             builder.Entity<Announcement>(entity =>
             {
                 entity.HasKey(a => a.Id);
+                entity.Property(a => a.Slug).HasMaxLength(300);
+                entity.HasIndex(a => a.Slug).IsUnique();
                 entity.Property(a => a.Title).IsRequired().HasMaxLength(200);
                 entity.Property(a => a.Content).IsRequired();
                 entity.Property(a => a.CreatedById).IsRequired();
@@ -62,6 +64,8 @@ namespace GlobalFlameMinistry.API.Data
             builder.Entity<Event>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.Slug).HasMaxLength(300);
+                entity.HasIndex(e => e.Slug).IsUnique();
                 entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.Description).HasMaxLength(2000);
                 entity.Property(e => e.StartDate).IsRequired();
@@ -192,6 +196,8 @@ namespace GlobalFlameMinistry.API.Data
             builder.Entity<Book>(entity =>
             {
                 entity.HasKey(b => b.Id);
+                entity.Property(b => b.Slug).HasMaxLength(300);
+                entity.HasIndex(b => b.Slug).IsUnique();
                 entity.Property(b => b.Title).IsRequired().HasMaxLength(200);
                 entity.Property(b => b.Author).IsRequired().HasMaxLength(150);
                 entity.Property(b => b.Description).HasMaxLength(5000);
@@ -276,6 +282,24 @@ namespace GlobalFlameMinistry.API.Data
             });
 
             // ── BLOG POST BLOCK ─────────────────────────────────────────────────
+            // ── SERMON ─────────────────────────────────────────────────────────
+            builder.Entity<Sermon>(entity =>
+            {
+                entity.HasKey(s => s.Id);
+                entity.Property(s => s.Slug).HasMaxLength(300);
+                entity.HasIndex(s => s.Slug).IsUnique();
+                entity.Property(s => s.Title).IsRequired().HasMaxLength(200);
+                entity.Property(s => s.Speaker).HasMaxLength(200);
+                entity.Property(s => s.Series).HasMaxLength(200);
+                entity.Property(s => s.Description).HasColumnType("text");
+                entity.Property(s => s.ImageUrl).HasMaxLength(500);
+                entity.Property(s => s.SpeakerImageUrl).HasMaxLength(500);
+                entity.Property(s => s.VideoUrl).HasMaxLength(500);
+                entity.Property(s => s.AudioUrl).HasMaxLength(500);
+                entity.Property(s => s.IsPublished).HasDefaultValue(false);
+                entity.Property(s => s.CreatedOn).HasDefaultValueSql("NOW()");
+            });
+
             builder.Entity<BlogPostBlock>(entity =>
             {
                 entity.HasKey(b => b.Id);

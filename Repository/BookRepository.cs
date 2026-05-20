@@ -20,6 +20,10 @@ namespace GlobalFlameMinistry.API.Repositories
             await _context.Books.AddAsync(book);
             await _context.SaveChangesAsync();
 
+            // Update slug to include ID
+            book.Slug = GlobalFlameMinistry.API.Helpers.SlugHelper.Generate(book.Title, book.Id);
+            await _context.SaveChangesAsync();
+
             return book;
         }
 
@@ -27,6 +31,11 @@ namespace GlobalFlameMinistry.API.Repositories
         {
             return await _context.Books
                 .FirstOrDefaultAsync(b => b.Id == id);
+        }
+
+        public async Task<Book?> GetBySlugAsync(string slug)
+        {
+            return await _context.Books.FirstOrDefaultAsync(b => b.Slug == slug);
         }
 
         public async Task<List<Book>> GetAllAsync(BookQueryObject query)
@@ -115,6 +124,10 @@ namespace GlobalFlameMinistry.API.Repositories
             existing.IsPublished = book.IsPublished;
             existing.UpdatedOn = DateTime.UtcNow;
 
+            await _context.SaveChangesAsync();
+
+            // Refresh slug in case title changed
+            existing.Slug = GlobalFlameMinistry.API.Helpers.SlugHelper.Generate(existing.Title, existing.Id);
             await _context.SaveChangesAsync();
 
             return existing;

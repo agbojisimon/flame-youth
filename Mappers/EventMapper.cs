@@ -1,4 +1,5 @@
 using GlobalFlameMinistry.API.DTOs.Event;
+using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Models;
 
 namespace GlobalFlameMinistry.API.Mappers
@@ -10,6 +11,7 @@ namespace GlobalFlameMinistry.API.Mappers
             return new EventResponseDto
             {
                 Id = eventModel.Id,
+                Slug = eventModel.Slug,
                 Title = eventModel.Title,
                 Description = eventModel.Description,
                 StartDate = eventModel.StartDate,
@@ -33,6 +35,7 @@ namespace GlobalFlameMinistry.API.Mappers
             return new Event
             {
                 Title = createDto.Title,
+                Slug = SlugHelper.Generate(createDto.Title, 0),
                 Description = createDto.Description,
                 StartDate = createDto.StartDate,
                 EndDate = createDto.EndDate,

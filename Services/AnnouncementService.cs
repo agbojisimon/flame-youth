@@ -123,6 +123,30 @@ namespace GlobalFlameMinistry.API.Services
         }
 
         /// <summary>
+        /// Gets an announcement by slug with caching.
+        /// </summary>
+        public async Task<AnnouncementDto?> GetBySlugAsync(string slug)
+        {
+            string cacheKey = $"announcement_slug_{slug}";
+
+            if (_memoryCache.TryGetValue(cacheKey, out AnnouncementDto? cached))
+            {
+                _logger.LogInformation("[AnnouncementService] Cache hit for slug {Slug}", slug);
+                return cached;
+            }
+
+            _logger.LogInformation("[AnnouncementService] Cache miss for slug {Slug}", slug);
+
+            var announcement = await _announceRepo.GetBySlugAsync(slug);
+            if (announcement is null) return null;
+
+            var result = announcement.ToAnnouncementDto();
+            _memoryCache.Set(cacheKey, result, _itemCacheExpiration);
+
+            return result;
+        }
+
+        /// <summary>
         /// Updates an existing announcement (admin endpoint). Invalidates related announcement caches.
         /// </summary>
         public async Task<AnnouncementDto?> UpdateAsync(int id, UpdateAnnouncementDto dto)

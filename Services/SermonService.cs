@@ -93,6 +93,31 @@ namespace GlobalFlameMinistry.API.Services
         }
 
         /// <summary>
+        /// Gets a sermon by slug with caching. Cache expires after 10 minutes.
+        /// </summary>
+        public async Task<SermonResponseDto?> GetBySlugAsync(string slug)
+        {
+            string cacheKey = $"sermon_slug_{slug}";
+
+            if (_memoryCache.TryGetValue(cacheKey, out SermonResponseDto? cachedSermon))
+            {
+                _logger.LogInformation("[SermonService] Cache hit for sermon slug {Slug}", slug);
+                return cachedSermon;
+            }
+
+            _logger.LogInformation("[SermonService] Cache miss for sermon slug {Slug}", slug);
+
+            var sermon = await _repository.GetBySlugAsync(slug);
+
+            if (sermon is null) return null;
+
+            var result = sermon.ToDto();
+            _memoryCache.Set(cacheKey, result, _itemCacheExpiration);
+
+            return result;
+        }
+
+        /// <summary>
         /// Gets all sermons (including unpublished). Admin endpoint - does not cache.
         /// </summary>
         public async Task<PagedResult<SermonResponseDto>> GetAllAsync(SermonQueryObject query)

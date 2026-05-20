@@ -38,5 +38,14 @@ namespace GlobalFlameMinistry.API.Controllers.Ministry
 
             return Ok(book);
         }
+
+        // GET /api/ministry/books/{slug}
+        [HttpGet("{slug}")]
+        public async Task<IActionResult> GetBySlug(string slug)
+        {
+            var book = await _service.GetBySlugAsync(slug);
+            if (book is null || !book.IsPublished) return NotFound("Book not found");
+            return Ok(book);
+        }
     }
 }

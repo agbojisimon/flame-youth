@@ -21,6 +21,10 @@ namespace GlobalFlameMinistry.API.Repository
             await _context.Events.AddAsync(eventModel);
             await _context.SaveChangesAsync();
 
+            // Update slug to include ID
+            eventModel.Slug = GlobalFlameMinistry.API.Helpers.SlugHelper.Generate(eventModel.Title, eventModel.Id);
+            await _context.SaveChangesAsync();
+
             return eventModel;
         }
 
@@ -114,6 +118,11 @@ namespace GlobalFlameMinistry.API.Repository
             return await _context.Events.FirstOrDefaultAsync(e => e.Id == id);
         }
 
+        public async Task<Event?> GetBySlugAsync(string slug)
+        {
+            return await _context.Events.Include(e => e.Ministry).FirstOrDefaultAsync(e => e.Slug == slug);
+        }
+
         public async Task<int> GetCountAsync(EventQueryObject query)
         {
             var events = _context.Events.AsQueryable();
@@ -163,6 +172,10 @@ namespace GlobalFlameMinistry.API.Repository
             if (eventModel is null) return null;
 
             eventModel.ApplyUpdate(updateDto);
+            await _context.SaveChangesAsync();
+
+            // Refresh slug if title changed
+            eventModel.Slug = GlobalFlameMinistry.API.Helpers.SlugHelper.Generate(eventModel.Title, eventModel.Id);
             await _context.SaveChangesAsync();
 
             return eventModel;

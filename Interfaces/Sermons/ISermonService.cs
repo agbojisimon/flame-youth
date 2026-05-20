@@ -9,6 +9,7 @@ namespace GlobalFlameMinistry.API.Interfaces
         // Public
         Task<PagedResult<SermonResponseDto>> GetPublishedAsync(SermonQueryObject query);
         Task<SermonResponseDto?> GetByIdAsync(int id);
+        Task<SermonResponseDto?> GetBySlugAsync(string slug);
 
         // Admin
         Task<PagedResult<SermonResponseDto>> GetAllAsync(SermonQueryObject query);

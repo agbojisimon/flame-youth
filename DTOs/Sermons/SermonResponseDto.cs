@@ -3,6 +3,7 @@ namespace GlobalFlameMinistry.API.DTOs.Sermon
     public class SermonResponseDto
     {
         public int Id { get; set; }
+        public string Slug { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Speaker { get; set; } = string.Empty;
         public string Series { get; set; } = string.Empty;

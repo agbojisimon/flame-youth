@@ -38,6 +38,15 @@ namespace GlobalFlameMinistry.API.Controllers.Ministry
             return Ok(evt);
         }
 
+        // GET /api/ministry/events/{slug}
+        [HttpGet("{slug}")]
+        public async Task<IActionResult> GetBySlug(string slug)
+        {
+            var evt = await _service.GetBySlugAsync(slug);
+            if (evt is null) return NotFound("Event not found");
+            return Ok(evt);
+        }
+
         // POST /api/ministry/events/{id}/register
         [HttpPost("{id:int}/register")]
         public async Task<IActionResult> Register(int id, [FromBody] RegisterForEventDto dto)

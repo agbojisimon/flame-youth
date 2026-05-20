@@ -7,6 +7,7 @@ namespace GlobalFlameMinistry.API.Interfaces
     {
         Task<Book> CreateAsync(Book book);
         Task<Book?> GetByIdAsync(int id);
+        Task<Book?> GetBySlugAsync(string slug);
         Task<List<Book>> GetAllAsync(BookQueryObject query);
         Task<int> GetCountAsync(BookQueryObject query);
         Task<Book?> UpdateAsync(int id, Book book);

@@ -72,6 +72,17 @@ namespace GlobalFlameMinistry.API.Services
         }
 
         /// <summary>
+        /// Gets a book by slug with caching.
+        /// </summary>
+        public async Task<BookResponseDto?> GetBySlugAsync(string slug)
+        {
+            var book = await _repository.GetBySlugAsync(slug);
+            var result = book?.ToDto();
+
+            return result;
+        }
+
+        /// <summary>
         /// Gets all published books with caching. Cache expires after 5 minutes.
         /// Typically used for public-facing book listings.
         /// </summary>
