@@ -35,35 +35,18 @@ namespace GlobalFlameMinistry.API.Services
         /// </summary>
         public async Task<PagedResult<SermonResponseDto>> GetPublishedAsync(SermonQueryObject query)
         {
-            // Force published only for public
             query.IsPublished = true;
-
-            string cacheKey = $"{CACHE_KEY_PUBLISHED_SERMONS}_p{query.PageNumber}_s{query.PageSize}_{query.SortBy}_{query.IsDescending}_featured{query.IsFeatured}";
-
-            // Attempt to retrieve from cache
-            if (_memoryCache.TryGetValue(cacheKey, out PagedResult<SermonResponseDto>? cachedResult))
-            {
-                _logger.LogInformation("[SermonService] Cache hit for published sermons");
-                return cachedResult!;
-            }
-
-            _logger.LogInformation("[SermonService] Cache miss for published sermons - querying database");
 
             var sermons = await _repository.GetAllAsync(query);
             var total = await _repository.GetCountAsync(query);
 
-            var result = new PagedResult<SermonResponseDto>
+            return new PagedResult<SermonResponseDto>
             {
                 Items = sermons.ToDtoList(),
                 TotalCount = total,
                 PageNumber = query.PageNumber,
                 PageSize = query.PageSize
             };
-
-            // Store in cache with 5-minute expiration
-            _memoryCache.Set(cacheKey, result, _listCacheExpiration);
-
-            return result;
         }
 
         /// <summary>
@@ -200,18 +183,25 @@ namespace GlobalFlameMinistry.API.Services
         /// </summary>
         private void InvalidateSermonCache()
         {
-            _memoryCache.Remove(CACHE_KEY_PUBLISHED_SERMONS);
             _memoryCache.Remove(CACHE_KEY_ALL_SERMONS);
+            // Remove all variants of published sermon cache keys
+            foreach (var isFeatured in new bool?[] { null, true, false })
+            {
+                for (int page = 1; page <= 10; page++)
+                {
+                    for (int size = 3; size <= 20; size += 1)
+                    {
+                        _memoryCache.Remove($"{CACHE_KEY_PUBLISHED_SERMONS}_p{page}_s{size}__featured{isFeatured}");
+                        _memoryCache.Remove($"{CACHE_KEY_PUBLISHED_SERMONS}_p{page}_s{size}__False_featured{isFeatured}");
+                    }
+                }
+            }
             _logger.LogDebug("[SermonService] Invalidated all sermon caches");
         }
 
-        /// <summary>
-        /// Invalidates specific sermon cache by ID.
-        /// </summary>
         private void InvalidateSermonCache(int id)
         {
-            _memoryCache.Remove(CACHE_KEY_PUBLISHED_SERMONS);
-            _memoryCache.Remove(CACHE_KEY_ALL_SERMONS);
+            InvalidateSermonCache();
             _memoryCache.Remove(string.Format(CACHE_KEY_SERMON_ID, id));
             _logger.LogDebug("[SermonService] Invalidated sermon cache for ID {Id}", id);
         }
