@@ -4,7 +4,7 @@ namespace GlobalFlameMinistry.API.Helpers
 {
     public class BlogQueryObject : BaseQueryObject
     {
-        public string? Module { get; set; }
+        public string? Department { get; set; }
         public bool? IsPublished { get; set; }
         public string? SearchTerm { get; set; }
     }

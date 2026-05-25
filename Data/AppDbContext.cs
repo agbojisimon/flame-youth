@@ -258,7 +258,7 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(p => p.Slug).IsRequired().HasMaxLength(200);
                 entity.Property(p => p.Excerpt).HasMaxLength(500);
                 entity.Property(p => p.CoverImageUrl).HasMaxLength(500);
-                entity.Property(p => p.Module).IsRequired().HasMaxLength(50);
+                entity.Property(p => p.Department).IsRequired().HasMaxLength(50);
                 entity.Property(p => p.IsPublished).HasDefaultValue(false);
                 entity.Property(p => p.IsDeleted).HasDefaultValue(false);
                 entity.Property(p => p.CreatedOn).HasDefaultValueSql("NOW()");

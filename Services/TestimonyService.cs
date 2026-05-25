@@ -1,6 +1,7 @@
 using GlobalFlameMinistry.API.DTOs.Common;
 using GlobalFlameMinistry.API.DTOs.Testimony;
 using GlobalFlameMinistry.API.Helpers;
+using GlobalFlameMinistry.API.Models;
 using GlobalFlameMinistry.API.Interfaces;
 using GlobalFlameMinistry.API.Interfaces.Email;
 using GlobalFlameMinistry.API.Mappers;
@@ -28,7 +29,7 @@ namespace GlobalFlameMinistry.API.Services
 
             try
             {
-                await SendAdminNotificationAsync(created.FullName, created.Content);
+                await SendAdminNotificationAsync(created);
             }
             catch (Exception ex)
             {
@@ -91,7 +92,7 @@ namespace GlobalFlameMinistry.API.Services
             return updated.ToTestimonyResponseDto();
         }
 
-        private async Task SendAdminNotificationAsync(string? submitterName, string? content)
+        private async Task SendAdminNotificationAsync(Testimony testimony)
         {
             var subject = "New Testimony Submitted";
 
@@ -109,11 +110,19 @@ namespace GlobalFlameMinistry.API.Services
                   <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #a855f7; margin-bottom: 24px;">
                     <p style="color: #475569; font-size: 14px; margin: 0 0 12px 0;">
                       <strong>Submitter Name:</strong><br/>
-                      {(string.IsNullOrWhiteSpace(submitterName) ? "<em>Not provided</em>" : submitterName)}
+                      {(string.IsNullOrWhiteSpace(testimony.FullName) ? "<em>Not provided</em>" : testimony.FullName)}
+                    </p>
+                    <p style="color: #475569; font-size: 14px; margin: 0 0 12px 0;">
+                      <strong>Email Address:</strong><br/>
+                      {testimony.Email}
+                    </p>
+                    <p style="color: #475569; font-size: 14px; margin: 0 0 12px 0;">
+                      <strong>Phone Number:</strong><br/>
+                      {(string.IsNullOrWhiteSpace(testimony.PhoneNumber) ? "<em>Not provided</em>" : testimony.PhoneNumber)}
                     </p>
                     <p style="color: #475569; font-size: 14px; margin: 0;">
                       <strong>Testimony Content:</strong><br/>
-                      {(string.IsNullOrWhiteSpace(content) ? "<em>No content</em>" : content)}
+                      {(string.IsNullOrWhiteSpace(testimony.Content) ? "<em>No content</em>" : testimony.Content)}
                     </p>
                   </div>
 

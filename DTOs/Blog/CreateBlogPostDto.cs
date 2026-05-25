@@ -14,8 +14,10 @@ namespace GlobalFlameMinistry.API.DTOs.Blog
         [MaxLength(500)]
         public string? CoverImageUrl { get; set; }
 
+        public string? VideoUrl { get; set; }
+
         [Required]
-        public string Module { get; set; } = string.Empty;
+        public string Department { get; set; } = string.Empty;
 
         public bool IsPublished { get; set; }
 
@@ -23,13 +25,19 @@ namespace GlobalFlameMinistry.API.DTOs.Blog
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            var allowedModules = new[] { "Ministry", "Youth" };
+            var allowedDepartments = new[]
+            {
+                "Royal Priesthood",
+                "House of Opera",
+                "Home of Love",
+                "Flame Stars"
+            };
 
-            if (string.IsNullOrWhiteSpace(Module) || !allowedModules.Contains(Module))
+            if (string.IsNullOrWhiteSpace(Department) || !allowedDepartments.Contains(Department))
             {
                 yield return new ValidationResult(
-                    "Module must be either 'Ministry' or 'Youth'.",
-                    new[] { nameof(Module) });
+                    "Department must be one of: Royal Priesthood, House of Opera, Home of Love, Flame Stars.",
+                    new[] { nameof(Department) });
             }
 
             if (Blocks is null)

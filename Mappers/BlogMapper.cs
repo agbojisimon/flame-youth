@@ -15,7 +15,8 @@ namespace GlobalFlameMinistry.API.Mappers
                 Slug = string.Empty,
                 Excerpt = dto.Excerpt?.Trim(),
                 CoverImageUrl = dto.CoverImageUrl?.Trim(),
-                Module = dto.Module.Trim(),
+                Department = dto.Department.Trim(),
+                VideoUrl = dto.VideoUrl?.Trim(),
                 IsPublished = dto.IsPublished,
                 AuthorId = authorId,
                 Blocks = dto.Blocks
@@ -44,7 +45,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 AuthorName = post.Author is null
                     ? string.Empty
                     : $"{post.Author.FirstName} {post.Author.LastName}".Trim(),
-                Module = post.Module,
+                Department = post.Department,
                 IsPublished = post.IsPublished,
                 CreatedOn = post.CreatedOn,
                 UpdatedOn = post.UpdatedOn,

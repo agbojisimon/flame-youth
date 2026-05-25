@@ -6,6 +6,8 @@ namespace GlobalFlameMinistry.API.Models
         public string? AppUserId { get; set; }
         public AppUser? User { get; set; }
         public string? FullName { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string? PhoneNumber { get; set; }
         public string Content { get; set; } = string.Empty;
         public string? Attachment { get; set; }
         public TestimonyStatus Status { get; set; } = TestimonyStatus.Pending;

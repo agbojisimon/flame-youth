@@ -50,9 +50,9 @@ namespace GlobalFlameMinistry.API.Repository
                 .Include(p => p.Blocks)
                 .AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(query.Module))
+            if (!string.IsNullOrWhiteSpace(query.Department))
             {
-                posts = posts.Where(p => p.Module == query.Module);
+                posts = posts.Where(p => p.Department == query.Department);
             }
 
             if (query.IsPublished.HasValue)
@@ -70,7 +70,7 @@ namespace GlobalFlameMinistry.API.Repository
             posts = query.SortBy?.Trim().ToLowerInvariant() switch
             {
                 "title" => query.IsDescending ? posts.OrderByDescending(p => p.Title) : posts.OrderBy(p => p.Title),
-                "module" => query.IsDescending ? posts.OrderByDescending(p => p.Module) : posts.OrderBy(p => p.Module),
+                "department" => query.IsDescending ? posts.OrderByDescending(p => p.Department) : posts.OrderBy(p => p.Department),
                 "updatedon" => query.IsDescending ? posts.OrderByDescending(p => p.UpdatedOn) : posts.OrderBy(p => p.UpdatedOn),
                 _ => query.IsDescending ? posts.OrderByDescending(p => p.CreatedOn) : posts.OrderBy(p => p.CreatedOn),
             };
@@ -88,9 +88,9 @@ namespace GlobalFlameMinistry.API.Repository
         {
             var posts = _context.BlogPosts.AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(query.Module))
+            if (!string.IsNullOrWhiteSpace(query.Department))
             {
-                posts = posts.Where(p => p.Module == query.Module);
+                posts = posts.Where(p => p.Department == query.Department);
             }
 
             if (query.IsPublished.HasValue)
@@ -151,7 +151,8 @@ namespace GlobalFlameMinistry.API.Repository
             existing.Slug = BlogMapper.GenerateSlug(dto.Title, existing.Id);
             existing.Excerpt = dto.Excerpt?.Trim();
             existing.CoverImageUrl = dto.CoverImageUrl?.Trim();
-            existing.Module = dto.Module.Trim();
+            existing.Department = dto.Department.Trim();
+            existing.VideoUrl = dto.VideoUrl?.Trim();
             existing.IsPublished = dto.IsPublished;
             existing.UpdatedOn = DateTime.UtcNow;
 
