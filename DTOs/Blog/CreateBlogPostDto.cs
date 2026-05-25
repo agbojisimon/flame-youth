@@ -25,21 +25,6 @@ namespace GlobalFlameMinistry.API.DTOs.Blog
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            var allowedDepartments = new[]
-            {
-                "Royal Priesthood",
-                "House of Opera",
-                "Home of Love",
-                "Flame Stars"
-            };
-
-            if (string.IsNullOrWhiteSpace(Department) || !allowedDepartments.Contains(Department))
-            {
-                yield return new ValidationResult(
-                    "Department must be one of: Royal Priesthood, House of Opera, Home of Love, Flame Stars.",
-                    new[] { nameof(Department) });
-            }
-
             if (Blocks is null)
             {
                 yield return new ValidationResult(
