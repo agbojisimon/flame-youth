@@ -16,5 +16,6 @@ namespace GlobalFlameMinistry.API.Interfaces
         Task<SermonResponseDto> CreateAsync(CreateSermonDto dto);
         Task<SermonResponseDto?> UpdateAsync(int id, UpdateSermonDto dto);
         Task<bool> DeleteAsync(int id);
+        Task<SermonResponseDto?> ToggleFeaturedAsync(int id);
     }
 }

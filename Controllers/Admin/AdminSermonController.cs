@@ -64,5 +64,17 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
 
             return NoContent();
         }
+
+        [HttpPut("{id}/toggle-featured")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ToggleFeatured(int id)
+        {
+            var result = await _service.ToggleFeaturedAsync(id);
+
+            if (result is null)
+                return NotFound();
+
+            return Ok(result);
+        }
     }
 }

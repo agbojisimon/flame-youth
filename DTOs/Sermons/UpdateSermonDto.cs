@@ -28,5 +28,6 @@ namespace GlobalFlameMinistry.API.DTOs.Sermon
         public DateTime SermonDate { get; set; }
 
         public bool IsPublished { get; set; }
+        public bool IsFeatured { get; set; }
     }
 }

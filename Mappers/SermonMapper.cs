@@ -22,6 +22,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 AudioUrl = sermon.AudioUrl,
                 SermonDate = sermon.SermonDate,
                 IsPublished = sermon.IsPublished,
+                IsFeatured = sermon.IsFeatured,
                 CreatedOn = sermon.CreatedOn,
                 UpdatedOn = sermon.UpdatedOn
             };
@@ -42,6 +43,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 AudioUrl = dto.AudioUrl,
                 SermonDate = dto.SermonDate,
                 IsPublished = dto.IsPublished,
+                IsFeatured = dto.IsFeatured,
                 CreatedOn = DateTime.UtcNow
             };
         }
@@ -58,6 +60,7 @@ namespace GlobalFlameMinistry.API.Mappers
             sermon.AudioUrl = dto.AudioUrl;
             sermon.SermonDate = dto.SermonDate;
             sermon.IsPublished = dto.IsPublished;
+            sermon.IsFeatured = dto.IsFeatured;
             sermon.UpdatedOn = DateTime.UtcNow;
         }
 
