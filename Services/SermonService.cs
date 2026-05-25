@@ -185,6 +185,16 @@ namespace GlobalFlameMinistry.API.Services
             return result;
         }
 
+        public async Task<SermonResponseDto?> ToggleFeaturedAsync(int id)
+        {
+            var sermon = await _repository.GetByIdAsync(id);
+            if (sermon is null) return null;
+            sermon.IsFeatured = !sermon.IsFeatured;
+            await _repository.SaveChangesAsync();
+            InvalidateSermonCache(id);
+            return sermon.ToDto();
+        }
+
         /// <summary>
         /// Invalidates all sermon-related caches.
         /// </summary>

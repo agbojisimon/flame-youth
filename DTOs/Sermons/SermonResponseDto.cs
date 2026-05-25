@@ -14,6 +14,7 @@ namespace GlobalFlameMinistry.API.DTOs.Sermon
         public string? AudioUrl { get; set; }
         public DateTime SermonDate { get; set; }
         public bool IsPublished { get; set; }
+        public bool IsFeatured { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime? UpdatedOn { get; set; }
     }

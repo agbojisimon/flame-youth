@@ -14,5 +14,6 @@ namespace GlobalFlameMinistry.API.Interfaces
         Task<Sermon?> UpdateAsync(int id, UpdateSermonDto dto);
         Task<bool> DeleteAsync(int id);
         Task<bool> ExistsAsync(int id);
+        Task SaveChangesAsync();
     }
 }

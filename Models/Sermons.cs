@@ -14,6 +14,7 @@ namespace GlobalFlameMinistry.API.Models
         public string? AudioUrl { get; set; }
         public DateTime SermonDate { get; set; }
         public bool IsPublished { get; set; } = false;
+        public bool IsFeatured { get; set; } = false;
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedOn { get; set; }
     }

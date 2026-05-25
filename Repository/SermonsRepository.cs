@@ -37,6 +37,10 @@ namespace GlobalFlameMinistry.API.Repositories
                 sermons = sermons.Where(s =>
                     s.IsPublished == query.IsPublished.Value);
 
+            if (query.IsFeatured.HasValue)
+                sermons = sermons.Where(s =>
+                    s.IsFeatured == query.IsFeatured.Value);
+
             if (query.FromDate.HasValue)
                 sermons = sermons.Where(s =>
                     s.SermonDate >= query.FromDate.Value);
@@ -88,6 +92,10 @@ namespace GlobalFlameMinistry.API.Repositories
             if (query.IsPublished.HasValue)
                 sermons = sermons.Where(s =>
                     s.IsPublished == query.IsPublished.Value);
+
+            if (query.IsFeatured.HasValue)
+                sermons = sermons.Where(s =>
+                    s.IsFeatured == query.IsFeatured.Value);
 
             if (query.FromDate.HasValue)
                 sermons = sermons.Where(s =>
@@ -149,5 +157,7 @@ namespace GlobalFlameMinistry.API.Repositories
 
         public async Task<bool> ExistsAsync(int id)
             => await _context.Sermons.AnyAsync(s => s.Id == id);
+
+        public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
     }
 }
