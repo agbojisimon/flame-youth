@@ -11,6 +11,7 @@ namespace GlobalFlameMinistry.API.Interfaces
         Task<BlogPost?> GetBySlugAsync(string slug);
         Task<List<BlogPost>> GetAllAsync(BlogQueryObject query);
         Task<int> GetCountAsync(BlogQueryObject query);
+        Task<List<string>> GetDistinctDepartmentsAsync(bool publishedOnly = true);
         Task<BlogPost?> UpdateAsync(int id, UpdateBlogPostDto dto);
         Task<bool> DeleteAsync(int id);
         Task<bool> TogglePublishAsync(int id);

@@ -63,5 +63,11 @@ namespace GlobalFlameMinistry.API.Services
         {
             return await _blogRepository.TogglePublishAsync(id);
         }
+
+        public async Task<List<string>> GetDistinctDepartmentsAsync()
+        {
+            return await _blogRepository.GetDistinctDepartmentsAsync(
+                publishedOnly: true);
+        }
     }
 }

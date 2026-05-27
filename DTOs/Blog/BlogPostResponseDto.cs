@@ -11,6 +11,8 @@ namespace GlobalFlameMinistry.API.DTOs.Blog
         public string? AuthorId { get; set; }
         public string? AuthorName { get; set; }
         public string Department { get; set; } = string.Empty;
+        public string? ConferenceTheme { get; set; }
+        public string? ThemeScripture { get; set; }
         public bool IsPublished { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime? UpdatedOn { get; set; }

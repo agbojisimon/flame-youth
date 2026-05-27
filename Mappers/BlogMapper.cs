@@ -17,6 +17,8 @@ namespace GlobalFlameMinistry.API.Mappers
                 CoverImageUrl = dto.CoverImageUrl?.Trim(),
                 Department = dto.Department.Trim(),
                 VideoUrl = dto.VideoUrl?.Trim(),
+                ConferenceTheme = dto.ConferenceTheme?.Trim(),
+                ThemeScripture = dto.ThemeScripture?.Trim(),
                 IsPublished = dto.IsPublished,
                 AuthorId = authorId,
                 Blocks = dto.Blocks
@@ -46,6 +48,8 @@ namespace GlobalFlameMinistry.API.Mappers
                     ? string.Empty
                     : $"{post.Author.FirstName} {post.Author.LastName}".Trim(),
                 Department = post.Department,
+                ConferenceTheme = post.ConferenceTheme,
+                ThemeScripture = post.ThemeScripture,
                 IsPublished = post.IsPublished,
                 CreatedOn = post.CreatedOn,
                 UpdatedOn = post.UpdatedOn,

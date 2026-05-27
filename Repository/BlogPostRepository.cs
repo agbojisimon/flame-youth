@@ -154,6 +154,8 @@ namespace GlobalFlameMinistry.API.Repository
             existing.Department = dto.Department.Trim();
             existing.VideoUrl = dto.VideoUrl?.Trim();
             existing.IsPublished = dto.IsPublished;
+            existing.ConferenceTheme = dto.ConferenceTheme?.Trim();
+            existing.ThemeScripture = dto.ThemeScripture?.Trim();
             existing.UpdatedOn = DateTime.UtcNow;
 
             _context.BlogPostBlocks.RemoveRange(existing.Blocks);
@@ -187,6 +189,20 @@ namespace GlobalFlameMinistry.API.Repository
             return true;
         }
 
+        public async Task<List<string>> GetDistinctDepartmentsAsync(
+            bool publishedOnly = true)
+        {
+            var query = _context.BlogPosts.AsQueryable();
+
+            if (publishedOnly)
+                query = query.Where(p => p.IsPublished && !p.IsDeleted);
+
+            return await query
+                .Select(p => p.Department)
+                .Distinct()
+                .OrderBy(d => d)
+                .ToListAsync();
+        }
         private static string GenerateTemporarySlug()
         {
             return Guid.NewGuid().ToString("N");

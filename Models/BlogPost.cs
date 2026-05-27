@@ -13,6 +13,8 @@ namespace GlobalFlameMinistry.API.Models
         public string? AuthorId { get; set; }
         public AppUser? Author { get; set; }
         public string Department { get; set; } = string.Empty;
+        public string? ConferenceTheme { get; set; }
+        public string? ThemeScripture { get; set; }
         public bool IsPublished { get; set; }
         public bool IsDeleted { get; set; }
         public DateTime CreatedOn { get; set; }

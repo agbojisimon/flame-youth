@@ -19,6 +19,12 @@ namespace GlobalFlameMinistry.API.DTOs.Blog
         [Required]
         public string Department { get; set; } = string.Empty;
 
+        [MaxLength(300)]
+        public string? ConferenceTheme { get; set; }
+
+        [MaxLength(500)]
+        public string? ThemeScripture { get; set; }
+
         public bool IsPublished { get; set; }
 
         public List<CreateBlogBlockDto> Blocks { get; set; } = new();
