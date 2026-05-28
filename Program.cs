@@ -19,6 +19,7 @@ using GlobalFlameMinistry.API.Services;
 using GlobalFlameMinistry.API.Services.Admin;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
@@ -167,8 +168,42 @@ builder.Services.AddHttpClient("BrevoClient", client =>
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 
-// MEMORY CACHE
-builder.Services.AddMemoryCache();
+// REDIS + HYBRID CACHE (two-level: L1 = in-memory, L2 = Redis)
+// HybridCache uses IMemoryCache internally as L1, no need for separate AddMemoryCache.
+//
+// Heroku deployment: provision "Heroku Data for Redis" addon, then REDIS_URL
+// environment variable is auto-set. The code below parses the redis:// URL format.
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+var redisUrl = Environment.GetEnvironmentVariable("REDIS_URL");
+if (!string.IsNullOrEmpty(redisUrl))
+{
+    try
+    {
+        var uri = new Uri(redisUrl);
+        var password = uri.UserInfo?.Split(':')?.Length > 1 ? uri.UserInfo.Split(':')[1] : "";
+        redisConnectionString = $"{uri.Host}:{uri.Port},password={password},ssl=True,abortConnect=False";
+    }
+    catch
+    {
+        // Fallback to config if URL parsing fails
+    }
+}
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = redisConnectionString;
+    options.InstanceName = "GlobalFlame_";
+});
+
+builder.Services.AddHybridCache(options =>
+{
+    options.MaximumPayloadBytes = 1024 * 1024 * 5;
+    options.DefaultEntryOptions = new HybridCacheEntryOptions
+    {
+        Expiration = TimeSpan.FromMinutes(10),
+        LocalCacheExpiration = TimeSpan.FromMinutes(2)
+    };
+});
 
 //APPLICATION SERVICES
 builder.Services.AddScoped<ITokenService, TokenService>();

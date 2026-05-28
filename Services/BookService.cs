@@ -3,122 +3,87 @@ using GlobalFlameMinistry.API.DTOs.Common;
 using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Interfaces;
 using GlobalFlameMinistry.API.Mappers;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace GlobalFlameMinistry.API.Services
 {
     public class BookService : IBookService
     {
         private readonly IBookRepository _repository;
-        private readonly IMemoryCache _memoryCache;
+        private readonly HybridCache _cache;
         private readonly ILogger<BookService> _logger;
 
-        // Cache key constants
-        private const string CACHE_KEY_PUBLISHED_BOOKS = "books_published";
-        private const string CACHE_KEY_ALL_BOOKS = "books_all";
-        private const string CACHE_KEY_BOOK_ID = "book_id_{0}";
-
-        // Cache expiration times
-        private readonly TimeSpan _listCacheExpiration = TimeSpan.FromMinutes(5);
-        private readonly TimeSpan _itemCacheExpiration = TimeSpan.FromMinutes(10);
-
-        public BookService(IBookRepository repository, IMemoryCache memoryCache, ILogger<BookService> logger)
+        public BookService(IBookRepository repository, HybridCache cache, ILogger<BookService> logger)
         {
             _repository = repository;
-            _memoryCache = memoryCache;
+            _cache = cache;
             _logger = logger;
         }
 
-        /// <summary>
-        /// Creates a new book (admin endpoint). Invalidates book caches.
-        /// </summary>
         public async Task<BookResponseDto> CreateAsync(CreateBookDto dto)
         {
             var book = dto.ToModel();
             var created = await _repository.CreateAsync(book);
 
-            // Invalidate book caches
-            InvalidateBookCache();
-
-            _logger.LogInformation("[BookService] Created new book with ID {Id}, invalidating caches", created.Id);
+            await _cache.RemoveByTagAsync(CacheKeys.TagBooks, CancellationToken.None);
+            _logger.LogInformation("[BookService] Created book ID {Id}, invalidated cache tag {Tag}", created.Id, CacheKeys.TagBooks);
 
             return created.ToDto();
         }
 
-        /// <summary>
-        /// Gets a book by ID with caching. Cache expires after 10 minutes.
-        /// </summary>
         public async Task<BookResponseDto?> GetByIdAsync(int id)
         {
-            string cacheKey = string.Format(CACHE_KEY_BOOK_ID, id);
+            var cacheKey = string.Format(CacheKeys.BookId, id);
 
-            if (_memoryCache.TryGetValue(cacheKey, out BookResponseDto? cachedBook))
-            {
-                _logger.LogInformation("[BookService] Cache hit for book ID {Id}", id);
-                return cachedBook;
-            }
-
-            _logger.LogInformation("[BookService] Cache miss for book ID {Id}", id);
-
-            var book = await _repository.GetByIdAsync(id);
-            var result = book?.ToDto();
-
-            if (result != null)
-            {
-                _memoryCache.Set(cacheKey, result, _itemCacheExpiration);
-            }
-
-            return result;
+            return await _cache.GetOrCreateAsync(
+                cacheKey,
+                async cancel =>
+                {
+                    var book = await _repository.GetByIdAsync(id);
+                    return book?.ToDto();
+                },
+                tags: [CacheKeys.TagBooks],
+                cancellationToken: CancellationToken.None);
         }
 
-        /// <summary>
-        /// Gets a book by slug with caching.
-        /// </summary>
         public async Task<BookResponseDto?> GetBySlugAsync(string slug)
         {
-            var book = await _repository.GetBySlugAsync(slug);
-            var result = book?.ToDto();
+            var cacheKey = string.Format(CacheKeys.BookSlug, slug);
 
-            return result;
+            return await _cache.GetOrCreateAsync(
+                cacheKey,
+                async cancel =>
+                {
+                    var book = await _repository.GetBySlugAsync(slug);
+                    return book?.ToDto();
+                },
+                tags: [CacheKeys.TagBooks],
+                cancellationToken: CancellationToken.None);
         }
 
-        /// <summary>
-        /// Gets all published books with caching. Cache expires after 5 minutes.
-        /// Typically used for public-facing book listings.
-        /// </summary>
         public async Task<PagedResult<BookResponseDto>> GetAllAsync(BookQueryObject query)
         {
-            string cacheKey = CACHE_KEY_PUBLISHED_BOOKS;
+            var cacheKey = string.Format(CacheKeys.BooksPublished, query.PageNumber, query.PageSize);
 
-            // Attempt to retrieve from cache
-            if (_memoryCache.TryGetValue(cacheKey, out PagedResult<BookResponseDto>? cachedResult))
-            {
-                _logger.LogInformation("[BookService] Cache hit for published books");
-                return cachedResult!;
-            }
+            return await _cache.GetOrCreateAsync(
+                cacheKey,
+                async cancel =>
+                {
+                    var books = await _repository.GetAllAsync(query);
+                    var totalCount = await _repository.GetCountAsync(query);
 
-            _logger.LogInformation("[BookService] Cache miss for published books - querying database");
-
-            var books = await _repository.GetAllAsync(query);
-            var totalCount = await _repository.GetCountAsync(query);
-
-            var result = new PagedResult<BookResponseDto>
-            {
-                Items = books.ToDtoList(),
-                TotalCount = totalCount,
-                PageNumber = query.PageNumber,
-                PageSize = query.PageSize,
-            };
-
-            // Store in cache with 5-minute expiration
-            _memoryCache.Set(cacheKey, result, _listCacheExpiration);
-
-            return result;
+                    return new PagedResult<BookResponseDto>
+                    {
+                        Items = books.ToDtoList(),
+                        TotalCount = totalCount,
+                        PageNumber = query.PageNumber,
+                        PageSize = query.PageSize,
+                    };
+                },
+                tags: [CacheKeys.TagBooks],
+                cancellationToken: CancellationToken.None);
         }
 
-        /// <summary>
-        /// Updates an existing book (admin endpoint). Invalidates related book caches.
-        /// </summary>
         public async Task<BookResponseDto?> UpdateAsync(int id, UpdateBookDto dto)
         {
             var existing = await _repository.GetByIdAsync(id);
@@ -129,50 +94,24 @@ namespace GlobalFlameMinistry.API.Services
 
             if (updated is not null)
             {
-                // Invalidate specific book caches
-                InvalidateBookCache(id);
-                _logger.LogInformation("[BookService] Updated book ID {Id}, invalidating caches", id);
+                await _cache.RemoveByTagAsync(CacheKeys.TagBooks, CancellationToken.None);
+                _logger.LogInformation("[BookService] Updated book ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagBooks);
             }
 
             return updated?.ToDto();
         }
 
-        /// <summary>
-        /// Deletes a book (admin endpoint). Invalidates all book caches.
-        /// </summary>
         public async Task<bool> DeleteAsync(int id)
         {
             var result = await _repository.DeleteAsync(id);
 
             if (result)
             {
-                // Invalidate all book caches
-                InvalidateBookCache();
-                _logger.LogInformation("[BookService] Deleted book ID {Id}, invalidating caches", id);
+                await _cache.RemoveByTagAsync(CacheKeys.TagBooks, CancellationToken.None);
+                _logger.LogInformation("[BookService] Deleted book ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagBooks);
             }
 
             return result;
-        }
-
-        /// <summary>
-        /// Invalidates all book-related caches.
-        /// </summary>
-        private void InvalidateBookCache()
-        {
-            _memoryCache.Remove(CACHE_KEY_PUBLISHED_BOOKS);
-            _memoryCache.Remove(CACHE_KEY_ALL_BOOKS);
-            _logger.LogDebug("[BookService] Invalidated all book caches");
-        }
-
-        /// <summary>
-        /// Invalidates specific book cache by ID.
-        /// </summary>
-        private void InvalidateBookCache(int id)
-        {
-            _memoryCache.Remove(CACHE_KEY_PUBLISHED_BOOKS);
-            _memoryCache.Remove(CACHE_KEY_ALL_BOOKS);
-            _memoryCache.Remove(string.Format(CACHE_KEY_BOOK_ID, id));
-            _logger.LogDebug("[BookService] Invalidated book cache for ID {Id}", id);
         }
     }
 }

@@ -5,6 +5,7 @@ using GlobalFlameMinistry.API.Models;
 using GlobalFlameMinistry.API.Interfaces;
 using GlobalFlameMinistry.API.Interfaces.Email;
 using GlobalFlameMinistry.API.Mappers;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace GlobalFlameMinistry.API.Services
 {
@@ -12,12 +13,14 @@ namespace GlobalFlameMinistry.API.Services
     {
         private readonly ITestimonyRepository _testimonyRepo;
         private readonly IEmailSender _emailSender;
+        private readonly HybridCache _cache;
         private readonly ILogger<TestimonyService> _logger;
 
-        public TestimonyService(ITestimonyRepository testimonyRepo, IEmailSender emailSender, ILogger<TestimonyService> logger)
+        public TestimonyService(ITestimonyRepository testimonyRepo, IEmailSender emailSender, HybridCache cache, ILogger<TestimonyService> logger)
         {
             _testimonyRepo = testimonyRepo;
             _emailSender = emailSender;
+            _cache = cache;
             _logger = logger;
         }
 
@@ -60,16 +63,25 @@ namespace GlobalFlameMinistry.API.Services
 
         public async Task<PagedResult<TestimonyResponseDto>> GetApprovedAsync(TestimonyQueryObject query)
         {
-            var testimonies = await _testimonyRepo.GetApprovedAsync(query);
-            var totalCount = await _testimonyRepo.GetApprovedCountAsync(query);
+            var cacheKey = string.Format(CacheKeys.TestimoniesApproved, query.PageNumber, query.PageSize);
 
-            return new PagedResult<TestimonyResponseDto>
-            {
-                Items = testimonies.ToDtoList(),
-                TotalCount = totalCount,
-                PageNumber = query.PageNumber,
-                PageSize = query.PageSize
-            };
+            return await _cache.GetOrCreateAsync(
+                cacheKey,
+                async cancel =>
+                {
+                    var testimonies = await _testimonyRepo.GetApprovedAsync(query);
+                    var totalCount = await _testimonyRepo.GetApprovedCountAsync(query);
+
+                    return new PagedResult<TestimonyResponseDto>
+                    {
+                        Items = testimonies.ToDtoList(),
+                        TotalCount = totalCount,
+                        PageNumber = query.PageNumber,
+                        PageSize = query.PageSize
+                    };
+                },
+                tags: [CacheKeys.TagTestimonies],
+                cancellationToken: CancellationToken.None);
         }
 
         public async Task<TestimonyResponseDto?> GetByIdAsync(int id)
@@ -86,10 +98,13 @@ namespace GlobalFlameMinistry.API.Services
         {
             var updated = await _testimonyRepo.UpdateStatusAsync(id, updateDto);
 
-            if (updated is null)
-                return null;
+            if (updated is not null)
+            {
+                await _cache.RemoveByTagAsync(CacheKeys.TagTestimonies, CancellationToken.None);
+                _logger.LogInformation("[TestimonyService] Updated testimony ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagTestimonies);
+            }
 
-            return updated.ToTestimonyResponseDto();
+            return updated?.ToTestimonyResponseDto();
         }
 
         private async Task SendAdminNotificationAsync(Testimony testimony)
