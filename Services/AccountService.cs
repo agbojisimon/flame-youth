@@ -216,7 +216,15 @@ namespace GlobalFlameMinistry.API.Services
                   </p>
                 </div>";
 
-            await _emailSender.SendEmailAsync(newEmail, subject, body);
+            try
+            {
+                await _emailSender.SendEmailAsync(newEmail, subject, body);
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException(
+                    "We could not send the confirmation email. Please try again later.", ex);
+            }
         }
 
         // EMAIL CHANGE — STEP 2 

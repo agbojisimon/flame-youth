@@ -37,6 +37,30 @@ namespace GlobalFlameMinistry.API.Services
 
         public async Task SendEmailAsync(string email, string subject, string htmlMessage)
         {
+            if (string.IsNullOrWhiteSpace(email))
+                throw new InvalidOperationException("[EmailSender] Cannot send email: recipient address is null or empty.");
+
+            if (string.IsNullOrWhiteSpace(subject))
+                throw new InvalidOperationException("[EmailSender] Cannot send email: subject is null or empty.");
+
+            if (string.IsNullOrWhiteSpace(htmlMessage))
+                throw new InvalidOperationException("[EmailSender] Cannot send email: body is null or empty.");
+
+            if (string.IsNullOrWhiteSpace(_emailSettings.Server))
+                throw new InvalidOperationException("[EmailSender] SMTP server is not configured. Set EmailSettings:Server.");
+
+            if (string.IsNullOrWhiteSpace(_emailSettings.Email))
+                throw new InvalidOperationException("[EmailSender] SMTP username (EmailSettings:Email) is not configured.");
+
+            if (string.IsNullOrWhiteSpace(_emailSettings.Password))
+                throw new InvalidOperationException("[EmailSender] SMTP password (EmailSettings:Password) is not configured.");
+
+            if (string.IsNullOrWhiteSpace(_emailSettings.SenderEmail))
+                throw new InvalidOperationException("[EmailSender] Sender email (EmailSettings:SenderEmail) is not configured.");
+
+            if (string.IsNullOrWhiteSpace(_emailSettings.SenderName))
+                throw new InvalidOperationException("[EmailSender] Sender name (EmailSettings:SenderName) is not configured.");
+
             try
             {
                 using var smtpClient = new SmtpClient(_emailSettings.Server)
@@ -68,12 +92,14 @@ namespace GlobalFlameMinistry.API.Services
                 _logger.LogError(ex,
                     "[EmailSender] SMTP failure sending to {Email} | Subject: {Subject} | StatusCode: {StatusCode}",
                     email, subject, ex.StatusCode);
+                throw;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
                     "[EmailSender] Unexpected failure sending to {Email} | Subject: {Subject}",
                     email, subject);
+                throw;
             }
         }
     }

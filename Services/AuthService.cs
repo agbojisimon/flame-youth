@@ -169,10 +169,19 @@ namespace GlobalFlameMinistry.API.Services
 
             var body = BuildResendConfirmationEmailBody(user.FirstName, link);
 
-            await _emailSender.SendEmailAsync(
-                user.Email!,
-                "Confirm your email — Global Flame Ministry",
-                body);
+            try
+            {
+                await _emailSender.SendEmailAsync(
+                    user.Email!,
+                    "Confirm your email — Global Flame Ministry",
+                    body);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "[AuthService] Resend confirmation email failed for {Email}", user.Email);
+                return "We could not send the confirmation email. Please try again later.";
+            }
 
             return "If the email exists, a confirmation link has been sent.";
         }
@@ -190,10 +199,18 @@ namespace GlobalFlameMinistry.API.Services
 
             var body = BuildForgotPasswordEmailBody(user.FirstName, resetLink);
 
-            await _emailSender.SendEmailAsync(
-                dto.Email,
-                "Reset your password — Global Flame Ministry",
-                body);
+            try
+            {
+                await _emailSender.SendEmailAsync(
+                    dto.Email,
+                    "Reset your password — Global Flame Ministry",
+                    body);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "[AuthService] Forgot-password email failed for {Email}", dto.Email);
+            }
         }
 
         public async Task<string> ResetPasswordAsync(ResetPasswordDto dto)
@@ -218,6 +235,7 @@ namespace GlobalFlameMinistry.API.Services
 
         private static string BuildConfirmationEmailBody(string firstName, string confirmationLink)
         {
+            var safeName = (firstName ?? "Beloved").Trim();
             return $@"
         <div style='font-family:Arial,sans-serif;max-width:600px;margin:auto;'>
           <div style='background:linear-gradient(135deg,#7c3aed,#a21caf);padding:32px;
@@ -226,7 +244,7 @@ namespace GlobalFlameMinistry.API.Services
             <p style='color:#ddd6fe;margin:8px 0 0;'>Email Confirmation</p>
           </div>
           <div style='padding:32px;background:white;'>
-            <p style='font-size:16px;color:#333;'>Hi <strong>{firstName}</strong>,</p>
+            <p style='font-size:16px;color:#333;'>Hi <strong>{safeName}</strong>,</p>
             <p style='color:#555;line-height:1.6;'>
               Thank you for joining Global Flame Ministry!
               Please confirm your email address to activate your account.
@@ -260,6 +278,7 @@ namespace GlobalFlameMinistry.API.Services
 
         private static string BuildResendConfirmationEmailBody(string firstName, string confirmationLink)
         {
+            var safeName = (firstName ?? "Beloved").Trim();
             return $@"
         <div style='font-family:Arial,sans-serif;max-width:600px;margin:auto;'>
           <div style='background:linear-gradient(135deg,#7c3aed,#a21caf);padding:32px;
@@ -268,7 +287,7 @@ namespace GlobalFlameMinistry.API.Services
             <p style='color:#ddd6fe;margin:8px 0 0;'>Email Confirmation</p>
           </div>
           <div style='padding:32px;background:white;'>
-            <p style='font-size:16px;color:#333;'>Hi <strong>{firstName}</strong>,</p>
+            <p style='font-size:16px;color:#333;'>Hi <strong>{safeName}</strong>,</p>
             <p style='color:#555;line-height:1.6;'>
               Here is your new confirmation link. Click below to activate your account:
             </p>
@@ -302,6 +321,7 @@ namespace GlobalFlameMinistry.API.Services
 
         private static string BuildForgotPasswordEmailBody(string firstName, string resetLink)
         {
+            var safeName = (firstName ?? "Beloved").Trim();
             return $@"
         <div style='font-family:Arial,sans-serif;max-width:600px;margin:auto;'>
           <div style='background:linear-gradient(135deg,#7c3aed,#a21caf);padding:32px;
@@ -310,7 +330,7 @@ namespace GlobalFlameMinistry.API.Services
             <p style='color:#ddd6fe;margin:8px 0 0;'>Password Reset</p>
           </div>
           <div style='padding:32px;background:white;'>
-            <p style='font-size:16px;color:#333;'>Hi <strong>{firstName}</strong>,</p>
+            <p style='font-size:16px;color:#333;'>Hi <strong>{safeName}</strong>,</p>
             <p style='color:#555;line-height:1.6;'>
               We received a request to reset your password.
               Click the button below to proceed:

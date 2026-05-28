@@ -46,7 +46,9 @@ namespace GlobalFlameMinistry.API.Services
 
         private async Task SendConfirmationEmailAsync(string toEmail, string fullName)
         {
-            var firstName = fullName.Split(' ')[0]; // Just use their first name — feels more personal
+            if (string.IsNullOrWhiteSpace(toEmail)) return;
+            var safeName = fullName ?? "Beloved";
+            var firstName = safeName.Split(' ')[0];
 
             var subject = "We've received your message — Global Flame";
 
@@ -79,6 +81,10 @@ namespace GlobalFlameMinistry.API.Services
 
         private async Task SendAdminNotificationAsync(string fullName, string senderEmail, string message)
         {
+            var safeName = fullName ?? "(not provided)";
+            var safeEmail = senderEmail ?? "(not provided)";
+            var safeMessage = message ?? "(not provided)";
+
             var subject = "New Contact Form Submission";
 
             var body = $"""
@@ -95,15 +101,15 @@ namespace GlobalFlameMinistry.API.Services
                   <div style="background: #f8fafc; padding: 16px; border-left: 4px solid #a855f7; margin-bottom: 24px;">
                     <p style="color: #475569; font-size: 14px; margin: 0 0 12px 0;">
                       <strong>Sender Name:</strong><br/>
-                      {fullName}
+                      {safeName}
                     </p>
                     <p style="color: #475569; font-size: 14px; margin: 0 0 12px 0;">
                       <strong>Email Address:</strong><br/>
-                      <a href="mailto:{senderEmail}">{senderEmail}</a>
+                      <a href="mailto:{safeEmail}">{safeEmail}</a>
                     </p>
                     <p style="color: #475569; font-size: 14px; margin: 0;">
                       <strong>Message:</strong><br/>
-                      {message}
+                      {safeMessage}
                     </p>
                   </div>
 

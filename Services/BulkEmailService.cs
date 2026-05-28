@@ -45,7 +45,25 @@ namespace GlobalFlameMinistry.API.Services
         public async Task<BulkEmailResponseDto> SendNowAsync(
             SendBulkEmailDto dto, string adminUserId, string adminName)
         {
+            if (string.IsNullOrWhiteSpace(dto.Subject))
+                throw new InvalidOperationException("[BulkEmail] Subject is required.");
+            if (string.IsNullOrWhiteSpace(dto.HtmlBody))
+                throw new InvalidOperationException("[BulkEmail] HTML body is required.");
+
             var recipients = await ResolveRecipientsAsync(dto);
+
+            if (recipients.Count == 0)
+            {
+                _logger.LogWarning("[BulkEmail] No recipients resolved for SendNow. Subject: {Subject}", dto.Subject);
+                var empty = dto.ToModel(BuildHtmlTemplate(dto.Subject, dto.HtmlBody, dto.ImageUrl), 0, "Sent", adminUserId, adminName);
+                empty.SuccessCount = 0;
+                empty.FailedCount = 0;
+                empty.Status = "Sent";
+                empty.SentAt = DateTime.UtcNow;
+                var saved = await _repo.CreateAsync(empty);
+                return saved.ToBulkEmailResponseDto();
+            }
+
             var htmlBodyTemplate = BuildHtmlTemplate(dto.Subject, dto.HtmlBody, dto.ImageUrl);
 
             var message = dto.ToModel(
@@ -54,7 +72,6 @@ namespace GlobalFlameMinistry.API.Services
             var created = await _repo.CreateAsync(message);
             await DispatchEmailsAsync(created, recipients);
 
-            // Re-fetch to return the actual final status — not the stale "Sending" state
             var updated = await _repo.GetByIdAsync(created.Id);
             return updated!.ToBulkEmailResponseDto();
         }
@@ -63,7 +80,20 @@ namespace GlobalFlameMinistry.API.Services
         public async Task<BulkEmailResponseDto> ScheduleAsync(
             SendBulkEmailDto dto, string adminUserId, string adminName)
         {
+            if (string.IsNullOrWhiteSpace(dto.Subject))
+                throw new InvalidOperationException("[BulkEmail] Subject is required.");
+            if (string.IsNullOrWhiteSpace(dto.HtmlBody))
+                throw new InvalidOperationException("[BulkEmail] HTML body is required.");
+
             var recipients = await ResolveRecipientsAsync(dto);
+
+            if (recipients.Count == 0)
+            {
+                _logger.LogWarning("[BulkEmail] No recipients resolved for Schedule. Subject: {Subject}", dto.Subject);
+                var empty = dto.ToModel(BuildHtmlTemplate(dto.Subject, dto.HtmlBody, dto.ImageUrl), 0, "Scheduled", adminUserId, adminName);
+                return (await _repo.CreateAsync(empty)).ToBulkEmailResponseDto();
+            }
+
             var htmlBodyTemplate = BuildHtmlTemplate(dto.Subject, dto.HtmlBody, dto.ImageUrl);
 
             var message = dto.ToModel(
@@ -119,6 +149,35 @@ namespace GlobalFlameMinistry.API.Services
         private async Task DispatchEmailsAsync(
             BulkEmailMessage message, List<EmailRecipient> recipients)
         {
+            if (recipients.Count == 0)
+            {
+                _logger.LogWarning("[BulkEmail] No recipients to dispatch for BulkEmail {Id}", message.Id);
+                message.Status = "Sent";
+                message.SentAt = DateTime.UtcNow;
+                await _repo.UpdateAsync(message);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_brevo.ApiKey))
+            {
+                _logger.LogError("[BulkEmail] Brevo API key is not configured. Cannot dispatch BulkEmail {Id}", message.Id);
+                message.Status = "Failed";
+                message.ErrorMessage = "Brevo API key is not configured.";
+                await _repo.UpdateAsync(message);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_brevo.SenderEmail))
+            {
+                _logger.LogError("[BulkEmail] Brevo sender email is not configured. Cannot dispatch BulkEmail {Id}", message.Id);
+                message.Status = "Failed";
+                message.ErrorMessage = "Brevo sender email is not configured.";
+                await _repo.UpdateAsync(message);
+                return;
+            }
+
+            var htmlBody = message.HtmlBody ?? string.Empty;
+
             var httpClient = _httpClientFactory.CreateClient("BrevoClient");
             httpClient.DefaultRequestHeaders.Remove("api-key");
             httpClient.DefaultRequestHeaders.Add("api-key", _brevo.ApiKey);
@@ -128,7 +187,6 @@ namespace GlobalFlameMinistry.API.Services
                 int successCount = 0;
                 int failedCount = 0;
 
-                // Batch into groups for rate limit compliance
                 var batches = recipients
                     .Select((r, index) => new { r, index })
                     .GroupBy(x => x.index / EmailBatchSize)
@@ -141,22 +199,21 @@ namespace GlobalFlameMinistry.API.Services
                     {
                         try
                         {
-                            // Personalize the body for this specific recipient
-                            var personalizedBody = message.HtmlBody
-                                .Replace("{{firstName}}", recipient.FirstName);
+                            var personalizedBody = htmlBody
+                                .Replace("{{firstName}}", recipient.FirstName ?? "Beloved");
 
                             var payload = new
                             {
                                 sender = new
                                 {
-                                    name = _brevo.SenderName,
+                                    name = _brevo.SenderName ?? "Global Flame",
                                     email = _brevo.SenderEmail
                                 },
                                 to = new[]
                                 {
-                                    new { email = recipient.Email }  // one recipient only — no exposure
+                                    new { email = recipient.Email }
                                 },
-                                subject = message.Subject,
+                                subject = message.Subject ?? "(no subject)",
                                 htmlContent = personalizedBody
                             };
 
@@ -184,7 +241,6 @@ namespace GlobalFlameMinistry.API.Services
                                     response.StatusCode, responseBody);
                             }
 
-                            // Small delay between individual sends
                             await Task.Delay(100);
                         }
                         catch (Exception ex)
@@ -196,7 +252,6 @@ namespace GlobalFlameMinistry.API.Services
                         }
                     }
 
-                    // Polite delay between batches
                     await Task.Delay(500);
                 }
 
@@ -280,9 +335,9 @@ namespace GlobalFlameMinistry.API.Services
 
         private static string BuildHtmlTemplate(string subject, string body, string? imageUrl)
         {
-            var encodedSubject = HtmlEncoder.Default.Encode(subject);
+            var encodedSubject = HtmlEncoder.Default.Encode(subject ?? "");
 
-            var encodedBody = HtmlEncoder.Default.Encode(body)
+            var encodedBody = HtmlEncoder.Default.Encode(body ?? "")
                 .Replace("&#xA;", "<br/>")
                 .Replace("&#xD;&#xA;", "<br/>");
 

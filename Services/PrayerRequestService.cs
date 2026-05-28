@@ -100,7 +100,8 @@ namespace GlobalFlameMinistry.API.Services
         // EMAILS 
         private async Task SendConfirmationEmailAsync(string toEmail, string fullName)
         {
-            var firstName = fullName.Split(' ')[0];
+            if (string.IsNullOrWhiteSpace(toEmail)) return;
+            var firstName = (fullName ?? "Beloved").Split(' ')[0];
             var subject = "Prayer Request Received — Global Flame";
             var body = $@"
         <div style='font-family: Georgia, serif; max-width: 600px; margin: auto;
@@ -132,24 +133,30 @@ namespace GlobalFlameMinistry.API.Services
 
         private async Task SendChurchInboxNotificationAsync(string toEmail, string requesterName, string requesterEmail, string? requesterPhone, string preferredContact, string? topic, string content, string? attachment)
         {
-            var subject = $" New Prayer Request — {requesterName}";
+            var safeName = requesterName ?? "(not provided)";
+            var safeEmail = requesterEmail ?? "(not provided)";
+            var safeContent = content ?? "(not provided)";
+            var safeContact = preferredContact ?? "(not provided)";
+            var safeTopic = topic;
+            var safeAttachment = attachment;
+            var subject = $" New Prayer Request — {safeName}";
 
-            var topicRow = !string.IsNullOrWhiteSpace(topic)
+            var topicRow = !string.IsNullOrWhiteSpace(safeTopic)
             ? $@"<tr>
                <td style='padding: 10px; border: 1px solid #e2e8f0;
                    font-weight: bold; background: #f8fafc;'>Topic</td>
                <td style='padding: 10px; border: 1px solid #e2e8f0;'>
-                 <strong>{topic}</strong>
+                 <strong>{safeTopic}</strong>
                </td>
              </tr>"
             : string.Empty;
 
-            var attachmentRow = !string.IsNullOrWhiteSpace(attachment)
+            var attachmentRow = !string.IsNullOrWhiteSpace(safeAttachment)
                 ? $@"<tr>
                <td style='padding: 10px; border: 1px solid #e2e8f0;
                    font-weight: bold; background: #f8fafc;'>Attachment</td>
                <td style='padding: 10px; border: 1px solid #e2e8f0;'>
-                 <a href='{attachment}'>View attachment</a>
+                 <a href='{safeAttachment}'>View attachment</a>
                </td>
              </tr>"
                 : string.Empty;
@@ -169,13 +176,13 @@ namespace GlobalFlameMinistry.API.Services
             <tr>
               <td style='padding: 10px; border: 1px solid #e2e8f0;
                   font-weight: bold; background: #f8fafc; width: 35%;'>Name</td>
-              <td style='padding: 10px; border: 1px solid #e2e8f0;'>{requesterName}</td>
+              <td style='padding: 10px; border: 1px solid #e2e8f0;'>{safeName}</td>
             </tr>
             <tr>
               <td style='padding: 10px; border: 1px solid #e2e8f0;
                   font-weight: bold; background: #f8fafc;'>Email</td>
               <td style='padding: 10px; border: 1px solid #e2e8f0;'>
-                <a href='mailto:{requesterEmail}'>{requesterEmail}</a>
+                <a href='mailto:{safeEmail}'>{safeEmail}</a>
               </td>
             </tr>
             <tr>
@@ -188,7 +195,7 @@ namespace GlobalFlameMinistry.API.Services
             <tr>
               <td style='padding: 10px; border: 1px solid #e2e8f0;
                   font-weight: bold; background: #f8fafc;'>Preferred Contact</td>
-              <td style='padding: 10px; border: 1px solid #e2e8f0;'>{preferredContact}</td>
+              <td style='padding: 10px; border: 1px solid #e2e8f0;'>{safeContact}</td>
             </tr>
             {attachmentRow}
           </table>
@@ -198,13 +205,13 @@ namespace GlobalFlameMinistry.API.Services
           <p style='color: #475569; background: #f8fafc; padding: 16px;
               border-left: 4px solid #a855f7; line-height: 1.7;
               white-space: pre-wrap;'>
-            {content}
+            {safeContent}
           </p>
           <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;' />
           <p style='color: #94a3b8; font-size: 13px;'>
             Global Flame &middot; Jos, Plateau State, Nigeria<br/>
             Reply directly to
-            <a href='mailto:{requesterEmail}'>{requesterEmail}</a> to contact the requester.
+            <a href='mailto:{safeEmail}'>{safeEmail}</a> to contact the requester.
           </p>
         </div>";
 

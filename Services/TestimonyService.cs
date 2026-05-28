@@ -129,7 +129,7 @@ namespace GlobalFlameMinistry.API.Services
                     </p>
                     <p style="color: #475569; font-size: 14px; margin: 0 0 12px 0;">
                       <strong>Email Address:</strong><br/>
-                      {testimony.Email}
+                      {(string.IsNullOrWhiteSpace(testimony.Email) ? "<em>Not provided</em>" : testimony.Email)}
                     </p>
                     <p style="color: #475569; font-size: 14px; margin: 0 0 12px 0;">
                       <strong>Phone Number:</strong><br/>
