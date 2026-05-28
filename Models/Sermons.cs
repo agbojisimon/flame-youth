@@ -10,6 +10,7 @@ namespace GlobalFlameMinistry.API.Models
         public string Description { get; set; } = string.Empty;
         public string? SpeakerImageUrl { get; set; }
         public string? ImageUrl { get; set; }
+        public string? Theme { get; set; }
         public string? VideoUrl { get; set; }
         public string? AudioUrl { get; set; }
         public DateTime SermonDate { get; set; }

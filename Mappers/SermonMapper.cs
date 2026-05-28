@@ -18,6 +18,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 Description = sermon.Description,
                 SpeakerImageUrl = sermon.SpeakerImageUrl,
                 ImageUrl = sermon.ImageUrl,
+                Theme = sermon.Theme,
                 VideoUrl = sermon.VideoUrl,
                 AudioUrl = sermon.AudioUrl,
                 SermonDate = sermon.SermonDate,
@@ -39,8 +40,8 @@ namespace GlobalFlameMinistry.API.Mappers
                 Description = dto.Description,
                 SpeakerImageUrl = dto.SpeakerImageUrl,
                 ImageUrl = dto.ImageUrl,
+                Theme = dto.Theme,
                 VideoUrl = dto.VideoUrl,
-                AudioUrl = dto.AudioUrl,
                 SermonDate = dto.SermonDate,
                 IsPublished = dto.IsPublished,
                 IsFeatured = dto.IsFeatured,
@@ -56,6 +57,7 @@ namespace GlobalFlameMinistry.API.Mappers
             sermon.Description = dto.Description;
             sermon.SpeakerImageUrl = dto.SpeakerImageUrl;
             sermon.ImageUrl = dto.ImageUrl;
+            sermon.Theme = dto.Theme;
             sermon.VideoUrl = dto.VideoUrl;
             sermon.AudioUrl = dto.AudioUrl;
             sermon.SermonDate = dto.SermonDate;

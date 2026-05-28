@@ -293,6 +293,7 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(s => s.Series).HasMaxLength(200);
                 entity.Property(s => s.Description).HasColumnType("text");
                 entity.Property(s => s.ImageUrl).HasMaxLength(500);
+                entity.Property(s => s.Theme).HasMaxLength(300);
                 entity.Property(s => s.SpeakerImageUrl).HasMaxLength(500);
                 entity.Property(s => s.VideoUrl).HasMaxLength(500);
                 entity.Property(s => s.AudioUrl).HasMaxLength(500);
