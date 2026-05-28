@@ -189,6 +189,12 @@ if (!string.IsNullOrEmpty(redisUrl))
     }
 }
 
+// Ensure abortConnect is set so Redis unavailability doesn't crash the app
+if (!redisConnectionString.Contains("abortConnect", StringComparison.OrdinalIgnoreCase))
+{
+    redisConnectionString += ",abortConnect=false";
+}
+
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = redisConnectionString;

@@ -28,53 +28,71 @@ namespace GlobalFlameMinistry.API.Services
             var cacheKey = string.Format(CacheKeys.SermonPublished,
                 query.PageNumber, query.PageSize, query.IsFeatured?.ToString() ?? "null");
 
-            return await _cache.GetOrCreateAsync(
-                cacheKey,
-                async cancel =>
-                {
-                    var sermons = await _repository.GetAllAsync(query);
-                    var total = await _repository.GetCountAsync(query);
+            async ValueTask<PagedResult<SermonResponseDto>> Factory(CancellationToken ct)
+            {
+                var sermons = await _repository.GetAllAsync(query);
+                var total = await _repository.GetCountAsync(query);
 
-                    return new PagedResult<SermonResponseDto>
-                    {
-                        Items = sermons.ToDtoList(),
-                        TotalCount = total,
-                        PageNumber = query.PageNumber,
-                        PageSize = query.PageSize
-                    };
-                },
-                tags: [CacheKeys.TagSermons],
-                cancellationToken: CancellationToken.None);
+                return new PagedResult<SermonResponseDto>
+                {
+                    Items = sermons.ToDtoList(),
+                    TotalCount = total,
+                    PageNumber = query.PageNumber,
+                    PageSize = query.PageSize
+                };
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(cacheKey, Factory, tags: [CacheKeys.TagSermons], cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis unavailable, falling back to DB for cache key {CacheKey}", cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<SermonResponseDto?> GetByIdAsync(int id)
         {
             var cacheKey = string.Format(CacheKeys.SermonId, id);
 
-            return await _cache.GetOrCreateAsync(
-                cacheKey,
-                async cancel =>
-                {
-                    var sermon = await _repository.GetByIdAsync(id);
-                    return sermon?.ToDto();
-                },
-                tags: [CacheKeys.TagSermons],
-                cancellationToken: CancellationToken.None);
+            async ValueTask<SermonResponseDto?> Factory(CancellationToken ct)
+            {
+                var sermon = await _repository.GetByIdAsync(id);
+                return sermon?.ToDto();
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(cacheKey, Factory, tags: [CacheKeys.TagSermons], cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis unavailable, falling back to DB for cache key {CacheKey}", cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<SermonResponseDto?> GetBySlugAsync(string slug)
         {
             var cacheKey = string.Format(CacheKeys.SermonSlug, slug);
 
-            return await _cache.GetOrCreateAsync(
-                cacheKey,
-                async cancel =>
-                {
-                    var sermon = await _repository.GetBySlugAsync(slug);
-                    return sermon?.ToDto();
-                },
-                tags: [CacheKeys.TagSermons],
-                cancellationToken: CancellationToken.None);
+            async ValueTask<SermonResponseDto?> Factory(CancellationToken ct)
+            {
+                var sermon = await _repository.GetBySlugAsync(slug);
+                return sermon?.ToDto();
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(cacheKey, Factory, tags: [CacheKeys.TagSermons], cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis unavailable, falling back to DB for cache key {CacheKey}", cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<PagedResult<SermonResponseDto>> GetAllAsync(SermonQueryObject query)
@@ -96,8 +114,15 @@ namespace GlobalFlameMinistry.API.Services
             var sermon = dto.ToModel();
             var created = await _repository.CreateAsync(sermon);
 
-            await _cache.RemoveByTagAsync(CacheKeys.TagSermons, CancellationToken.None);
-            _logger.LogInformation("[SermonService] Created sermon ID {Id}, invalidated cache tag {Tag}", created.Id, CacheKeys.TagSermons);
+            try
+            {
+                await _cache.RemoveByTagAsync(CacheKeys.TagSermons, CancellationToken.None);
+                _logger.LogInformation("[SermonService] Created sermon ID {Id}, invalidated cache tag {Tag}", created.Id, CacheKeys.TagSermons);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[SermonService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagSermons);
+            }
 
             return created.ToDto();
         }
@@ -108,8 +133,15 @@ namespace GlobalFlameMinistry.API.Services
 
             if (updated is not null)
             {
-                await _cache.RemoveByTagAsync(CacheKeys.TagSermons, CancellationToken.None);
-                _logger.LogInformation("[SermonService] Updated sermon ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagSermons);
+                try
+                {
+                    await _cache.RemoveByTagAsync(CacheKeys.TagSermons, CancellationToken.None);
+                    _logger.LogInformation("[SermonService] Updated sermon ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagSermons);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[SermonService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagSermons);
+                }
             }
 
             return updated?.ToDto();
@@ -121,8 +153,15 @@ namespace GlobalFlameMinistry.API.Services
 
             if (result)
             {
-                await _cache.RemoveByTagAsync(CacheKeys.TagSermons, CancellationToken.None);
-                _logger.LogInformation("[SermonService] Deleted sermon ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagSermons);
+                try
+                {
+                    await _cache.RemoveByTagAsync(CacheKeys.TagSermons, CancellationToken.None);
+                    _logger.LogInformation("[SermonService] Deleted sermon ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagSermons);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[SermonService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagSermons);
+                }
             }
 
             return result;
@@ -135,8 +174,15 @@ namespace GlobalFlameMinistry.API.Services
             sermon.IsFeatured = !sermon.IsFeatured;
             await _repository.SaveChangesAsync();
 
-            await _cache.RemoveByTagAsync(CacheKeys.TagSermons, CancellationToken.None);
-            _logger.LogInformation("[SermonService] Toggled featured sermon ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagSermons);
+            try
+            {
+                await _cache.RemoveByTagAsync(CacheKeys.TagSermons, CancellationToken.None);
+                _logger.LogInformation("[SermonService] Toggled featured sermon ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagSermons);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[SermonService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagSermons);
+            }
 
             return sermon.ToDto();
         }

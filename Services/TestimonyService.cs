@@ -65,23 +65,29 @@ namespace GlobalFlameMinistry.API.Services
         {
             var cacheKey = string.Format(CacheKeys.TestimoniesApproved, query.PageNumber, query.PageSize);
 
-            return await _cache.GetOrCreateAsync(
-                cacheKey,
-                async cancel =>
-                {
-                    var testimonies = await _testimonyRepo.GetApprovedAsync(query);
-                    var totalCount = await _testimonyRepo.GetApprovedCountAsync(query);
+            async ValueTask<PagedResult<TestimonyResponseDto>> Factory(CancellationToken ct)
+            {
+                var testimonies = await _testimonyRepo.GetApprovedAsync(query);
+                var totalCount = await _testimonyRepo.GetApprovedCountAsync(query);
 
-                    return new PagedResult<TestimonyResponseDto>
-                    {
-                        Items = testimonies.ToDtoList(),
-                        TotalCount = totalCount,
-                        PageNumber = query.PageNumber,
-                        PageSize = query.PageSize
-                    };
-                },
-                tags: [CacheKeys.TagTestimonies],
-                cancellationToken: CancellationToken.None);
+                return new PagedResult<TestimonyResponseDto>
+                {
+                    Items = testimonies.ToDtoList(),
+                    TotalCount = totalCount,
+                    PageNumber = query.PageNumber,
+                    PageSize = query.PageSize
+                };
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(cacheKey, Factory, tags: [CacheKeys.TagTestimonies], cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis unavailable, falling back to DB for cache key {CacheKey}", cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<TestimonyResponseDto?> GetByIdAsync(int id)
@@ -100,8 +106,15 @@ namespace GlobalFlameMinistry.API.Services
 
             if (updated is not null)
             {
-                await _cache.RemoveByTagAsync(CacheKeys.TagTestimonies, CancellationToken.None);
-                _logger.LogInformation("[TestimonyService] Updated testimony ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagTestimonies);
+                try
+                {
+                    await _cache.RemoveByTagAsync(CacheKeys.TagTestimonies, CancellationToken.None);
+                    _logger.LogInformation("[TestimonyService] Updated testimony ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagTestimonies);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[TestimonyService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagTestimonies);
+                }
             }
 
             return updated?.ToTestimonyResponseDto();

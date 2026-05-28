@@ -25,8 +25,15 @@ namespace GlobalFlameMinistry.API.Services
             var book = dto.ToModel();
             var created = await _repository.CreateAsync(book);
 
-            await _cache.RemoveByTagAsync(CacheKeys.TagBooks, CancellationToken.None);
-            _logger.LogInformation("[BookService] Created book ID {Id}, invalidated cache tag {Tag}", created.Id, CacheKeys.TagBooks);
+            try
+            {
+                await _cache.RemoveByTagAsync(CacheKeys.TagBooks, CancellationToken.None);
+                _logger.LogInformation("[BookService] Created book ID {Id}, invalidated cache tag {Tag}", created.Id, CacheKeys.TagBooks);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[BookService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagBooks);
+            }
 
             return created.ToDto();
         }
@@ -35,53 +42,71 @@ namespace GlobalFlameMinistry.API.Services
         {
             var cacheKey = string.Format(CacheKeys.BookId, id);
 
-            return await _cache.GetOrCreateAsync(
-                cacheKey,
-                async cancel =>
-                {
-                    var book = await _repository.GetByIdAsync(id);
-                    return book?.ToDto();
-                },
-                tags: [CacheKeys.TagBooks],
-                cancellationToken: CancellationToken.None);
+            async ValueTask<BookResponseDto?> Factory(CancellationToken ct)
+            {
+                var book = await _repository.GetByIdAsync(id);
+                return book?.ToDto();
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(cacheKey, Factory, tags: [CacheKeys.TagBooks], cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis unavailable, falling back to DB for cache key {CacheKey}", cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<BookResponseDto?> GetBySlugAsync(string slug)
         {
             var cacheKey = string.Format(CacheKeys.BookSlug, slug);
 
-            return await _cache.GetOrCreateAsync(
-                cacheKey,
-                async cancel =>
-                {
-                    var book = await _repository.GetBySlugAsync(slug);
-                    return book?.ToDto();
-                },
-                tags: [CacheKeys.TagBooks],
-                cancellationToken: CancellationToken.None);
+            async ValueTask<BookResponseDto?> Factory(CancellationToken ct)
+            {
+                var book = await _repository.GetBySlugAsync(slug);
+                return book?.ToDto();
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(cacheKey, Factory, tags: [CacheKeys.TagBooks], cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis unavailable, falling back to DB for cache key {CacheKey}", cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<PagedResult<BookResponseDto>> GetAllAsync(BookQueryObject query)
         {
             var cacheKey = string.Format(CacheKeys.BooksPublished, query.PageNumber, query.PageSize);
 
-            return await _cache.GetOrCreateAsync(
-                cacheKey,
-                async cancel =>
-                {
-                    var books = await _repository.GetAllAsync(query);
-                    var totalCount = await _repository.GetCountAsync(query);
+            async ValueTask<PagedResult<BookResponseDto>> Factory(CancellationToken ct)
+            {
+                var books = await _repository.GetAllAsync(query);
+                var totalCount = await _repository.GetCountAsync(query);
 
-                    return new PagedResult<BookResponseDto>
-                    {
-                        Items = books.ToDtoList(),
-                        TotalCount = totalCount,
-                        PageNumber = query.PageNumber,
-                        PageSize = query.PageSize,
-                    };
-                },
-                tags: [CacheKeys.TagBooks],
-                cancellationToken: CancellationToken.None);
+                return new PagedResult<BookResponseDto>
+                {
+                    Items = books.ToDtoList(),
+                    TotalCount = totalCount,
+                    PageNumber = query.PageNumber,
+                    PageSize = query.PageSize,
+                };
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(cacheKey, Factory, tags: [CacheKeys.TagBooks], cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis unavailable, falling back to DB for cache key {CacheKey}", cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<BookResponseDto?> UpdateAsync(int id, UpdateBookDto dto)
@@ -94,8 +119,15 @@ namespace GlobalFlameMinistry.API.Services
 
             if (updated is not null)
             {
-                await _cache.RemoveByTagAsync(CacheKeys.TagBooks, CancellationToken.None);
-                _logger.LogInformation("[BookService] Updated book ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagBooks);
+                try
+                {
+                    await _cache.RemoveByTagAsync(CacheKeys.TagBooks, CancellationToken.None);
+                    _logger.LogInformation("[BookService] Updated book ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagBooks);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[BookService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagBooks);
+                }
             }
 
             return updated?.ToDto();
@@ -107,8 +139,15 @@ namespace GlobalFlameMinistry.API.Services
 
             if (result)
             {
-                await _cache.RemoveByTagAsync(CacheKeys.TagBooks, CancellationToken.None);
-                _logger.LogInformation("[BookService] Deleted book ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagBooks);
+                try
+                {
+                    await _cache.RemoveByTagAsync(CacheKeys.TagBooks, CancellationToken.None);
+                    _logger.LogInformation("[BookService] Deleted book ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagBooks);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[BookService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagBooks);
+                }
             }
 
             return result;

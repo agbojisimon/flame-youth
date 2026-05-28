@@ -25,8 +25,15 @@ namespace GlobalFlameMinistry.API.Services
             var blogPost = dto.ToModel(authorId);
             var created = await _blogRepository.CreateAsync(blogPost);
 
-            await _cache.RemoveByTagAsync(CacheKeys.TagBlog, CancellationToken.None);
-            _logger.LogInformation("[BlogPostService] Created blog post ID {Id}, invalidated cache tag {Tag}", created.Id, CacheKeys.TagBlog);
+            try
+            {
+                await _cache.RemoveByTagAsync(CacheKeys.TagBlog, CancellationToken.None);
+                _logger.LogInformation("[BlogPostService] Created blog post ID {Id}, invalidated cache tag {Tag}", created.Id, CacheKeys.TagBlog);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[BlogPostService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagBlog);
+            }
 
             return created.ToResponseDto();
         }
@@ -37,8 +44,15 @@ namespace GlobalFlameMinistry.API.Services
 
             if (result)
             {
-                await _cache.RemoveByTagAsync(CacheKeys.TagBlog, CancellationToken.None);
-                _logger.LogInformation("[BlogPostService] Deleted blog post ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagBlog);
+                try
+                {
+                    await _cache.RemoveByTagAsync(CacheKeys.TagBlog, CancellationToken.None);
+                    _logger.LogInformation("[BlogPostService] Deleted blog post ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagBlog);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[BlogPostService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagBlog);
+                }
             }
 
             return result;
@@ -48,53 +62,71 @@ namespace GlobalFlameMinistry.API.Services
         {
             var cacheKey = string.Format(CacheKeys.BlogPublished, query.PageNumber, query.PageSize);
 
-            return await _cache.GetOrCreateAsync(
-                cacheKey,
-                async cancel =>
-                {
-                    var posts = await _blogRepository.GetAllAsync(query);
-                    var totalCount = await _blogRepository.GetCountAsync(query);
+            async ValueTask<PagedResult<BlogPostResponseDto>> Factory(CancellationToken ct)
+            {
+                var posts = await _blogRepository.GetAllAsync(query);
+                var totalCount = await _blogRepository.GetCountAsync(query);
 
-                    return new PagedResult<BlogPostResponseDto>
-                    {
-                        Items = posts.ToDtoList(),
-                        TotalCount = totalCount,
-                        PageNumber = query.PageNumber,
-                        PageSize = query.PageSize
-                    };
-                },
-                tags: [CacheKeys.TagBlog],
-                cancellationToken: CancellationToken.None);
+                return new PagedResult<BlogPostResponseDto>
+                {
+                    Items = posts.ToDtoList(),
+                    TotalCount = totalCount,
+                    PageNumber = query.PageNumber,
+                    PageSize = query.PageSize
+                };
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(cacheKey, Factory, tags: [CacheKeys.TagBlog], cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis unavailable, falling back to DB for cache key {CacheKey}", cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<BlogPostResponseDto?> GetByIdAsync(int id)
         {
             var cacheKey = string.Format(CacheKeys.BlogId, id);
 
-            return await _cache.GetOrCreateAsync(
-                cacheKey,
-                async cancel =>
-                {
-                    var post = await _blogRepository.GetByIdAsync(id);
-                    return post?.ToResponseDto();
-                },
-                tags: [CacheKeys.TagBlog],
-                cancellationToken: CancellationToken.None);
+            async ValueTask<BlogPostResponseDto?> Factory(CancellationToken ct)
+            {
+                var post = await _blogRepository.GetByIdAsync(id);
+                return post?.ToResponseDto();
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(cacheKey, Factory, tags: [CacheKeys.TagBlog], cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis unavailable, falling back to DB for cache key {CacheKey}", cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<BlogPostResponseDto?> GetBySlugAsync(string slug)
         {
             var cacheKey = string.Format(CacheKeys.BlogSlug, slug);
 
-            return await _cache.GetOrCreateAsync(
-                cacheKey,
-                async cancel =>
-                {
-                    var post = await _blogRepository.GetBySlugAsync(slug);
-                    return post?.ToResponseDto();
-                },
-                tags: [CacheKeys.TagBlog],
-                cancellationToken: CancellationToken.None);
+            async ValueTask<BlogPostResponseDto?> Factory(CancellationToken ct)
+            {
+                var post = await _blogRepository.GetBySlugAsync(slug);
+                return post?.ToResponseDto();
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(cacheKey, Factory, tags: [CacheKeys.TagBlog], cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis unavailable, falling back to DB for cache key {CacheKey}", cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<BlogPostResponseDto?> UpdateAsync(int id, UpdateBlogPostDto dto)
@@ -103,8 +135,15 @@ namespace GlobalFlameMinistry.API.Services
 
             if (updated is not null)
             {
-                await _cache.RemoveByTagAsync(CacheKeys.TagBlog, CancellationToken.None);
-                _logger.LogInformation("[BlogPostService] Updated blog post ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagBlog);
+                try
+                {
+                    await _cache.RemoveByTagAsync(CacheKeys.TagBlog, CancellationToken.None);
+                    _logger.LogInformation("[BlogPostService] Updated blog post ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagBlog);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[BlogPostService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagBlog);
+                }
             }
 
             return updated?.ToResponseDto();
@@ -116,8 +155,15 @@ namespace GlobalFlameMinistry.API.Services
 
             if (result)
             {
-                await _cache.RemoveByTagAsync(CacheKeys.TagBlog, CancellationToken.None);
-                _logger.LogInformation("[BlogPostService] Toggled publish blog post ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagBlog);
+                try
+                {
+                    await _cache.RemoveByTagAsync(CacheKeys.TagBlog, CancellationToken.None);
+                    _logger.LogInformation("[BlogPostService] Toggled publish blog post ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagBlog);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[BlogPostService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagBlog);
+                }
             }
 
             return result;

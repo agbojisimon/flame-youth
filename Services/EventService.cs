@@ -25,8 +25,15 @@ namespace GlobalFlameMinistry.API.Services
             var evt = createDto.ToModel();
             var created = await _eventRepo.CreateAsync(evt);
 
-            await _cache.RemoveByTagAsync(CacheKeys.TagEvents, CancellationToken.None);
-            _logger.LogInformation("[EventService] Created event ID {Id}, invalidated cache tag {Tag}", created.Id, CacheKeys.TagEvents);
+            try
+            {
+                await _cache.RemoveByTagAsync(CacheKeys.TagEvents, CancellationToken.None);
+                _logger.LogInformation("[EventService] Created event ID {Id}, invalidated cache tag {Tag}", created.Id, CacheKeys.TagEvents);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[EventService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagEvents);
+            }
 
             return created.ToEventResponseDto();
         }
@@ -37,8 +44,15 @@ namespace GlobalFlameMinistry.API.Services
 
             if (result)
             {
-                await _cache.RemoveByTagAsync(CacheKeys.TagEvents, CancellationToken.None);
-                _logger.LogInformation("[EventService] Deleted event ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagEvents);
+                try
+                {
+                    await _cache.RemoveByTagAsync(CacheKeys.TagEvents, CancellationToken.None);
+                    _logger.LogInformation("[EventService] Deleted event ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagEvents);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[EventService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagEvents);
+                }
             }
 
             return result;
@@ -48,53 +62,71 @@ namespace GlobalFlameMinistry.API.Services
         {
             var cacheKey = string.Format(CacheKeys.EventsUpcoming, query.PageNumber, query.PageSize);
 
-            return await _cache.GetOrCreateAsync(
-                cacheKey,
-                async cancel =>
-                {
-                    var events = await _eventRepo.GetAllAsync(query);
-                    var totalCount = await _eventRepo.GetCountAsync(query);
+            async ValueTask<PagedResult<EventResponseDto>> Factory(CancellationToken ct)
+            {
+                var events = await _eventRepo.GetAllAsync(query);
+                var totalCount = await _eventRepo.GetCountAsync(query);
 
-                    return new PagedResult<EventResponseDto>
-                    {
-                        Items = events.ToDtoList(),
-                        TotalCount = totalCount,
-                        PageNumber = query.PageNumber,
-                        PageSize = query.PageSize
-                    };
-                },
-                tags: [CacheKeys.TagEvents],
-                cancellationToken: CancellationToken.None);
+                return new PagedResult<EventResponseDto>
+                {
+                    Items = events.ToDtoList(),
+                    TotalCount = totalCount,
+                    PageNumber = query.PageNumber,
+                    PageSize = query.PageSize
+                };
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(cacheKey, Factory, tags: [CacheKeys.TagEvents], cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis unavailable, falling back to DB for cache key {CacheKey}", cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<EventResponseDto?> GetByIdAsync(int id)
         {
             var cacheKey = string.Format(CacheKeys.EventId, id);
 
-            return await _cache.GetOrCreateAsync(
-                cacheKey,
-                async cancel =>
-                {
-                    var evt = await _eventRepo.GetByIdAsync(id);
-                    return evt?.ToEventResponseDto();
-                },
-                tags: [CacheKeys.TagEvents],
-                cancellationToken: CancellationToken.None);
+            async ValueTask<EventResponseDto?> Factory(CancellationToken ct)
+            {
+                var evt = await _eventRepo.GetByIdAsync(id);
+                return evt?.ToEventResponseDto();
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(cacheKey, Factory, tags: [CacheKeys.TagEvents], cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis unavailable, falling back to DB for cache key {CacheKey}", cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<EventResponseDto?> GetBySlugAsync(string slug)
         {
             var cacheKey = string.Format(CacheKeys.EventSlug, slug);
 
-            return await _cache.GetOrCreateAsync(
-                cacheKey,
-                async cancel =>
-                {
-                    var evt = await _eventRepo.GetBySlugAsync(slug);
-                    return evt?.ToEventResponseDto();
-                },
-                tags: [CacheKeys.TagEvents],
-                cancellationToken: CancellationToken.None);
+            async ValueTask<EventResponseDto?> Factory(CancellationToken ct)
+            {
+                var evt = await _eventRepo.GetBySlugAsync(slug);
+                return evt?.ToEventResponseDto();
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(cacheKey, Factory, tags: [CacheKeys.TagEvents], cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis unavailable, falling back to DB for cache key {CacheKey}", cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<EventResponseDto?> UpdateAsync(int id, UpdateEventDto updateDto)
@@ -103,8 +135,15 @@ namespace GlobalFlameMinistry.API.Services
 
             if (updated is not null)
             {
-                await _cache.RemoveByTagAsync(CacheKeys.TagEvents, CancellationToken.None);
-                _logger.LogInformation("[EventService] Updated event ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagEvents);
+                try
+                {
+                    await _cache.RemoveByTagAsync(CacheKeys.TagEvents, CancellationToken.None);
+                    _logger.LogInformation("[EventService] Updated event ID {Id}, invalidated cache tag {Tag}", id, CacheKeys.TagEvents);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[EventService] Redis unavailable, cache invalidation skipped for {Tag}", CacheKeys.TagEvents);
+                }
             }
 
             return updated?.ToEventResponseDto();
