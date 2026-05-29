@@ -24,6 +24,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 SermonDate = sermon.SermonDate,
                 IsPublished = sermon.IsPublished,
                 IsFeatured = sermon.IsFeatured,
+                Category = sermon.Category,
                 CreatedOn = sermon.CreatedOn,
                 UpdatedOn = sermon.UpdatedOn
             };
@@ -45,6 +46,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 SermonDate = dto.SermonDate,
                 IsPublished = dto.IsPublished,
                 IsFeatured = dto.IsFeatured,
+                Category = dto.Category,
                 CreatedOn = DateTime.UtcNow
             };
         }
@@ -63,6 +65,7 @@ namespace GlobalFlameMinistry.API.Mappers
             sermon.SermonDate = dto.SermonDate;
             sermon.IsPublished = dto.IsPublished;
             sermon.IsFeatured = dto.IsFeatured;
+            sermon.Category = dto.Category;
             sermon.UpdatedOn = DateTime.UtcNow;
         }
 

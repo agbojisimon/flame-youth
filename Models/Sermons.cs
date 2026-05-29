@@ -1,3 +1,5 @@
+using GlobalFlameMinistry.API.Models.Enums;
+
 namespace GlobalFlameMinistry.API.Models
 {
     public class Sermon
@@ -16,6 +18,7 @@ namespace GlobalFlameMinistry.API.Models
         public DateTime SermonDate { get; set; }
         public bool IsPublished { get; set; } = false;
         public bool IsFeatured { get; set; } = false;
+        public SermonCategory Category { get; set; } = SermonCategory.Conference;
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedOn { get; set; }
     }

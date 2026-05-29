@@ -4,6 +4,7 @@ using GlobalFlameMinistry.API.Helpers.Queries;
 using GlobalFlameMinistry.API.Interfaces;
 using GlobalFlameMinistry.API.Mappers;
 using GlobalFlameMinistry.API.Models;
+using GlobalFlameMinistry.API.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace GlobalFlameMinistry.API.Repositories
@@ -40,6 +41,10 @@ namespace GlobalFlameMinistry.API.Repositories
             if (query.IsFeatured.HasValue)
                 sermons = sermons.Where(s =>
                     s.IsFeatured == query.IsFeatured.Value);
+
+            if (query.Category.HasValue)
+                sermons = sermons.Where(s =>
+                    s.Category == query.Category.Value);
 
             if (query.FromDate.HasValue)
                 sermons = sermons.Where(s =>
@@ -96,6 +101,10 @@ namespace GlobalFlameMinistry.API.Repositories
             if (query.IsFeatured.HasValue)
                 sermons = sermons.Where(s =>
                     s.IsFeatured == query.IsFeatured.Value);
+
+            if (query.Category.HasValue)
+                sermons = sermons.Where(s =>
+                    s.Category == query.Category.Value);
 
             if (query.FromDate.HasValue)
                 sermons = sermons.Where(s =>

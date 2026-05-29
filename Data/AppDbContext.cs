@@ -1,4 +1,5 @@
 using GlobalFlameMinistry.API.Models;
+using GlobalFlameMinistry.API.Models.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -298,6 +299,9 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(s => s.VideoUrl).HasMaxLength(500);
                 entity.Property(s => s.AudioUrl).HasMaxLength(500);
                 entity.Property(s => s.IsPublished).HasDefaultValue(false);
+                entity.Property(s => s.Category)
+                      .HasDefaultValue(SermonCategory.Conference)
+                      .HasConversion<int>();
                 entity.Property(s => s.CreatedOn).HasDefaultValueSql("NOW()");
             });
 

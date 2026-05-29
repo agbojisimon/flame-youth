@@ -1,3 +1,5 @@
+using GlobalFlameMinistry.API.Models.Enums;
+
 namespace GlobalFlameMinistry.API.Helpers.Queries
 {
     public class SermonQueryObject : BaseQueryObject
@@ -7,6 +9,7 @@ namespace GlobalFlameMinistry.API.Helpers.Queries
         public string? Series { get; set; }
         public bool? IsPublished { get; set; }
         public bool? IsFeatured { get; set; }
+        public SermonCategory? Category { get; set; }
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
     }

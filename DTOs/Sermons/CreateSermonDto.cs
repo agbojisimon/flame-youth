@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using GlobalFlameMinistry.API.Models.Enums;
 
 namespace GlobalFlameMinistry.API.DTOs.Sermon
 {
@@ -27,5 +28,6 @@ namespace GlobalFlameMinistry.API.DTOs.Sermon
         public DateTime SermonDate { get; set; }
         public bool IsPublished { get; set; } = false;
         public bool IsFeatured { get; set; } = false;
+        public SermonCategory Category { get; set; } = SermonCategory.Conference;
     }
 }
