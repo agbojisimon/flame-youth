@@ -12,7 +12,7 @@ public static class CacheKeys
     public const string TagTestimonies = "tag:testimonies";
 
     // ── SERMONS ────────────────────────────────────────────────────────────────
-    public const string SermonPublished = "sermons:published_p{0}_s{1}_f{2}";
+    public const string SermonPublished = "sermons:published_p{0}_s{1}_f{2}_c{3}";
     public const string SermonId = "sermons:id_{0}";
     public const string SermonSlug = "sermons:slug_{0}";
 

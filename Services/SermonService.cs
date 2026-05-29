@@ -26,7 +26,7 @@ namespace GlobalFlameMinistry.API.Services
             query.IsPublished = true;
 
             var cacheKey = string.Format(CacheKeys.SermonPublished,
-                query.PageNumber, query.PageSize, query.IsFeatured?.ToString() ?? "null");
+                query.PageNumber, query.PageSize, query.IsFeatured?.ToString() ?? "null", query.Category?.ToString() ?? "all");
 
             async ValueTask<PagedResult<SermonResponseDto>> Factory(CancellationToken ct)
             {
