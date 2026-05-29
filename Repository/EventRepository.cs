@@ -67,15 +67,15 @@ namespace GlobalFlameMinistry.API.Repository
                 events = events.Where(e => e.IsCancelled == query.IsCancelled.Value);
 
             if (query.UpcomingOnly.HasValue && query.UpcomingOnly.Value)
-                events = events.Where(e => e.StartDate > DateTime.UtcNow);
+                events = events.Where(e => e.StartDate > DateTime.Now);
 
             if (query.OngoingOnly.HasValue && query.OngoingOnly.Value)
                 events = events.Where(e =>
-                    e.StartDate <= DateTime.UtcNow &&
-                    e.EndDate >= DateTime.UtcNow);
+                    e.StartDate <= DateTime.Now &&
+                    e.EndDate >= DateTime.Now);
 
             if (query.PastOnly.HasValue && query.PastOnly.Value)
-                events = events.Where(e => e.EndDate < DateTime.UtcNow);
+                events = events.Where(e => e.EndDate < DateTime.Now);
 
             if (query.MinistryId.HasValue)
                 events = events.Where(e => e.MinistryId == query.MinistryId.Value);
@@ -147,15 +147,15 @@ namespace GlobalFlameMinistry.API.Repository
                 events = events.Where(e => e.IsCancelled == query.IsCancelled.Value);
 
             if (query.UpcomingOnly.HasValue && query.UpcomingOnly.Value)
-                events = events.Where(e => e.StartDate > DateTime.UtcNow);
+                events = events.Where(e => e.StartDate > DateTime.Now);
 
             if (query.OngoingOnly.HasValue && query.OngoingOnly.Value)
                 events = events.Where(e =>
-                    e.StartDate <= DateTime.UtcNow &&
-                    e.EndDate >= DateTime.UtcNow);
+                    e.StartDate <= DateTime.Now &&
+                    e.EndDate >= DateTime.Now);
 
             if (query.PastOnly.HasValue && query.PastOnly.Value)
-                events = events.Where(e => e.EndDate < DateTime.UtcNow);
+                events = events.Where(e => e.EndDate < DateTime.Now);
 
             if (query.FromDate.HasValue)
                 events = events.Where(e => e.StartDate >= query.FromDate.Value);

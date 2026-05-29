@@ -60,7 +60,7 @@ namespace GlobalFlameMinistry.API.Services
 
         public async Task<PagedResult<EventResponseDto>> GetAllAsync(EventQueryObject query)
         {
-            var cacheKey = string.Format(CacheKeys.EventsUpcoming, query.PageNumber, query.PageSize);
+            var cacheKey = $"events:p{query.PageNumber}:s{query.PageSize}:upcoming{query.UpcomingOnly}:ongoing{query.OngoingOnly}:past{query.PastOnly}:cancelled{query.IsCancelled}:module{query.Module}";
 
             async ValueTask<PagedResult<EventResponseDto>> Factory(CancellationToken ct)
             {
