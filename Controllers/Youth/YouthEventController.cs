@@ -84,7 +84,7 @@ namespace GlobalFlameMinistry.API.Controllers.Youth
         {
             dto.Module = "Youth";
             var evt = await _eventService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = evt.Id }, evt);
+            return Ok(new { isSuccess = true, data = evt });
         }
 
         // PUT /api/youth/events/5 — Admin only
@@ -97,7 +97,8 @@ namespace GlobalFlameMinistry.API.Controllers.Youth
             if (existing.Module != "Youth") return NotFound("Event not found");
 
             var evt = await _eventService.UpdateAsync(id, dto);
-            return Ok(evt);
+            if (evt is null) return NotFound("Event not found");
+            return Ok(new { isSuccess = true, data = evt });
         }
 
         // DELETE /api/youth/events/5 — Admin only
@@ -111,7 +112,7 @@ namespace GlobalFlameMinistry.API.Controllers.Youth
 
             var deleted = await _eventService.DeleteAsync(id);
             if (!deleted) return NotFound("Event not found");
-            return NoContent();
+            return Ok(new { isSuccess = true });
         }
     }
 }

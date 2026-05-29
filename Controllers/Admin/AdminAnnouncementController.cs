@@ -50,7 +50,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
                 return Unauthorized("Unauthorized");
 
             var announcement = await _announceService.CreateAsync(dto, createdById);
-            return CreatedAtAction(nameof(GetById), new { id = announcement.Id }, announcement);
+            return Ok(new { isSuccess = true, data = announcement });
         }
 
         // PUT /api/admin/announcements/5
@@ -62,7 +62,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (announcement is null)
                 return NotFound("Announcement not found");
 
-            return Ok(announcement);
+            return Ok(new { isSuccess = true, data = announcement });
         }
 
         // DELETE /api/admin/announcements/5
@@ -74,7 +74,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Announcement not found");
 
-            return NoContent();
+            return Ok(new { isSuccess = true });
         }
     }
 }

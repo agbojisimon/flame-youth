@@ -45,7 +45,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
         {
             var ministry = await _service.CreateAsync(dto);
 
-            return CreatedAtAction(nameof(GetById), new { id = ministry.Id }, ministry);
+            return Ok(new { isSuccess = true, data = ministry });
         }
 
         // PUT /api/admin/ministries/5
@@ -58,7 +58,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (ministry is null)
                 return NotFound("Ministry not found");
 
-            return Ok(ministry);
+            return Ok(new { isSuccess = true, data = ministry });
         }
 
         // DELETE /api/admin/ministries/5
@@ -70,7 +70,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Ministry not found");
 
-            return NoContent();
+            return Ok(new { isSuccess = true });
         }
     }
 }

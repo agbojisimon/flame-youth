@@ -40,7 +40,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
         public async Task<IActionResult> Create([FromBody] CreateSermonDto dto)
         {
             var sermon = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = sermon.Id }, sermon);
+            return Ok(new { isSuccess = true, data = sermon });
         }
 
         [HttpPut("{id:int}")]
@@ -51,7 +51,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (sermon is null)
                 return NotFound("Sermon not found");
 
-            return Ok(sermon);
+            return Ok(new { isSuccess = true, data = sermon });
         }
 
         [HttpDelete("{id:int}")]
@@ -62,7 +62,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Sermon not found");
 
-            return NoContent();
+            return Ok(new { isSuccess = true });
         }
 
         [HttpPut("{id}/toggle-featured")]
@@ -74,7 +74,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (result is null)
                 return NotFound();
 
-            return Ok(result);
+            return Ok(new { isSuccess = true, data = result });
         }
     }
 }

@@ -55,7 +55,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
         public async Task<IActionResult> Create([FromBody] CreateEventDto dto)
         {
             var evt = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = evt.Id }, evt);
+            return Ok(new { isSuccess = true, data = evt });
         }
 
         // PUT /api/admin/events/5
@@ -66,7 +66,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (evt is null)
                 return NotFound("Event not found");
 
-            return Ok(evt);
+            return Ok(new { isSuccess = true, data = evt });
         }
 
         // DELETE /api/admin/events/5
@@ -78,7 +78,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Event not found");
 
-            return NoContent();
+            return Ok(new { isSuccess = true });
         }
     }
 }

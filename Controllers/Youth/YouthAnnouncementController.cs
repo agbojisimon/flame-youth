@@ -59,7 +59,7 @@ namespace GlobalFlameMinistry.API.Controllers.Youth
 
             var announcement = await _announceService.CreateAsync(createDto, createdById);
 
-            return CreatedAtAction(nameof(GetById), new { id = announcement.Id }, announcement);
+            return Ok(new { isSuccess = true, data = announcement });
         }
 
         // PUT /api/youth/announcements/5
@@ -79,7 +79,10 @@ namespace GlobalFlameMinistry.API.Controllers.Youth
 
             var announcement = await _announceService.UpdateAsync(id, dto);
 
-            return Ok(announcement);
+            if (announcement is null)
+                return NotFound("Announcement not found");
+
+            return Ok(new { isSuccess = true, data = announcement });
         }
 
         // DELETE /api/youth/announcements/5
@@ -102,7 +105,7 @@ namespace GlobalFlameMinistry.API.Controllers.Youth
             if (!deleted)
                 return NotFound("Announcement not found");
 
-            return NoContent();
+            return Ok(new { isSuccess = true });
         }
     }
 }

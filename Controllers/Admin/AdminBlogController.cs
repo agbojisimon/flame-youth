@@ -46,7 +46,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
                 return Unauthorized("Unauthorized");
 
             var created = await _blogService.CreateAsync(dto, authorId);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            return Ok(new { isSuccess = true, data = created });
         }
 
         [HttpPut("{id:int}")]
@@ -57,7 +57,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (updated is null)
                 return NotFound("Blog post not found");
 
-            return Ok(updated);
+            return Ok(new { isSuccess = true, data = updated });
         }
 
         [HttpDelete("{id:int}")]
@@ -68,7 +68,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Blog post not found");
 
-            return NoContent();
+            return Ok(new { isSuccess = true });
         }
 
         [HttpPatch("{id:int}/publish")]
@@ -79,7 +79,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!toggled)
                 return NotFound("Blog post not found");
 
-            return Ok(new { isPublished = toggled });
+            return Ok(new { isSuccess = true, data = new { isPublished = toggled } });
         }
     }
 }

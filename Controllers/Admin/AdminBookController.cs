@@ -45,7 +45,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
         {
             var book = await _service.CreateAsync(dto);
 
-            return CreatedAtAction(nameof(GetById), new { id = book.Id }, book);
+            return Ok(new { isSuccess = true, data = book });
         }
 
         // PUT /api/admin/books/5
@@ -58,7 +58,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (book is null)
                 return NotFound("Book not found");
 
-            return Ok(book);
+            return Ok(new { isSuccess = true, data = book });
         }
 
         // DELETE /api/admin/books/5
@@ -70,7 +70,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Book not found");
 
-            return NoContent();
+            return Ok(new { isSuccess = true });
         }
     }
 }

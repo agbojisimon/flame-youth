@@ -48,7 +48,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (result is null)
                 return NotFound("Testimony not found");
 
-            return Ok(result);
+            return Ok(new { isSuccess = true, data = result });
         }
 
         [HttpDelete("{id:int}")]
@@ -59,7 +59,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (!deleted)
                 return NotFound("Testimony not found");
 
-            return NoContent();
+            return Ok(new { isSuccess = true });
         }
 
         [HttpGet("all")]
