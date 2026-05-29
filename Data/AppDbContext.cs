@@ -67,7 +67,7 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(e => e.Slug).HasMaxLength(300);
                 entity.HasIndex(e => e.Slug).IsUnique();
                 entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
-                entity.Property(e => e.Description).HasMaxLength(2000);
+                entity.Property(e => e.Description).HasMaxLength(5000);
                 entity.Property(e => e.StartDate).IsRequired();
                 entity.Property(e => e.EndDate).IsRequired();
                 entity.Property(e => e.Location).IsRequired().HasMaxLength(300);

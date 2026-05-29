@@ -8,7 +8,7 @@ namespace GlobalFlameMinistry.API.DTOs.Event
         [StringLength(200, MinimumLength = 3, ErrorMessage = "Title must be between 3 and 200 characters")]
         public string Title { get; set; } = string.Empty;
 
-        [StringLength(2000, ErrorMessage = "Description cannot exceed 2000 characters")]
+        [StringLength(5000, ErrorMessage = "Description cannot exceed 5000 characters")]
         public string? Description { get; set; }
 
         [Required(ErrorMessage = "Start date is required")]
