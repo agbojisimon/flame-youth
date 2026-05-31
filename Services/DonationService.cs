@@ -12,18 +12,21 @@ namespace GlobalFlameMinistry.API.Services
     public class DonationService : IDonationService
     {
         private readonly AppDbContext _context;
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _config;
 
         public DonationService(
             AppDbContext context,
-            HttpClient httpClient,
+            IHttpClientFactory httpClientFactory,
             IConfiguration config)
         {
             _context = context;
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
             _config = config;
         }
+
+        private HttpClient CreateClient() =>
+            _httpClientFactory.CreateClient("DonationClient");
 
         // ── PAYSTACK ──────────────────────────────────────────────────────────
         public async Task<InitiateDonationResponseDto> InitiatePaystackAsync(
@@ -73,7 +76,8 @@ namespace GlobalFlameMinistry.API.Services
             request.Headers.Add("Authorization", $"Bearer {secretKey}");
             request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.SendAsync(request);
+            using var client = CreateClient();
+            var response = await client.SendAsync(request);
             var responseBody = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<JsonElement>(responseBody);
 
@@ -137,7 +141,8 @@ namespace GlobalFlameMinistry.API.Services
             request.Headers.Add("Authorization", $"Bearer {secretKey}");
             request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.SendAsync(request);
+            using var client = CreateClient();
+            var response = await client.SendAsync(request);
             var responseBody = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<JsonElement>(responseBody);
 
@@ -169,7 +174,8 @@ namespace GlobalFlameMinistry.API.Services
                 $"https://api.paystack.co/transaction/verify/{reference}");
             request.Headers.Add("Authorization", $"Bearer {secretKey}");
 
-            var response = await _httpClient.SendAsync(request);
+            using var client = CreateClient();
+            var response = await client.SendAsync(request);
             var responseBody = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<JsonElement>(responseBody);
 
@@ -202,7 +208,8 @@ namespace GlobalFlameMinistry.API.Services
                 $"https://api.flutterwave.com/v3/transactions/{transactionId}/verify");
             request.Headers.Add("Authorization", $"Bearer {secretKey}");
 
-            var response = await _httpClient.SendAsync(request);
+            using var client = CreateClient();
+            var response = await client.SendAsync(request);
             var responseBody = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<JsonElement>(responseBody);
 

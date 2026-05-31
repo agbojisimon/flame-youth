@@ -3,12 +3,14 @@ using GlobalFlameMinistry.API.DTOs.PrayerRequest;
 using GlobalFlameMinistry.API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GlobalFlameMinistry.API.Controllers.Ministry
 {
     [Route("api/[controller]")]
     [ApiController]
     [AllowAnonymous]
+    [EnableRateLimiting("GeneralPolicy")]
     public class PrayerRequestController : ControllerBase
     {
         private readonly IPrayerRequestService _prayerService;

@@ -3,11 +3,13 @@ using GlobalFlameMinistry.API.DTOs.Auth;
 using GlobalFlameMinistry.API.Interfaces.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GlobalFlameMinistry.API.Controllers.Members
 {
     [Route("api/auth")]
     [ApiController]
+    [EnableRateLimiting("AuthPolicy")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;

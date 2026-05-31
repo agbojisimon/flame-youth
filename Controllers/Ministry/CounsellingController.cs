@@ -2,11 +2,13 @@ using System.Security.Claims;
 using GlobalFlameMinistry.API.DTOs.Counselling;
 using GlobalFlameMinistry.API.Interfaces.Counselling;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GlobalFlameMinistry.API.Controllers.Ministry
 {
     [Route("api/ministry/counselling")]
     [ApiController]
+    [EnableRateLimiting("GeneralPolicy")]
     public class CounsellingController : ControllerBase
     {
         private readonly ICounsellingService _service;

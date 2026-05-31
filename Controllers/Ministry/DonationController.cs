@@ -1,11 +1,13 @@
 using GlobalFlameMinistry.API.DTOs.Donation;
 using GlobalFlameMinistry.API.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GlobalFlameMinistry.API.Controllers.Ministry
 {
     [Route("api/ministry/donations")]
     [ApiController]
+    [EnableRateLimiting("GeneralPolicy")]
     public class DonationController : ControllerBase
     {
         private readonly IDonationService _service;

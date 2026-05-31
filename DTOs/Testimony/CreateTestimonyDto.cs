@@ -3,6 +3,7 @@ namespace GlobalFlameMinistry.API.DTOs.Testimony
 {
     public class CreateTestimonyDto
     {
+        [StringLength(150)]
         public string? FullName { get; set; }
 
         [Required(ErrorMessage = "Please share your testimony")]

@@ -8,6 +8,7 @@ namespace GlobalFlameMinistry.API.DTOs.Event
         [StringLength(200)]
         public string Title { get; set; } = string.Empty;
 
+        [StringLength(5000)]
         public string? Description { get; set; }
 
         [Required]
@@ -17,8 +18,10 @@ namespace GlobalFlameMinistry.API.DTOs.Event
         public DateTime EndDate { get; set; }
 
         [Required]
+        [StringLength(300)]
         public string Location { get; set; } = string.Empty;
 
+        [StringLength(500)]
         public string? ImageUrl { get; set; }
         public int? MinistryId { get; set; }
 

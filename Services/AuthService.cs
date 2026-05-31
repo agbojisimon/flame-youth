@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using GlobalFlameMinistry.API.DTOs.Account;
 using GlobalFlameMinistry.API.DTOs.Auth;
 using GlobalFlameMinistry.API.Interfaces;
@@ -5,6 +6,7 @@ using GlobalFlameMinistry.API.Interfaces.Auth;
 using GlobalFlameMinistry.API.Interfaces.Email;
 using GlobalFlameMinistry.API.Mappers;
 using GlobalFlameMinistry.API.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 
 namespace GlobalFlameMinistry.API.Services
@@ -17,13 +19,16 @@ namespace GlobalFlameMinistry.API.Services
         private readonly ITokenService _tokenService;
         private readonly IConfiguration _config;
         private readonly ILogger<AuthService> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AuthService(
             UserManager<AppUser> userManager,
             SignInManager<AppUser> signInManager,
             IEmailSender emailSender,
             ITokenService tokenService,
-            IConfiguration config, ILogger<AuthService> logger)
+            IConfiguration config,
+            ILogger<AuthService> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -31,6 +36,7 @@ namespace GlobalFlameMinistry.API.Services
             _tokenService = tokenService;
             _config = config;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<string> RegisterAsync(RegisterDto dto)
@@ -87,17 +93,32 @@ namespace GlobalFlameMinistry.API.Services
             var user = await _userManager.FindByEmailAsync(dto.Email!);
 
             if (user == null)
+            {
+                _logger.LogWarning(
+                    "Failed login attempt for {Email} from {IP} at {Time} — user not found",
+                    dto.Email, _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress, DateTime.UtcNow);
                 throw new UnauthorizedAccessException("Invalid credentials.");
+            }
 
             if (!user.EmailConfirmed)
+            {
+                _logger.LogWarning(
+                    "Failed login attempt for {Email} from {IP} at {Time} — email not confirmed",
+                    dto.Email, _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress, DateTime.UtcNow);
                 throw new UnauthorizedAccessException(
                     "Please confirm your email before logging in.");
+            }
 
             var result = await _signInManager.CheckPasswordSignInAsync(
                 user, dto.Password!, false);
 
             if (!result.Succeeded)
+            {
+                _logger.LogWarning(
+                    "Failed login attempt for {Email} from {IP} at {Time} — wrong password",
+                    dto.Email, _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress, DateTime.UtcNow);
                 throw new UnauthorizedAccessException("Invalid credentials.");
+            }
 
             var token = await _tokenService.CreateTokenAsync(user);
             var roles = await _userManager.GetRolesAsync(user);
@@ -366,7 +387,9 @@ namespace GlobalFlameMinistry.API.Services
 
         private static string GenerateRefreshToken()
         {
-            return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+            var bytes = new byte[32];
+            RandomNumberGenerator.Fill(bytes);
+            return Convert.ToBase64String(bytes);
         }
     }
 }

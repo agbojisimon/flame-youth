@@ -1,6 +1,8 @@
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading.RateLimiting;
 using GlobalFlameMinistry.API.Configuration;
+using Microsoft.AspNetCore.RateLimiting;
 using GlobalFlameMinistry.API.Data;
 using GlobalFlameMinistry.API.Fillters;
 using GlobalFlameMinistry.API.Filters;
@@ -94,8 +96,8 @@ builder.Services.AddCors(options =>
                 "https://www.globalflameministry.org",
                 "http://localhost:5173" // keep for local development
             )
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+            .WithHeaders("Authorization", "Content-Type")
+            .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE");
     });
 });
 
@@ -211,7 +213,32 @@ builder.Services.AddHybridCache(options =>
     };
 });
 
+// RATE LIMITING
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Strict policy for auth endpoints: 5 requests per 15 minutes
+    options.AddFixedWindowLimiter("AuthPolicy", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(15);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 0;
+    });
+
+    // General policy for public write endpoints: 20 requests per minute
+    options.AddFixedWindowLimiter("GeneralPolicy", opt =>
+    {
+        opt.PermitLimit = 20;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 0;
+    });
+});
+
 //APPLICATION SERVICES
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -232,7 +259,8 @@ builder.Services.AddScoped<IEventRegistrationRepository, EventRegistrationReposi
 builder.Services.AddScoped<IEventRegistrationService, EventRegistrationService>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<IBookService, BookService>();
-builder.Services.AddHttpClient<IDonationService, DonationService>();
+builder.Services.AddHttpClient("DonationClient");
+builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IDonationRepository, DonationRepository>();
 builder.Services.AddScoped<IAdminDonationService, AdminDonationService>();
 builder.Services.Configure<BrevoSettings>(builder.Configuration.GetSection("Brevo"));
@@ -274,13 +302,27 @@ using (var scope = app.Services.CreateScope())
 
 // MIDDLEWARE PIPELINE
 // ORDER MATTERS — don't rearrange these
-app.UseSwagger();
-app.UseSwaggerUI();
-
 if (app.Environment.IsDevelopment())
 {
-    app.UseHttpsRedirection();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
+
+app.UseRateLimiter();
+
+app.UseHttpsRedirection();
+
+// SECURITY HEADERS
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    context.Response.Headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
+    context.Response.Headers["Content-Security-Policy"] = "default-src 'self'";
+    context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+    await next();
+});
 
 app.UseCors("ProductionCors");
 

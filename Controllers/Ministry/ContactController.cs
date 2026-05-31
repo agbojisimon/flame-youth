@@ -2,12 +2,14 @@ using GlobalFlameMinistry.API.DTOs.Contact;
 using GlobalFlameMinistry.API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GlobalFlameMinistry.API.Controllers.Ministry
 {
     [Route("api/ministry/contacts")]
     [ApiController]
     [AllowAnonymous]
+    [EnableRateLimiting("GeneralPolicy")]
     public class ContactController : ControllerBase
     {
         private readonly IContactService _contactService;

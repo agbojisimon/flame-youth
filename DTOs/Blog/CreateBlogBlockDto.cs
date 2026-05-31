@@ -5,8 +5,10 @@ namespace GlobalFlameMinistry.API.DTOs.Blog
     public class CreateBlogBlockDto : IValidatableObject
     {
         [Required]
+        [MaxLength(50)]
         public string BlockType { get; set; } = string.Empty;
 
+        [MaxLength(10000)]
         public string? Content { get; set; }
 
         [MaxLength(500)]

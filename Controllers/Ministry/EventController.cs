@@ -1,12 +1,15 @@
 using GlobalFlameMinistry.API.DTOs.Event;
 using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GlobalFlameMinistry.API.Controllers.Ministry
 {
     [Route("api/ministry/events")]
     [ApiController]
+    [EnableRateLimiting("GeneralPolicy")]
     public class EventController : ControllerBase
     {
         private readonly IEventService _service;
@@ -48,6 +51,7 @@ namespace GlobalFlameMinistry.API.Controllers.Ministry
         }
 
         // POST /api/ministry/events/{id}/register
+        [Authorize]
         [HttpPost("{id:int}/register")]
         public async Task<IActionResult> Register(int id, [FromBody] RegisterForEventDto dto)
         {

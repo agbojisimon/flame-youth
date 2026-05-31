@@ -3,12 +3,14 @@ using GlobalFlameMinistry.API.DTOs.Testimony;
 using GlobalFlameMinistry.API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GlobalFlameMinistry.API.Controllers.Members
 {
     [Route("api/[controller]")]
     [ApiController]
     [AllowAnonymous]
+    [EnableRateLimiting("GeneralPolicy")]
     public class TestimonyController : ControllerBase
     {
         private readonly ITestimonyService _testimonyService;

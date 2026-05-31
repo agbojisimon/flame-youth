@@ -13,6 +13,7 @@ namespace GlobalFlameMinistry.API.DTOs.Contact
         [EmailAddress(ErrorMessage = "Please provide a valid email address")]
         [StringLength(200, ErrorMessage = "Email cannot exceed 200 characters")]
         public string Email { get; set; } = string.Empty;
+        [StringLength(20)]
         public string? PhoneNumber { get; set; }
 
         [Required(ErrorMessage = "Message is required")]

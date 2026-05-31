@@ -14,9 +14,11 @@ namespace GlobalFlameMinistry.API.DTOs.Blog
         [MaxLength(500)]
         public string? CoverImageUrl { get; set; }
 
+        [MaxLength(500)]
         public string? VideoUrl { get; set; }
 
         [Required]
+        [MaxLength(50)]
         public string Department { get; set; } = string.Empty;
 
         [MaxLength(300)]

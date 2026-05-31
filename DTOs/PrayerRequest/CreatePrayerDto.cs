@@ -20,6 +20,7 @@ namespace GlobalFlameMinistry.API.DTOs.PrayerRequest
         public string PreferredContact { get; set; } = "Email";
         [StringLength(50)]
         public string? Topic { get; set; }
+        [StringLength(500)]
         public string? Attachment { get; set; }
     }
 }
