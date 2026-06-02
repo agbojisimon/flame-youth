@@ -114,7 +114,7 @@ namespace GlobalFlameMinistry.API.Controllers.Members
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.Lax,
                 MaxAge = TimeSpan.FromMinutes(15)
             });
 
@@ -122,7 +122,7 @@ namespace GlobalFlameMinistry.API.Controllers.Members
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.Lax,
                 MaxAge = TimeSpan.FromDays(7)
             });
         }
