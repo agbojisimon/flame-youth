@@ -45,7 +45,7 @@ namespace GlobalFlameMinistry.API.Controllers.Members
         }
 
         [AllowAnonymous]
-        [HttpPost("refresh-token")]
+        [HttpPost("refresh")]
         public async Task<IActionResult> RefreshToken()
         {
             var refreshToken = Request.Cookies["gfm_refresh_token"];
