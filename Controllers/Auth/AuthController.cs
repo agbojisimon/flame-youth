@@ -36,8 +36,12 @@ namespace GlobalFlameMinistry.API.Controllers.Members
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
             var result = await _authService.LoginAsync(dto);
-            SetAuthCookies(result.AccessToken, result.RefreshToken);
-            return Ok(result.User);
+            SetRefreshCookie(result.RefreshToken);
+            return Ok(new
+            {
+                accessToken = result.AccessToken,
+                user = result.User
+            });
         }
 
         [AllowAnonymous]
@@ -49,8 +53,8 @@ namespace GlobalFlameMinistry.API.Controllers.Members
                 return Unauthorized(new { message = "No refresh token provided." });
 
             var result = await _authService.RefreshTokenAsync(refreshToken);
-            SetAuthCookies(result.AccessToken, result.RefreshToken);
-            return Ok(new { message = "Token refreshed successfully." });
+            SetRefreshCookie(result.RefreshToken);
+            return Ok(new { accessToken = result.AccessToken });
         }
 
         [Authorize]
@@ -61,7 +65,7 @@ namespace GlobalFlameMinistry.API.Controllers.Members
             if (!string.IsNullOrEmpty(userId))
                 await _authService.LogoutAsync(userId);
 
-            ClearAuthCookies();
+            ClearRefreshCookie();
             return Ok(new { message = "Logged out successfully." });
         }
 
@@ -108,29 +112,24 @@ namespace GlobalFlameMinistry.API.Controllers.Members
             return Ok(result);
         }
 
-        private void SetAuthCookies(string accessToken, string refreshToken)
+        private void SetRefreshCookie(string refreshToken)
         {
-            Response.Cookies.Append("gfm_access_token", accessToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Lax,
-                MaxAge = TimeSpan.FromMinutes(15)
-            });
-
             Response.Cookies.Append("gfm_refresh_token", refreshToken, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Lax,
+                Path = "/api/auth/refresh",
                 MaxAge = TimeSpan.FromDays(7)
             });
         }
 
-        private void ClearAuthCookies()
+        private void ClearRefreshCookie()
         {
-            Response.Cookies.Delete("gfm_access_token");
-            Response.Cookies.Delete("gfm_refresh_token");
+            Response.Cookies.Delete("gfm_refresh_token", new CookieOptions
+            {
+                Path = "/api/auth/refresh"
+            });
         }
     }
 }
