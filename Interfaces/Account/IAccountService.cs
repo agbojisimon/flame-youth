@@ -11,7 +11,7 @@ namespace GlobalFlameMinistry.API.Interfaces.Account
         Task<List<MyPrayerRequestDto>> GetMyPrayerRequestsAsync(string userId);
         Task<List<MyRegistrationDto>> GetMyRegistrationsAsync(string userId);
         Task<List<MyDonationDto>> GetMyDonationsAsync(string userId);
-        Task RequestEmailChangeAsync(string userId, string newEmail);
+        Task RequestEmailChangeAsync(string userId, string newEmail, string currentPassword);
         Task<bool> ConfirmEmailChangeAsync(string userId, ConfirmEmailChangeDto dto);
         // IAccountService.cs
         Task<JoinYouthResultDto> JoinYouthCommunityAsync(string userId, JoinYouthDto dto);

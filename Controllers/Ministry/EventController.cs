@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using GlobalFlameMinistry.API.DTOs.Event;
 using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Interfaces;
@@ -61,6 +62,9 @@ namespace GlobalFlameMinistry.API.Controllers.Ministry
 
             if (evt.IsCancelled)
                 return BadRequest("This event has been cancelled.");
+
+            // Use the JWT email — user cannot register another person's email
+            dto.Email = User.FindFirstValue(ClaimTypes.Email) ?? dto.Email;
 
             try
             {

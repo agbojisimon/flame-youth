@@ -157,11 +157,14 @@ namespace GlobalFlameMinistry.API.Services
             };
         }
 
-        public async Task RequestEmailChangeAsync(string userId, string newEmail)
+        public async Task RequestEmailChangeAsync(string userId, string newEmail, string currentPassword)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user is null)
                 throw new ApplicationException("User not found.");
+
+            if (!await _userManager.CheckPasswordAsync(user, currentPassword))
+                throw new ApplicationException("Invalid password. Please enter your current password to change your email.");
 
             // Check the new email isn't already taken by someone else
             var existing = await _userManager.FindByEmailAsync(newEmail);

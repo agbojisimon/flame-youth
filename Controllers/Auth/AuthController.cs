@@ -9,7 +9,7 @@ namespace GlobalFlameMinistry.API.Controllers.Members
 {
     [Route("api/auth")]
     [ApiController]
-    [EnableRateLimiting("AuthPolicy")]
+    [EnableRateLimiting("AuthCatchAllPolicy")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -22,6 +22,7 @@ namespace GlobalFlameMinistry.API.Controllers.Members
         }
 
         [AllowAnonymous]
+        [EnableRateLimiting("RegistrationPolicy")]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
@@ -30,6 +31,7 @@ namespace GlobalFlameMinistry.API.Controllers.Members
         }
 
         [AllowAnonymous]
+        [EnableRateLimiting("LoginPolicy")]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
@@ -63,6 +65,7 @@ namespace GlobalFlameMinistry.API.Controllers.Members
         }
 
         [AllowAnonymous]
+        [EnableRateLimiting("ForgotPasswordPolicy")]
         [HttpPost("resend-confirmation")]
         public async Task<IActionResult> ResendConfirmation(
             [FromBody] ResendConfirmationDto dto)
@@ -72,6 +75,7 @@ namespace GlobalFlameMinistry.API.Controllers.Members
         }
 
         [AllowAnonymous]
+        [EnableRateLimiting("ForgotPasswordPolicy")]
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
         {

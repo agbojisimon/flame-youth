@@ -3,6 +3,7 @@ using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Interfaces.BulkEmail;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace GlobalFlameMinistry.API.Controllers.Admin
@@ -10,6 +11,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
     [Route("api/admin/bulk-email")]
     [ApiController]
     [Authorize(Roles = "Admin")]
+    [EnableRateLimiting("BulkEmailPolicy")]
     public class AdminBulkEmailController : ControllerBase
     {
         private readonly IBulkEmailService _service;

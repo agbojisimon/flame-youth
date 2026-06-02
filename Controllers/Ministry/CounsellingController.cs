@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using GlobalFlameMinistry.API.DTOs.Counselling;
 using GlobalFlameMinistry.API.Interfaces.Counselling;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -8,6 +9,7 @@ namespace GlobalFlameMinistry.API.Controllers.Ministry
 {
     [Route("api/ministry/counselling")]
     [ApiController]
+    [AllowAnonymous]
     [EnableRateLimiting("GeneralPolicy")]
     public class CounsellingController : ControllerBase
     {

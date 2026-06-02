@@ -100,7 +100,7 @@ namespace GlobalFlameMinistry.API.Controllers.Account
         {
             try
             {
-                await _accountService.RequestEmailChangeAsync(UserId, dto.NewEmail);
+                await _accountService.RequestEmailChangeAsync(UserId, dto.NewEmail, dto.CurrentPassword);
                 return Ok(new
                 {
                     message =

@@ -4,6 +4,7 @@ using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Interfaces;
 using GlobalFlameMinistry.API.Interfaces.Email;
 using GlobalFlameMinistry.API.Mappers;
+using Microsoft.Extensions.Logging;
 
 namespace GlobalFlameMinistry.API.Services
 {
@@ -12,12 +13,18 @@ namespace GlobalFlameMinistry.API.Services
         private readonly IPrayerRequestRepository _prayerRepo;
         private readonly IEmailSender _emailSender;
         private readonly IConfiguration _config;
+        private readonly ILogger<PrayerRequestService> _logger;
 
-        public PrayerRequestService(IPrayerRequestRepository prayerRepo, IEmailSender emailSender, IConfiguration config)
+        public PrayerRequestService(
+            IPrayerRequestRepository prayerRepo,
+            IEmailSender emailSender,
+            IConfiguration config,
+            ILogger<PrayerRequestService> logger)
         {
             _prayerRepo = prayerRepo;
             _emailSender = emailSender;
             _config = config;
+            _logger = logger;
         }
 
         public async Task<PrayerRequestResponseDto> CreateAsync(CreatePrayerDto dto, string? name, string? email, string? appUserId)
@@ -31,7 +38,7 @@ namespace GlobalFlameMinistry.API.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[PrayerRequestService] Confirmation email failed: {ex.Message}");
+                _logger.LogWarning(ex, "Confirmation email failed for prayer request {Id}", created.Id);
             }
 
             var churchInbox = _config["PrayerInboxEmail"];
@@ -51,7 +58,7 @@ namespace GlobalFlameMinistry.API.Services
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[PrayerRequestService] Church inbox email failed: {ex.Message}");
+                    _logger.LogWarning(ex, "Church inbox email failed for prayer request {Id}", created.Id);
                 }
             }
 

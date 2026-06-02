@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using GlobalFlameMinistry.API.DTOs.Account;
 using GlobalFlameMinistry.API.DTOs.Auth;
 using GlobalFlameMinistry.API.Interfaces;
@@ -43,7 +44,12 @@ namespace GlobalFlameMinistry.API.Services
         {
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser != null)
-                throw new ApplicationException("An account with this email already exists.");
+            {
+                _logger.LogWarning(
+                    "Registration attempt for existing email {Email} from {IP} at {Time}",
+                    dto.Email, _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress, DateTime.UtcNow);
+                return "If you are not already registered, a confirmation link has been sent to your email.";
+            }
 
             var user = dto.ToAppUser();
             var result = await _userManager.CreateAsync(user, dto.Password);
@@ -97,16 +103,7 @@ namespace GlobalFlameMinistry.API.Services
                 _logger.LogWarning(
                     "Failed login attempt for {Email} from {IP} at {Time} — user not found",
                     dto.Email, _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress, DateTime.UtcNow);
-                throw new UnauthorizedAccessException("Invalid credentials.");
-            }
-
-            if (!user.EmailConfirmed)
-            {
-                _logger.LogWarning(
-                    "Failed login attempt for {Email} from {IP} at {Time} — email not confirmed",
-                    dto.Email, _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress, DateTime.UtcNow);
-                throw new UnauthorizedAccessException(
-                    "Please confirm your email before logging in.");
+                throw new UnauthorizedAccessException("Invalid email or password.");
             }
 
             var result = await _signInManager.CheckPasswordSignInAsync(
@@ -115,19 +112,21 @@ namespace GlobalFlameMinistry.API.Services
             if (!result.Succeeded)
             {
                 _logger.LogWarning(
-                    "Failed login attempt for {Email} from {IP} at {Time} — wrong password",
-                    dto.Email, _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress, DateTime.UtcNow);
-                throw new UnauthorizedAccessException("Invalid credentials.");
+                    "Failed login attempt for {Email} from {IP} at {Time} — {Reason}",
+                    dto.Email, _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress,
+                    DateTime.UtcNow, user.EmailConfirmed ? "wrong password" : "email not confirmed");
+                throw new UnauthorizedAccessException("Invalid email or password.");
             }
 
             var token = await _tokenService.CreateTokenAsync(user);
             var roles = await _userManager.GetRolesAsync(user);
 
-            user.RefreshToken = GenerateRefreshToken();
+            var plainRefreshToken = GenerateRefreshToken();
+            user.RefreshToken = HashToken(plainRefreshToken);
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _userManager.UpdateAsync(user);
 
-            return user.ToNewUserDto(token, user.RefreshToken!, roles.ToList());
+            return user.ToNewUserDto(token, plainRefreshToken, roles.ToList());
         }
 
         public async Task<string> RefreshTokenAsync(RefreshTokenDto dto)
@@ -135,14 +134,15 @@ namespace GlobalFlameMinistry.API.Services
             var user = await _userManager.FindByEmailAsync(dto.Email!);
 
             if (user == null ||
-                user.RefreshToken != dto.RefreshToken ||
+                user.RefreshToken != HashToken(dto.RefreshToken) ||
                 user.RefreshTokenExpiryTime <= DateTime.UtcNow)
                 throw new UnauthorizedAccessException(
                     "Invalid or expired refresh token.");
 
             var newJwt = await _tokenService.CreateTokenAsync(user);
 
-            user.RefreshToken = GenerateRefreshToken();
+            var plainRefreshToken = GenerateRefreshToken();
+            user.RefreshToken = HashToken(plainRefreshToken);
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _userManager.UpdateAsync(user);
 
@@ -210,7 +210,11 @@ namespace GlobalFlameMinistry.API.Services
         public async Task ForgotPasswordAsync(ForgotPasswordDto dto)
         {
             var user = await _userManager.FindByEmailAsync(dto.Email);
-            if (user == null || !user.EmailConfirmed) return;
+            if (user == null || !user.EmailConfirmed)
+            {
+                await Task.Delay(Random.Shared.Next(200, 500));
+                return;
+            }
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = Uri.EscapeDataString(token);
@@ -390,6 +394,12 @@ namespace GlobalFlameMinistry.API.Services
             var bytes = new byte[32];
             RandomNumberGenerator.Fill(bytes);
             return Convert.ToBase64String(bytes);
+        }
+
+        private static string HashToken(string token)
+        {
+            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+            return Convert.ToHexString(bytes);
         }
     }
 }
