@@ -14,8 +14,6 @@ namespace GlobalFlameMinistry.API.Models
         public string FullName => $"{FirstName} {LastName}".Trim();
         public string? ProfilePictureUrl { get; set; }
         public string? Module { get; set; }
-        public string? RefreshToken { get; set; }
-        public DateTime RefreshTokenExpiryTime { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
         public ICollection<Testimony> Testimonies { get; set; } = new List<Testimony>();
     }

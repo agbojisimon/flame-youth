@@ -6,8 +6,9 @@ namespace GlobalFlameMinistry.API.Interfaces.Auth
     public interface IAuthService
     {
         Task<string> RegisterAsync(RegisterDto registerDto);
-        Task<NewUserDto> LoginAsync(LoginDto loginDto);
-        Task<string> RefreshTokenAsync(RefreshTokenDto dto);
+        Task<LoginResultDto> LoginAsync(LoginDto loginDto);
+        Task<LoginResultDto> RefreshTokenAsync(string refreshToken);
+        Task LogoutAsync(string userId);
         Task<string> ConfirmEmailAsync(EmailConfirmationDto dto);
         Task<string> ResendConfirmationAsync(string email);
         Task ForgotPasswordAsync(ForgotPasswordDto dto);

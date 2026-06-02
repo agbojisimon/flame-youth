@@ -36,22 +36,39 @@ namespace GlobalFlameMinistry.API.Controllers.Members
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
             var result = await _authService.LoginAsync(dto);
-            return Ok(result);
+            SetAuthCookies(result.AccessToken, result.RefreshToken);
+            return Ok(result.User);
         }
 
         [AllowAnonymous]
         [HttpPost("refresh-token")]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto)
+        public async Task<IActionResult> RefreshToken()
         {
-            var result = await _authService.RefreshTokenAsync(dto);
-            return Ok(result);
+            var refreshToken = Request.Cookies["gfm_refresh_token"];
+            if (string.IsNullOrEmpty(refreshToken))
+                return Unauthorized(new { message = "No refresh token provided." });
+
+            var result = await _authService.RefreshTokenAsync(refreshToken);
+            SetAuthCookies(result.AccessToken, result.RefreshToken);
+            return Ok(new { message = "Token refreshed successfully." });
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId))
+                await _authService.LogoutAsync(userId);
+
+            ClearAuthCookies();
+            return Ok(new { message = "Logged out successfully." });
         }
 
         [AllowAnonymous]
         [HttpGet("confirm-email")]
         public async Task<IActionResult> ConfirmEmail([FromQuery] EmailConfirmationDto dto)
         {
-            // ✅ Use FrontendUrl from config — works from any device
             var frontendUrl = _config["App:FrontendUrl"];
             try
             {
@@ -89,6 +106,31 @@ namespace GlobalFlameMinistry.API.Controllers.Members
         {
             var result = await _authService.ResetPasswordAsync(dto);
             return Ok(result);
+        }
+
+        private void SetAuthCookies(string accessToken, string refreshToken)
+        {
+            Response.Cookies.Append("gfm_access_token", accessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                MaxAge = TimeSpan.FromMinutes(15)
+            });
+
+            Response.Cookies.Append("gfm_refresh_token", refreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                MaxAge = TimeSpan.FromDays(7)
+            });
+        }
+
+        private void ClearAuthCookies()
+        {
+            Response.Cookies.Delete("gfm_access_token");
+            Response.Cookies.Delete("gfm_refresh_token");
         }
     }
 }

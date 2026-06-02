@@ -28,6 +28,7 @@ namespace GlobalFlameMinistry.API.Data
         public DbSet<BlogPost> BlogPosts { get; set; }
         public DbSet<BlogPostBlock> BlogPostBlocks { get; set; }
         public DbSet<CounsellingRequest> CounsellingRequests { get; set; }
+        public DbSet<RefreshTokenFamily> RefreshTokenFamilies { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -40,7 +41,6 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(u => u.FirstName).IsRequired().HasMaxLength(100);
                 entity.Property(u => u.LastName).IsRequired().HasMaxLength(100);
                 entity.Property(u => u.ProfilePictureUrl).HasMaxLength(500);
-                entity.Property(u => u.RefreshToken).HasMaxLength(500);
                 entity.Property(u => u.CreatedOn).HasDefaultValueSql("NOW()");
             });
 
@@ -339,6 +339,20 @@ namespace GlobalFlameMinistry.API.Data
                       .HasForeignKey(c => c.AppUserId)
                       .OnDelete(DeleteBehavior.SetNull)
                       .IsRequired(false);
+            });
+
+            // ── REFRESH TOKEN FAMILY ───────────────────────────────────────────
+            builder.Entity<RefreshTokenFamily>(entity =>
+            {
+                entity.HasKey(rf => rf.Id);
+                entity.Property(rf => rf.UserId).IsRequired().HasMaxLength(450);
+                entity.Property(rf => rf.TokenHash).IsRequired().HasMaxLength(500);
+                entity.HasIndex(rf => rf.TokenHash).IsUnique();
+                entity.HasIndex(rf => new { rf.UserId, rf.FamilyId });
+                entity.HasOne(rf => rf.User)
+                      .WithMany()
+                      .HasForeignKey(rf => rf.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             // ── SEED ROLES ─────────────────────────────────────────────────────

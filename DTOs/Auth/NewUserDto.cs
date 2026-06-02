@@ -11,9 +11,5 @@ namespace GlobalFlameMinistry.API.DTOs.Account
         public bool IsYouthMember { get; set; }
         public string? Module { get; set; }
         public List<string> Roles { get; set; } = new();
-
-        // Auth tokens — only needed after login
-        public string Token { get; set; } = string.Empty;
-        public string RefreshToken { get; set; } = string.Empty;
     }
 }

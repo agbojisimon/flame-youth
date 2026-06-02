@@ -19,8 +19,7 @@ namespace GlobalFlameMinistry.API.Mappers
         }
 
         // AppUser → NewUserDto — used ONLY after login
-        // Includes JWT token and refresh token
-        public static NewUserDto ToNewUserDto(this AppUser user, string token, string refreshToken, List<string>? roles = null)
+        public static NewUserDto ToNewUserDto(this AppUser user, List<string>? roles = null)
         {
             return new NewUserDto
             {
@@ -32,8 +31,6 @@ namespace GlobalFlameMinistry.API.Mappers
                 Email = user.Email ?? string.Empty,
                 Module = user.Module,
                 Roles = roles ?? new List<string>(),
-                Token = token,
-                RefreshToken = refreshToken,
                 IsYouthMember = roles?.Contains("YouthMember") ?? false
             };
         }

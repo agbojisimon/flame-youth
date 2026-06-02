@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using GlobalFlameMinistry.API.Data;
 using GlobalFlameMinistry.API.DTOs.Account;
 using GlobalFlameMinistry.API.DTOs.Auth;
 using GlobalFlameMinistry.API.Interfaces;
@@ -9,6 +10,7 @@ using GlobalFlameMinistry.API.Mappers;
 using GlobalFlameMinistry.API.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace GlobalFlameMinistry.API.Services
 {
@@ -21,6 +23,7 @@ namespace GlobalFlameMinistry.API.Services
         private readonly IConfiguration _config;
         private readonly ILogger<AuthService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly AppDbContext _context;
 
         public AuthService(
             UserManager<AppUser> userManager,
@@ -29,7 +32,8 @@ namespace GlobalFlameMinistry.API.Services
             ITokenService tokenService,
             IConfiguration config,
             ILogger<AuthService> logger,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            AppDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -38,6 +42,7 @@ namespace GlobalFlameMinistry.API.Services
             _config = config;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
+            _context = context;
         }
 
         public async Task<string> RegisterAsync(RegisterDto dto)
@@ -71,7 +76,6 @@ namespace GlobalFlameMinistry.API.Services
 
             var body = BuildConfirmationEmailBody(user.FirstName, confirmationLink);
 
-            // Attempt to send — track whether it succeeded
             var emailSent = true;
             try
             {
@@ -87,14 +91,13 @@ namespace GlobalFlameMinistry.API.Services
                     "[AuthService] Confirmation email failed for {Email} after registration.", user.Email);
             }
 
-            // Account was created — return appropriate message
             return emailSent
                 ? "Registration successful. Please check your email to confirm your account."
                 : "Your account was created, but we could not send your confirmation email. " +
                   "Please use the 'Resend Confirmation' option to try again.";
         }
 
-        public async Task<NewUserDto> LoginAsync(LoginDto dto)
+        public async Task<LoginResultDto> LoginAsync(LoginDto dto)
         {
             var user = await _userManager.FindByEmailAsync(dto.Email!);
 
@@ -118,35 +121,91 @@ namespace GlobalFlameMinistry.API.Services
                 throw new UnauthorizedAccessException("Invalid email or password.");
             }
 
-            var token = await _tokenService.CreateTokenAsync(user);
+            var accessToken = await _tokenService.CreateTokenAsync(user);
             var roles = await _userManager.GetRolesAsync(user);
 
             var plainRefreshToken = GenerateRefreshToken();
-            user.RefreshToken = HashToken(plainRefreshToken);
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-            await _userManager.UpdateAsync(user);
+            var tokenHash = HashToken(plainRefreshToken);
 
-            return user.ToNewUserDto(token, plainRefreshToken, roles.ToList());
+            var family = new RefreshTokenFamily
+            {
+                UserId = user.Id,
+                TokenHash = tokenHash,
+                ExpiresAt = DateTime.UtcNow.AddDays(7)
+            };
+
+            _context.RefreshTokenFamilies.Add(family);
+            await _context.SaveChangesAsync();
+
+            var userDto = user.ToNewUserDto(roles.ToList());
+            return new LoginResultDto
+            {
+                User = userDto,
+                AccessToken = accessToken,
+                RefreshToken = plainRefreshToken
+            };
         }
 
-        public async Task<string> RefreshTokenAsync(RefreshTokenDto dto)
+        public async Task<LoginResultDto> RefreshTokenAsync(string refreshToken)
         {
-            var user = await _userManager.FindByEmailAsync(dto.Email!);
+            var tokenHash = HashToken(refreshToken);
+            var familyEntry = await _context.RefreshTokenFamilies
+                .FirstOrDefaultAsync(rf => rf.TokenHash == tokenHash);
 
-            if (user == null ||
-                user.RefreshToken != HashToken(dto.RefreshToken) ||
-                user.RefreshTokenExpiryTime <= DateTime.UtcNow)
-                throw new UnauthorizedAccessException(
-                    "Invalid or expired refresh token.");
+            if (familyEntry == null || familyEntry.ExpiresAt <= DateTime.UtcNow)
+                throw new UnauthorizedAccessException("Invalid or expired refresh token.");
 
-            var newJwt = await _tokenService.CreateTokenAsync(user);
+            if (familyEntry.IsInvalidated)
+            {
+                var userFamilies = await _context.RefreshTokenFamilies
+                    .Where(rf => rf.UserId == familyEntry.UserId && !rf.IsInvalidated)
+                    .ToListAsync();
+                foreach (var f in userFamilies)
+                    f.IsInvalidated = true;
+                await _context.SaveChangesAsync();
 
-            var plainRefreshToken = GenerateRefreshToken();
-            user.RefreshToken = HashToken(plainRefreshToken);
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-            await _userManager.UpdateAsync(user);
+                _logger.LogWarning(
+                    "Refresh token reuse detected for user {UserId}. All families invalidated.",
+                    familyEntry.UserId);
+                throw new UnauthorizedAccessException("Security breach detected. Please login again.");
+            }
 
-            return newJwt;
+            var user = await _userManager.FindByIdAsync(familyEntry.UserId);
+            if (user == null)
+                throw new UnauthorizedAccessException("User not found.");
+
+            familyEntry.IsInvalidated = true;
+
+            var newAccessToken = await _tokenService.CreateTokenAsync(user);
+            var newPlainRefreshToken = GenerateRefreshToken();
+            var newTokenHash = HashToken(newPlainRefreshToken);
+
+            var newFamilyEntry = new RefreshTokenFamily
+            {
+                UserId = user.Id,
+                FamilyId = familyEntry.FamilyId,
+                TokenHash = newTokenHash,
+                ExpiresAt = DateTime.UtcNow.AddDays(7)
+            };
+
+            _context.RefreshTokenFamilies.Add(newFamilyEntry);
+            await _context.SaveChangesAsync();
+
+            return new LoginResultDto
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = newPlainRefreshToken
+            };
+        }
+
+        public async Task LogoutAsync(string userId)
+        {
+            var families = await _context.RefreshTokenFamilies
+                .Where(rf => rf.UserId == userId && !rf.IsInvalidated)
+                .ToListAsync();
+            foreach (var f in families)
+                f.IsInvalidated = true;
+            await _context.SaveChangesAsync();
         }
 
         public async Task<string> ConfirmEmailAsync(EmailConfirmationDto dto)

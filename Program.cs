@@ -96,6 +96,7 @@ builder.Services.AddCors(options =>
                 "https://www.globalflameministry.org",
                 "http://localhost:5173" // keep for local development
             )
+            .AllowCredentials()
             .WithHeaders("Authorization", "Content-Type")
             .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE");
     });
@@ -154,8 +155,20 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(builder.Configuration["JWT:SigningKey"]!)),
         ValidateLifetime = true,
-        // Zero means tokens expire exactly on time — no grace period
         ClockSkew = TimeSpan.Zero
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Cookies["gfm_access_token"];
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
