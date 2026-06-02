@@ -118,7 +118,7 @@ namespace GlobalFlameMinistry.API.Controllers.Members
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Lax,
+                SameSite = SameSiteMode.None,
                 Path = "/api/auth/refresh",
                 MaxAge = TimeSpan.FromDays(7)
             });
