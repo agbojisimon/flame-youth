@@ -11,7 +11,6 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
     [Route("api/admin/bulk-email")]
     [ApiController]
     [Authorize(Roles = "Admin")]
-    [EnableRateLimiting("BulkEmailPolicy")]
     public class AdminBulkEmailController : ControllerBase
     {
         private readonly IBulkEmailService _service;
@@ -40,6 +39,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
 
         // POST /api/admin/bulk-email/send
         [HttpPost("send")]
+        [EnableRateLimiting("BulkEmailPolicy")]
         public async Task<IActionResult> SendNow([FromBody] SendBulkEmailDto dto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
@@ -52,6 +52,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
 
         // POST /api/admin/bulk-email/schedule
         [HttpPost("schedule")]
+        [EnableRateLimiting("BulkEmailPolicy")]
         public async Task<IActionResult> Schedule([FromBody] SendBulkEmailDto dto)
         {
             if (dto.ScheduledAt is null || dto.ScheduledAt <= DateTime.UtcNow)
@@ -68,6 +69,7 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
 
         // DELETE /api/admin/bulk-email/{id}
         [HttpDelete("{id:int}")]
+        [EnableRateLimiting("BulkEmailPolicy")]
         public async Task<IActionResult> Cancel(int id)
         {
             var cancelled = await _service.CancelScheduledAsync(id);
