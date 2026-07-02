@@ -94,11 +94,11 @@ builder.Services.AddCors(options =>
             .WithOrigins(
                 "https://globalflameministry.org",
                 "https://www.globalflameministry.org",
-                "http://localhost:5173" // keep for local development
+                "http://localhost:5173"
             )
             .AllowCredentials()
-            .WithHeaders("Authorization", "Content-Type")
-            .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE");
+            .AllowAnyHeader()
+            .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
     });
 });
 
@@ -362,6 +362,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("ProductionCors");
+
 app.UseRateLimiter();
 
 app.UseHttpsRedirection();
@@ -379,8 +381,6 @@ app.Use(async (context, next) =>
     }
     await next();
 });
-
-app.UseCors("ProductionCors");
 
 app.UseAuthentication();
 // Who are you?
