@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text;
+using System.Security.Claims;
 using System.Threading.RateLimiting;
 using GlobalFlameMinistry.API.Configuration;
 using Microsoft.AspNetCore.RateLimiting;
@@ -227,7 +228,12 @@ builder.Services.AddRateLimiter(options =>
     // Global catch-all: 100 requests per minute per IP
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            partitionKey: context.User?.Identity?.IsAuthenticated == true
+                ? context.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                    ?? context.User.Identity?.Name
+                    ?? context.Connection.RemoteIpAddress?.ToString()
+                    ?? "unknown"
+                : context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 100,
@@ -364,8 +370,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("ProductionCors");
 
-app.UseRateLimiter();
-
 app.UseHttpsRedirection();
 
 // SECURITY HEADERS
@@ -384,6 +388,9 @@ app.Use(async (context, next) =>
 
 app.UseAuthentication();
 // Who are you?
+
+app.UseRateLimiter();
+
 app.UseAuthorization();
 // What are you allowed to do?
 app.MapControllers();
