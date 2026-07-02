@@ -96,11 +96,14 @@ namespace GlobalFlameMinistry.API.Repository
 
         public async Task<List<BulkEmailMessage>> GetDueScheduledAsync()
         {
+            var now = DateTime.UtcNow;
             return await _context.BulkEmailMessages
                 .Where(e =>
-                    e.Status == "Scheduled" &&
-                    e.ScheduledAt.HasValue &&
-                    e.ScheduledAt.Value <= DateTime.UtcNow)
+                    (e.Status == "Scheduled" &&
+                     e.ScheduledAt.HasValue &&
+                     e.ScheduledAt.Value <= now) ||
+                    (e.Status == "Sending" &&
+                     e.CreatedOn <= now.AddMinutes(-30)))
                 .ToListAsync();
         }
 

@@ -138,10 +138,21 @@ namespace GlobalFlameMinistry.API.Services
 
             foreach (var message in dueMessages)
             {
-                var recipients = await ResolveRecipientsFromMessageAsync(message);
-                message.Status = "Sending";
-                await _repo.UpdateAsync(message);
-                await DispatchEmailsAsync(message, recipients);
+                try
+                {
+                    var recipients = await ResolveRecipientsFromMessageAsync(message);
+                    message.Status = "Sending";
+                    await _repo.UpdateAsync(message);
+                    await DispatchEmailsAsync(message, recipients);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Failed to process scheduled BulkEmail {Id}. Marking as Failed.", message.Id);
+                    message.Status = "Failed";
+                    message.ErrorMessage = ex.Message;
+                    await _repo.UpdateAsync(message);
+                }
             }
         }
 

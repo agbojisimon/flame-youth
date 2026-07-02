@@ -12,6 +12,7 @@ namespace GlobalFlameMinistry.API.Mappers
             {
                 Id = message.Id,
                 Subject = message.Subject,
+                ImageUrl = message.ImageUrl,
                 TargetGroup = message.TargetGroup,
                 Status = message.Status,
                 TotalRecipients = message.TotalRecipients,
