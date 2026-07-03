@@ -41,26 +41,58 @@ namespace GlobalFlameMinistry.API.Services
             _logger = logger;
         }
 
+        // ══════════════════════════════════════════════════════════════════
+        // DIAGNOSTIC HELPERS  (REMOVE AFTER DEBUGGING)
+        // ══════════════════════════════════════════════════════════════════
+        private void LogTrace(string step, object? extra = null)
+        {
+            var extraJson = extra is not null
+                ? JsonSerializer.Serialize(extra)
+                : "";
+            _logger.LogWarning("[DIAG] BULK_EMAIL_TRACE | {Step} | {Extra}",
+                step, extraJson);
+        }
+
+        private void LogTraceException(string step, Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "[DIAG] BULK_EMAIL_TRACE | {Step} | EXCEPTION | {Message} | {StackTrace}",
+                step, ex.Message, ex.StackTrace);
+        }
+        // ══════════════════════════════════════════════════════════════════
+
         // ── SEND NOW ────────────────────────────────────────────────────────
         public async Task<BulkEmailResponseDto> SendNowAsync(
             SendBulkEmailDto dto, string adminUserId, string adminName)
         {
-            if (string.IsNullOrWhiteSpace(dto.Subject))
-                throw new InvalidOperationException("[BulkEmail] Subject is required.");
-            if (string.IsNullOrWhiteSpace(dto.HtmlBody))
-                throw new InvalidOperationException("[BulkEmail] HTML body is required.");
+            LogTrace("SendNowAsync ENTERED", new { subject = dto.Subject, targetGroup = dto.TargetGroup, customEmails = dto.CustomEmails, scheduledAt = dto.ScheduledAt, adminUserId, adminName });
 
+            if (string.IsNullOrWhiteSpace(dto.Subject))
+            {
+                LogTrace("SendNowAsync FAILED: Subject is empty");
+                throw new InvalidOperationException("[BulkEmail] Subject is required.");
+            }
+            if (string.IsNullOrWhiteSpace(dto.HtmlBody))
+            {
+                LogTrace("SendNowAsync FAILED: HtmlBody is empty");
+                throw new InvalidOperationException("[BulkEmail] HTML body is required.");
+            }
+
+            LogTrace("SendNowAsync calling ResolveRecipientsAsync");
             var recipients = await ResolveRecipientsAsync(dto);
+            LogTrace("SendNowAsync ResolveRecipientsAsync returned", new { recipientCount = recipients.Count });
 
             if (recipients.Count == 0)
             {
                 _logger.LogWarning("[BulkEmail] No recipients resolved for SendNow. Subject: {Subject}", dto.Subject);
+                LogTrace("SendNowAsync EARLY RETURN: 0 recipients -> hardcoded Status=Sent. NO HTTP REQUEST TO BREVO WILL BE MADE.");
                 var empty = dto.ToModel(BuildHtmlTemplate(dto.Subject, dto.HtmlBody, dto.ImageUrl), 0, "Sent", adminUserId, adminName);
                 empty.SuccessCount = 0;
                 empty.FailedCount = 0;
                 empty.Status = "Sent";
                 empty.SentAt = DateTime.UtcNow;
                 var saved = await _repo.CreateAsync(empty);
+                LogTrace("SendNowAsync RETURNING FALSE SUCCESS: DB record saved with Status=Sent but 0 HTTP requests made to Brevo", new { savedId = saved.Id });
                 return saved.ToBulkEmailResponseDto();
             }
 
@@ -69,10 +101,14 @@ namespace GlobalFlameMinistry.API.Services
             var message = dto.ToModel(
                 htmlBodyTemplate, recipients.Count, "Sending", adminUserId, adminName);
 
+            LogTrace("SendNowAsync saving initial DB record with Status=Sending", new { recipientsCount = recipients.Count, firstRecipient = recipients.FirstOrDefault() });
             var created = await _repo.CreateAsync(message);
+            LogTrace("SendNowAsync saved DB record", new { createdId = created.Id });
             await DispatchEmailsAsync(created, recipients);
 
+            LogTrace("SendNowAsync re-reading updated record from DB");
             var updated = await _repo.GetByIdAsync(created.Id);
+            LogTrace("SendNowAsync RETURNING", new { status = updated?.Status, successCount = updated?.SuccessCount, failedCount = updated?.FailedCount, errorMessage = updated?.ErrorMessage });
             return updated!.ToBulkEmailResponseDto();
         }
 
@@ -80,16 +116,27 @@ namespace GlobalFlameMinistry.API.Services
         public async Task<BulkEmailResponseDto> ScheduleAsync(
             SendBulkEmailDto dto, string adminUserId, string adminName)
         {
-            if (string.IsNullOrWhiteSpace(dto.Subject))
-                throw new InvalidOperationException("[BulkEmail] Subject is required.");
-            if (string.IsNullOrWhiteSpace(dto.HtmlBody))
-                throw new InvalidOperationException("[BulkEmail] HTML body is required.");
+            LogTrace("ScheduleAsync ENTERED", new { subject = dto.Subject, targetGroup = dto.TargetGroup, scheduledAt = dto.ScheduledAt });
 
+            if (string.IsNullOrWhiteSpace(dto.Subject))
+            {
+                LogTrace("ScheduleAsync FAILED: Subject is empty");
+                throw new InvalidOperationException("[BulkEmail] Subject is required.");
+            }
+            if (string.IsNullOrWhiteSpace(dto.HtmlBody))
+            {
+                LogTrace("ScheduleAsync FAILED: HtmlBody is empty");
+                throw new InvalidOperationException("[BulkEmail] HTML body is required.");
+            }
+
+            LogTrace("ScheduleAsync calling ResolveRecipientsAsync");
             var recipients = await ResolveRecipientsAsync(dto);
+            LogTrace("ScheduleAsync ResolveRecipientsAsync returned", new { recipientCount = recipients.Count });
 
             if (recipients.Count == 0)
             {
                 _logger.LogWarning("[BulkEmail] No recipients resolved for Schedule. Subject: {Subject}", dto.Subject);
+                LogTrace("ScheduleAsync EARLY RETURN: 0 recipients, saving with Status=Scheduled. No HTTP request will be made.");
                 var empty = dto.ToModel(BuildHtmlTemplate(dto.Subject, dto.HtmlBody, dto.ImageUrl), 0, "Scheduled", adminUserId, adminName);
                 return (await _repo.CreateAsync(empty)).ToBulkEmailResponseDto();
             }
@@ -99,7 +146,9 @@ namespace GlobalFlameMinistry.API.Services
             var message = dto.ToModel(
                 htmlBodyTemplate, recipients.Count, "Scheduled", adminUserId, adminName);
 
+            LogTrace("ScheduleAsync saving DB record", new { recipientsCount = recipients.Count });
             var created = await _repo.CreateAsync(message);
+            LogTrace("ScheduleAsync RETURNING", new { createdId = created.Id });
             return created.ToBulkEmailResponseDto();
         }
 
@@ -134,13 +183,17 @@ namespace GlobalFlameMinistry.API.Services
         // ── PROCESS SCHEDULED (called by background service) ────────────────
         public async Task ProcessScheduledEmailsAsync()
         {
+            LogTrace("ProcessScheduledEmailsAsync ENTERED");
             var dueMessages = await _repo.GetDueScheduledAsync();
+            LogTrace("ProcessScheduledEmailsAsync GetDueScheduledAsync returned", new { count = dueMessages.Count, ids = dueMessages.Select(m => m.Id).ToList() });
 
             foreach (var message in dueMessages)
             {
+                LogTrace("ProcessScheduledEmailsAsync processing message", new { id = message.Id, subject = message.Subject, targetGroup = message.TargetGroup });
                 try
                 {
                     var recipients = await ResolveRecipientsFromMessageAsync(message);
+                    LogTrace("ProcessScheduledEmailsAsync resolved recipients", new { id = message.Id, recipientCount = recipients.Count });
                     message.Status = "Sending";
                     await _repo.UpdateAsync(message);
                     await DispatchEmailsAsync(message, recipients);
@@ -149,6 +202,7 @@ namespace GlobalFlameMinistry.API.Services
                 {
                     _logger.LogError(ex,
                         "Failed to process scheduled BulkEmail {Id}. Marking as Failed.", message.Id);
+                    LogTraceException("ProcessScheduledEmailsAsync exception processing message", ex);
                     message.Status = "Failed";
                     message.ErrorMessage = ex.Message;
                     await _repo.UpdateAsync(message);
@@ -160,9 +214,12 @@ namespace GlobalFlameMinistry.API.Services
         private async Task DispatchEmailsAsync(
             BulkEmailMessage message, List<EmailRecipient> recipients)
         {
+            LogTrace("DispatchEmailsAsync ENTERED", new { bulkEmailId = message.Id, recipientCount = recipients.Count });
+
             if (recipients.Count == 0)
             {
                 _logger.LogWarning("[BulkEmail] No recipients to dispatch for BulkEmail {Id}", message.Id);
+                LogTrace("DispatchEmailsAsync EARLY RETURN: 0 recipients -> Status hardcoded to Sent. NO HTTP REQUEST TO BREVO.");
                 message.Status = "Sent";
                 message.SentAt = DateTime.UtcNow;
                 await _repo.UpdateAsync(message);
@@ -172,26 +229,33 @@ namespace GlobalFlameMinistry.API.Services
             if (string.IsNullOrWhiteSpace(_brevo.ApiKey))
             {
                 _logger.LogError("[BulkEmail] Brevo API key is not configured. Cannot dispatch BulkEmail {Id}", message.Id);
+                LogTrace("DispatchEmailsAsync EARLY RETURN: ApiKey is empty. NO HTTP REQUEST TO BREVO.", new { apiKey = _brevo.ApiKey, apiKeyLength = _brevo.ApiKey?.Length });
                 message.Status = "Failed";
                 message.ErrorMessage = "Brevo API key is not configured.";
                 await _repo.UpdateAsync(message);
                 return;
             }
+            LogTrace("DispatchEmailsAsync ApiKey check PASSED", new { apiKeyPrefix = _brevo.ApiKey?.Substring(0, Math.Min(20, _brevo.ApiKey?.Length ?? 0)) + "...", apiKeyLength = _brevo.ApiKey?.Length });
 
             if (string.IsNullOrWhiteSpace(_brevo.SenderEmail))
             {
                 _logger.LogError("[BulkEmail] Brevo sender email is not configured. Cannot dispatch BulkEmail {Id}", message.Id);
+                LogTrace("DispatchEmailsAsync EARLY RETURN: SenderEmail is empty. NO HTTP REQUEST TO BREVO.");
                 message.Status = "Failed";
                 message.ErrorMessage = "Brevo sender email is not configured.";
                 await _repo.UpdateAsync(message);
                 return;
             }
+            LogTrace("DispatchEmailsAsync SenderEmail check PASSED", new { senderEmail = _brevo.SenderEmail, senderName = _brevo.SenderName });
 
             var htmlBody = message.HtmlBody ?? string.Empty;
 
             var httpClient = _httpClientFactory.CreateClient("BrevoClient");
+            LogTrace("DispatchEmailsAsync HttpClient created", new { baseAddress = httpClient.BaseAddress?.ToString() });
+
             httpClient.DefaultRequestHeaders.Remove("api-key");
             httpClient.DefaultRequestHeaders.Add("api-key", _brevo.ApiKey);
+            LogTrace("DispatchEmailsAsync api-key header set on HttpClient");
 
             try
             {
@@ -203,6 +267,8 @@ namespace GlobalFlameMinistry.API.Services
                     .GroupBy(x => x.index / EmailBatchSize)
                     .Select(g => g.Select(x => x.r).ToList())
                     .ToList();
+
+                LogTrace("DispatchEmailsAsync batches created", new { batchCount = batches.Count, batchSizes = batches.Select(b => b.Count).ToList() });
 
                 foreach (var batch in batches)
                 {
@@ -232,8 +298,14 @@ namespace GlobalFlameMinistry.API.Services
                             var content = new StringContent(
                                 json, Encoding.UTF8, "application/json");
 
+                            var targetUrl = $"{(httpClient.BaseAddress?.ToString().TrimEnd('/') ?? "https://api.brevo.com/v3")}/smtp/email";
+                            LogTrace("DispatchEmailsAsync ABOUT TO CALL PostAsync", new { url = targetUrl, recipientEmail = recipient.Email, recipientFirstName = recipient.FirstName, bulkEmailId = message.Id });
+
                             var response = await httpClient.PostAsync("smtp/email", content);
+                            LogTrace("DispatchEmailsAsync PostAsync COMPLETED", new { httpStatusCode = (int)response.StatusCode, reasonPhrase = response.ReasonPhrase, isSuccess = response.IsSuccessStatusCode, bulkEmailId = message.Id, recipientEmail = recipient.Email });
+
                             var responseBody = await response.Content.ReadAsStringAsync();
+                            LogTrace("DispatchEmailsAsync response body read", new { bodyLength = responseBody?.Length ?? 0, bodyPreview = responseBody?.Substring(0, Math.Min(500, responseBody?.Length ?? 0)) });
 
                             if (response.IsSuccessStatusCode)
                             {
@@ -241,6 +313,7 @@ namespace GlobalFlameMinistry.API.Services
                                 _logger.LogInformation(
                                     "Email sent to {Email} for BulkEmail {Id}",
                                     recipient.Email, message.Id);
+                                LogTrace("DispatchEmailsAsync BREVO ACCEPTED email", new { recipientEmail = recipient.Email, statusCode = (int)response.StatusCode, responseBody });
                             }
                             else
                             {
@@ -250,6 +323,7 @@ namespace GlobalFlameMinistry.API.Services
                                     "Status: {Status}. Response: {Body}",
                                     recipient.Email, message.Id,
                                     response.StatusCode, responseBody);
+                                LogTrace("DispatchEmailsAsync BREVO REJECTED email", new { recipientEmail = recipient.Email, statusCode = (int)response.StatusCode, responseBody });
                             }
 
                             await Task.Delay(100);
@@ -259,6 +333,7 @@ namespace GlobalFlameMinistry.API.Services
                             _logger.LogError(ex,
                                 "Exception sending to {Email} for BulkEmail {Id}",
                                 recipient.Email, message.Id);
+                            LogTraceException("DispatchEmailsAsync INNER CATCH: exception during send to recipient", ex);
                             failedCount++;
                         }
                     }
@@ -271,6 +346,7 @@ namespace GlobalFlameMinistry.API.Services
                 message.FailedCount = failedCount;
                 message.SentAt = DateTime.UtcNow;
 
+                LogTrace("DispatchEmailsAsync saving final status", new { status = message.Status, successCount, failedCount, totalRecipients = recipients.Count, errorMessage = message.ErrorMessage });
                 await _repo.UpdateAsync(message);
 
                 _logger.LogInformation(
@@ -281,6 +357,7 @@ namespace GlobalFlameMinistry.API.Services
             {
                 _logger.LogError(ex,
                     "Dispatch completely failed for BulkEmail {Id}", message.Id);
+                LogTraceException("DispatchEmailsAsync OUTER CATCH: dispatch completely failed", ex);
                 message.Status = "Failed";
                 message.ErrorMessage = ex.Message;
                 await _repo.UpdateAsync(message);
@@ -290,45 +367,70 @@ namespace GlobalFlameMinistry.API.Services
         // ── PRIVATE: RESOLVE RECIPIENTS ─────────────────────────────────────
         private async Task<List<EmailRecipient>> ResolveRecipientsAsync(SendBulkEmailDto dto)
         {
+            LogTrace("ResolveRecipientsAsync ENTERED", new { targetGroup = dto.TargetGroup, customEmails = dto.CustomEmails });
+
             if (dto.TargetGroup == "Custom")
             {
                 if (string.IsNullOrWhiteSpace(dto.CustomEmails))
+                {
+                    LogTrace("ResolveRecipientsAsync Custom target but CustomEmails is empty -> returning 0 recipients");
                     return new List<EmailRecipient>();
+                }
 
-                // Custom emails have no names — fall back to "Member"
-                return dto.CustomEmails
+                var parsed = dto.CustomEmails
                     .Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Select(e => e.Trim())
                     .Where(e => !string.IsNullOrWhiteSpace(e))
                     .Distinct()
                     .Select(e => new EmailRecipient(e, "Beloved"))
                     .ToList();
+
+                LogTrace("ResolveRecipientsAsync parsed custom emails", new { count = parsed.Count, emails = parsed.Select(r => r.Email).ToList() });
+                return parsed;
             }
 
             var query = _context.Users.Where(u => u.EmailConfirmed);
+            LogTrace("ResolveRecipientsAsync base query: EmailConfirmed users");
 
             if (dto.TargetGroup == "Ministry")
+            {
                 query = query.Where(u => u.Module == "Ministry");
+                LogTrace("ResolveRecipientsAsync filtered to Ministry");
+            }
             else if (dto.TargetGroup == "Youth")
+            {
                 query = query.Where(u => u.Module == "Youth");
+                LogTrace("ResolveRecipientsAsync filtered to Youth");
+            }
+            else
+            {
+                LogTrace("ResolveRecipientsAsync target group is All (no module filter)");
+            }
 
-            return await query
+            var result = await query
                 .Where(u => !string.IsNullOrWhiteSpace(u.Email))
                 .Select(u => new EmailRecipient(u.Email!, u.FirstName))
                 .ToListAsync();
+
+            LogTrace("ResolveRecipientsAsync query executed", new { count = result.Count, firstFew = result.Take(5).Select(r => new { r.Email, r.FirstName }).ToList() });
+            return result;
         }
 
         private async Task<List<EmailRecipient>> ResolveRecipientsFromMessageAsync(
             BulkEmailMessage message)
         {
+            LogTrace("ResolveRecipientsFromMessageAsync ENTERED", new { bulkEmailId = message.Id, targetGroup = message.TargetGroup });
+
             if (message.TargetGroup == "Custom" &&
                 !string.IsNullOrWhiteSpace(message.CustomEmailsJson))
             {
-                return message.CustomEmailsJson
+                var parsed = message.CustomEmailsJson
                     .Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Select(e => e.Trim())
                     .Select(e => new EmailRecipient(e, "Member"))
                     .ToList();
+                LogTrace("ResolveRecipientsFromMessageAsync parsed custom emails", new { count = parsed.Count });
+                return parsed;
             }
 
             var query = _context.Users.Where(u => u.EmailConfirmed);
@@ -338,10 +440,13 @@ namespace GlobalFlameMinistry.API.Services
             else if (message.TargetGroup == "Youth")
                 query = query.Where(u => u.Module == "Youth");
 
-            return await query
+            var result = await query
                 .Where(u => !string.IsNullOrWhiteSpace(u.Email))
                 .Select(u => new EmailRecipient(u.Email!, u.FirstName))
                 .ToListAsync();
+
+            LogTrace("ResolveRecipientsFromMessageAsync query executed", new { count = result.Count });
+            return result;
         }
 
         private static string BuildHtmlTemplate(string subject, string body, string? imageUrl)
