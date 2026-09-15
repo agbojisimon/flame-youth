@@ -94,7 +94,8 @@ namespace GlobalFlameMinistry.API.Services
                         _settings.CloudName,
                         Truncate(responseBody, 500));
 
-                    throw new InvalidOperationException("Upload failed. Please try again.");
+                    throw new InvalidOperationException(
+                        $"Upload failed. Cloudinary responded with {(int)response.StatusCode}: {Truncate(responseBody, 500)}.");
                 }
 
                 var json = JObject.Parse(responseBody);
