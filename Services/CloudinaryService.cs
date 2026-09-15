@@ -49,10 +49,9 @@ namespace GlobalFlameMinistry.API.Services
             var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
             var safeFileName = SanitizeFileName(file.FileName);
 
-            // Sign exactly the multipart params that will be posted (excluding file/api_key)
+            // Cloudinary signs every posted field except file/api_key/resource_type/cloud_name
             var parameters = new SortedDictionary<string, string>
             {
-                ["resource_type"] = resourceType,
                 ["timestamp"] = timestamp
             };
 
