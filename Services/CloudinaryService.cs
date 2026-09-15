@@ -1,6 +1,4 @@
 using System.Net.Http.Headers;
-using System.Security.Cryptography;
-using System.Text;
 using GlobalFlameMinistry.API.Configuration;
 using GlobalFlameMinistry.API.DTOs.Media;
 using GlobalFlameMinistry.API.Helpers;
@@ -32,8 +30,7 @@ namespace GlobalFlameMinistry.API.Services
             string? publicId)
         {
             if (string.IsNullOrWhiteSpace(_settings.CloudName) ||
-                string.IsNullOrWhiteSpace(_settings.ApiKey) ||
-                string.IsNullOrWhiteSpace(_settings.ApiSecret))
+                string.IsNullOrWhiteSpace(_settings.UploadPreset))
             {
                 throw new InvalidOperationException("Cloudinary is not configured.");
             }
@@ -45,26 +42,9 @@ namespace GlobalFlameMinistry.API.Services
             if (file.Length > UploadValidation.GetMaxSizeForContentType(contentType))
                 throw new InvalidOperationException("File is too large.");
 
-            var resourceType = ResolveResourceType(contentType);
-            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+            // Unsigned upload via the account's upload preset. The preset governs
+            // allowed parameters, so folder/publicId from the request are not sent.
             var safeFileName = SanitizeFileName(file.FileName);
-
-            // Cloudinary signs every posted field except file/api_key/resource_type/cloud_name
-            var parameters = new SortedDictionary<string, string>
-            {
-                ["timestamp"] = timestamp
-            };
-
-            if (!string.IsNullOrWhiteSpace(folder))
-                parameters["folder"] = folder;
-
-            if (!string.IsNullOrWhiteSpace(publicId))
-                parameters["public_id"] = publicId;
-
-            var signString = string.Join("&", parameters.Select(p => $"{p.Key}={p.Value}")) + _settings.ApiSecret;
-            var signature = Convert.ToHexString(
-                    SHA1.HashData(Encoding.UTF8.GetBytes(signString)))
-                .ToLowerInvariant();
 
             using var content = new MultipartFormDataContent();
 
@@ -72,14 +52,9 @@ namespace GlobalFlameMinistry.API.Services
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
             content.Add(fileContent, "file", safeFileName);
 
-            content.Add(new StringContent(_settings.ApiKey), "api_key");
+            content.Add(new StringContent(_settings.UploadPreset), "upload_preset");
 
-            foreach (var parameter in parameters)
-                content.Add(new StringContent(parameter.Value), parameter.Key);
-
-            content.Add(new StringContent(signature), "signature");
-
-            var uploadUrl = $"https://api.cloudinary.com/v1_1/{_settings.CloudName}/{resourceType}/upload";
+            var uploadUrl = $"https://api.cloudinary.com/v1_1/{_settings.CloudName}/auto/upload";
 
             try
             {
@@ -131,20 +106,6 @@ namespace GlobalFlameMinistry.API.Services
 
                 throw new InvalidOperationException("Upload failed. Please try again.");
             }
-        }
-
-        private static string ResolveResourceType(string contentType)
-        {
-            if (contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
-                return "image";
-
-            if (contentType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase))
-                return "video"; // Cloudinary stores audio as video
-
-            if (contentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
-                return "video";
-
-            return "raw"; // PDF and other documents
         }
 
         private static string SanitizeFileName(string fileName)
