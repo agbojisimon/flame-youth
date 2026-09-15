@@ -14,6 +14,7 @@ using GlobalFlameMinistry.API.Interfaces.Auth;
 using GlobalFlameMinistry.API.Interfaces.BulkEmail;
 using GlobalFlameMinistry.API.Interfaces.Counselling;
 using GlobalFlameMinistry.API.Interfaces.Email;
+using GlobalFlameMinistry.API.Interfaces.Media;
 using GlobalFlameMinistry.API.Interfaces.Ministry;
 using GlobalFlameMinistry.API.Models;
 using GlobalFlameMinistry.API.Repositories;
@@ -320,6 +321,8 @@ builder.Services.AddScoped<IEventRegistrationService, EventRegistrationService>(
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddHttpClient("DonationClient");
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
+builder.Services.AddHttpClient<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IDonationRepository, DonationRepository>();
 builder.Services.AddScoped<IAdminDonationService, AdminDonationService>();

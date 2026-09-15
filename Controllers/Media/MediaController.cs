@@ -1,5 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
+using GlobalFlameMinistry.API.DTOs.Media;
+using GlobalFlameMinistry.API.Helpers;
+using GlobalFlameMinistry.API.Interfaces.Media;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,10 +20,44 @@ namespace GlobalFlameMinistry.API.Controllers.Media
     public class MediaController : ControllerBase
     {
         private readonly IConfiguration _config;
+        private readonly ICloudinaryService _cloudinaryService;
 
-        public MediaController(IConfiguration config)
+        public MediaController(
+            IConfiguration config,
+            ICloudinaryService cloudinaryService)
         {
             _config = config;
+            _cloudinaryService = cloudinaryService;
+        }
+
+        // POST /api/media/upload
+        // Multipart form-data: file (required), folder (optional), publicId (optional)
+        [HttpPost("upload")]
+        [RequestFormLimits(
+            MultipartBodyLengthLimit = 120 * 1024 * 1024,
+            ValueLengthLimit = 4096)]
+        [RequestSizeLimit(120 * 1024 * 1024)]
+        public async Task<IActionResult> Upload([FromForm] MediaUploadRequest request)
+        {
+            if (!UploadValidation.IsAllowedContentType(request.File.ContentType))
+                return BadRequest("Unsupported file type.");
+
+            if (request.File.Length > UploadValidation.GetMaxSizeForContentType(request.File.ContentType))
+                return BadRequest("File is too large.");
+
+            try
+            {
+                var result = await _cloudinaryService.UploadAsync(
+                    request.File,
+                    request.Folder,
+                    request.PublicId);
+
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(502, new { message = ex.Message });
+            }
         }
 
         [HttpPost("sign-upload")]
