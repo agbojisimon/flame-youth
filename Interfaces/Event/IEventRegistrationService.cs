@@ -10,7 +10,8 @@ namespace GlobalFlameMinistry.API.Interfaces
             string eventTitle,
             DateTime startDate,
             DateTime endDate,
-            string location);
+            string location,
+            string? appUserId = null);
 
         Task<List<EventRegistrationResponseDto>> GetByEventIdAsync(int eventId);
         Task<int> GetCountByEventIdAsync(int eventId);

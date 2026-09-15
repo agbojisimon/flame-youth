@@ -788,7 +788,8 @@ namespace GlobalFlameMinistry.API.Migrations
 
                     b.HasIndex("AppUserId");
 
-                    b.HasIndex("EventId");
+                    b.HasIndex("EventId", "Email")
+                        .IsUnique();
 
                     b.ToTable("EventRegistrations");
                 });

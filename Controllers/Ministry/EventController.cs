@@ -2,7 +2,6 @@ using System.Security.Claims;
 using GlobalFlameMinistry.API.DTOs.Event;
 using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -52,7 +51,6 @@ namespace GlobalFlameMinistry.API.Controllers.Ministry
         }
 
         // POST /api/ministry/events/{id}/register
-        [Authorize]
         [HttpPost("{id:int}/register")]
         public async Task<IActionResult> Register(int id, [FromBody] RegisterForEventDto dto)
         {
@@ -63,8 +61,18 @@ namespace GlobalFlameMinistry.API.Controllers.Ministry
             if (evt.IsCancelled)
                 return BadRequest("This event has been cancelled.");
 
-            // Use the JWT email — user cannot register another person's email
-            dto.Email = User.FindFirstValue(ClaimTypes.Email) ?? dto.Email;
+            if (!evt.AcceptsRegistrations)
+                return BadRequest("This event is not accepting registrations.");
+
+            // If authenticated, link the registration to the user's account
+            var appUserId = User.Identity?.IsAuthenticated == true
+                ? User.FindFirstValue(ClaimTypes.NameIdentifier)
+                : null;
+
+            // For logged-in users, use the JWT email so they
+            // cannot register another person's email
+            if (appUserId is not null)
+                dto.Email = User.FindFirstValue(ClaimTypes.Email) ?? dto.Email;
 
             try
             {
@@ -74,7 +82,8 @@ namespace GlobalFlameMinistry.API.Controllers.Ministry
                     evt.Title,
                     evt.StartDate,
                     evt.EndDate,
-                    evt.Location
+                    evt.Location,
+                    appUserId
                 );
 
                 return Ok(new

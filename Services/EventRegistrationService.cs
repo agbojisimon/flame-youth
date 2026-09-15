@@ -24,7 +24,8 @@ namespace GlobalFlameMinistry.API.Services
             string eventTitle,
             DateTime startDate,
             DateTime endDate,
-            string location)
+            string location,
+            string? appUserId = null)
         {
             // Prevent duplicate registrations
             var alreadyRegistered = await _repository
@@ -38,6 +39,7 @@ namespace GlobalFlameMinistry.API.Services
             var registration = new EventRegistration
             {
                 EventId = eventId,
+                AppUserId = appUserId,
                 FullName = dto.FullName,
                 Email = dto.Email,
                 PhoneNumber = dto.PhoneNumber,

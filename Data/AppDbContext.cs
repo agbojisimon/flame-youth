@@ -96,6 +96,7 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(e => e.Email).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.PhoneNumber).HasMaxLength(20);
                 entity.Property(e => e.AppUserId).HasMaxLength(450).IsRequired(false);
+                entity.HasIndex(e => new { e.EventId, e.Email }).IsUnique();
 
                 entity.HasOne(e => e.Event)
                       .WithMany()

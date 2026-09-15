@@ -44,7 +44,8 @@ namespace GlobalFlameMinistry.API.Controllers.Youth
         }
 
         // POST /api/youth/events/{id}/register
-        // Any logged in user can register for a youth event
+        // Any user (logged in or anonymous) can register for a youth event
+        [AllowAnonymous]
         [HttpPost("{id:int}/register")]
         public async Task<IActionResult> Register(
             int id,
@@ -54,9 +55,17 @@ namespace GlobalFlameMinistry.API.Controllers.Youth
             if (evt is null) return NotFound("Event not found");
             if (evt.Module != "Youth") return NotFound("Event not found");
             if (evt.IsCancelled) return BadRequest("This event has been cancelled.");
+            if (!evt.AcceptsRegistrations) return BadRequest("This event is not accepting registrations.");
 
-            // Use the JWT email — user cannot register another person's email
-            dto.Email = User.FindFirstValue(ClaimTypes.Email) ?? dto.Email;
+            // If authenticated, link the registration to the user's account
+            var appUserId = User.Identity?.IsAuthenticated == true
+                ? User.FindFirstValue(ClaimTypes.NameIdentifier)
+                : null;
+
+            // For logged-in users, use the JWT email so they
+            // cannot register another person's email
+            if (appUserId is not null)
+                dto.Email = User.FindFirstValue(ClaimTypes.Email) ?? dto.Email;
 
             try
             {
@@ -66,7 +75,8 @@ namespace GlobalFlameMinistry.API.Controllers.Youth
                     evt.Title,
                     evt.StartDate,
                     evt.EndDate,
-                    evt.Location
+                    evt.Location,
+                    appUserId
                 );
 
                 return Ok(new

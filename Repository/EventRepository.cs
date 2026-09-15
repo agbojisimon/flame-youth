@@ -115,7 +115,9 @@ namespace GlobalFlameMinistry.API.Repository
 
         public async Task<Event?> GetByIdAsync(int id)
         {
-            return await _context.Events.FirstOrDefaultAsync(e => e.Id == id);
+            return await _context.Events
+                .Include(e => e.Ministry)
+                .FirstOrDefaultAsync(e => e.Id == id);
         }
 
         public async Task<Event?> GetBySlugAsync(string slug)
