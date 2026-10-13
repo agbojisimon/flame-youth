@@ -716,6 +716,9 @@ namespace GlobalFlameMinistry.API.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
+                    b.Property<int?>("MaxRegistrations")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("MinistryId")
                         .HasColumnType("integer");
 
@@ -725,6 +728,11 @@ namespace GlobalFlameMinistry.API.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasDefaultValue("Ministry");
+
+                    b.Property<int>("SeatsTaken")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("Slug")
                         .IsRequired()

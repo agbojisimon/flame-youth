@@ -13,6 +13,8 @@ namespace GlobalFlameMinistry.API.Models
         public string Module { get; set; } = "Ministry";
         public bool IsCancelled { get; set; } = false;
         public bool AcceptsRegistrations { get; set; } = true;
+        public int? MaxRegistrations { get; set; }
+        public int SeatsTaken { get; set; } = 0;
         public bool AcceptsDonations { get; set; } = true;
         public string? DonationLabel { get; set; }
         public int? MinistryId { get; set; }

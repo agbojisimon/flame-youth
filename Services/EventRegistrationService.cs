@@ -1,7 +1,11 @@
+using System.Net;
 using GlobalFlameMinistry.API.DTOs.Event;
+using GlobalFlameMinistry.API.Exceptions;
+using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Interfaces;
 using GlobalFlameMinistry.API.Interfaces.Email;
 using GlobalFlameMinistry.API.Models;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace GlobalFlameMinistry.API.Services
 {
@@ -9,13 +13,19 @@ namespace GlobalFlameMinistry.API.Services
     {
         private readonly IEventRegistrationRepository _repository;
         private readonly IEmailSender _emailSender;
+        private readonly HybridCache _cache;
+        private readonly ILogger<EventRegistrationService> _logger;
 
         public EventRegistrationService(
             IEventRegistrationRepository repository,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            HybridCache cache,
+            ILogger<EventRegistrationService> logger)
         {
             _repository = repository;
             _emailSender = emailSender;
+            _cache = cache;
+            _logger = logger;
         }
 
         public async Task<EventRegistrationResponseDto> RegisterAsync(
@@ -27,30 +37,43 @@ namespace GlobalFlameMinistry.API.Services
             string location,
             string? appUserId = null)
         {
-            // Prevent duplicate registrations
-            var alreadyRegistered = await _repository
-                .IsAlreadyRegisteredAsync(eventId, dto.Email);
+            // Normalize the email before any comparison or insert
+            dto.Email = (dto.Email ?? string.Empty).Trim().ToLowerInvariant();
 
-            if (alreadyRegistered)
-                throw new ApplicationException(
+            // Fast-path hint; the DB unique index is the real authority
+            if (await _repository.IsAlreadyRegisteredAsync(eventId, dto.Email))
+                throw new EventRegistrationConflictException(
                     "This email is already registered for this event.");
 
-            // Save registration
+            // Save registration (atomic seat claim + duplicate detection)
             var registration = new EventRegistration
             {
                 EventId = eventId,
                 AppUserId = appUserId,
-                FullName = dto.FullName,
+                FullName = dto.FullName?.Trim() ?? string.Empty,
                 Email = dto.Email,
-                PhoneNumber = dto.PhoneNumber,
+                PhoneNumber = dto.PhoneNumber?.Trim(),
                 RegisteredAt = DateTime.UtcNow
             };
 
             var created = await _repository.CreateAsync(registration);
 
-            // Send confirmation email using existing EmailSender
-            await SendConfirmationEmailAsync(
-                dto, eventTitle, startDate, endDate, location);
+            await InvalidateEventsCacheAsync(created.Id);
+
+            // Send confirmation email out-of-band from the HTTP response
+            try
+            {
+                await SendConfirmationEmailAsync(
+                    dto, eventTitle, startDate, endDate, location);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "[EventRegistration] Confirmation email failed for registration {RegistrationId} to {Email}.",
+                    created.Id,
+                    created.Email);
+            }
 
             return new EventRegistrationResponseDto
             {
@@ -82,6 +105,25 @@ namespace GlobalFlameMinistry.API.Services
         public async Task<int> GetCountByEventIdAsync(int eventId)
             => await _repository.GetCountByEventIdAsync(eventId);
 
+        private async Task InvalidateEventsCacheAsync(int registrationId)
+        {
+            try
+            {
+                await _cache.RemoveByTagAsync(CacheKeys.TagEvents, CancellationToken.None);
+                _logger.LogInformation(
+                    "[EventRegistration] Registration {RegistrationId} persisted, invalidated cache tag {Tag}",
+                    registrationId,
+                    CacheKeys.TagEvents);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "[EventRegistration] Redis unavailable, cache invalidation skipped for {Tag}",
+                    CacheKeys.TagEvents);
+            }
+        }
+
         private async Task SendConfirmationEmailAsync(
             RegisterForEventDto dto,
             string eventTitle,
@@ -92,6 +134,10 @@ namespace GlobalFlameMinistry.API.Services
             var startDateStr = startDate.ToString("dddd, MMMM d, yyyy");
             var startTimeStr = startDate.ToString("h:mm tt");
             var endTimeStr = endDate.ToString("h:mm tt");
+
+            var safeFullName = WebUtility.HtmlEncode(dto.FullName ?? string.Empty);
+            var safeEventTitle = WebUtility.HtmlEncode(eventTitle);
+            var safeLocation = WebUtility.HtmlEncode(location);
 
             var body = $@"
                 <!DOCTYPE html>
@@ -120,7 +166,7 @@ namespace GlobalFlameMinistry.API.Services
 
                     <div class='body'>
                       <p style='font-size: 16px; color: #333;'>
-                        Dear <strong>{dto.FullName}</strong>,
+                        Dear <strong>{safeFullName}</strong>,
                       </p>
                       <p style='color: #555; line-height: 1.6;'>
                         Your registration has been confirmed! We are excited to have
@@ -128,10 +174,10 @@ namespace GlobalFlameMinistry.API.Services
                       </p>
 
                       <div class='event-card'>
-                        <h2>{eventTitle}</h2>
+                        <h2>{safeEventTitle}</h2>
                         <div class='detail'>📅 <span><strong>{startDateStr}</strong></span></div>
                         <div class='detail'>🕐 <span>{startTimeStr} — {endTimeStr}</span></div>
-                        <div class='detail'>📍 <span>{location}</span></div>
+                        <div class='detail'>📍 <span>{safeLocation}</span></div>
                       </div>
 
                       <p style='color: #555; line-height: 1.6;'>

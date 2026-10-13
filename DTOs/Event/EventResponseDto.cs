@@ -14,6 +14,9 @@ public class EventResponseDto
     public string Module { get; set; } = string.Empty;
     public bool IsCancelled { get; set; }
     public bool AcceptsRegistrations { get; set; }
+    public int? MaxRegistrations { get; set; }
+    public int SeatsTaken { get; set; }
+    public bool CanRegister { get; set; }
     public bool AcceptsDonations { get; set; }
     public string? DonationLabel { get; set; }
     public DateTime CreatedOn { get; set; }

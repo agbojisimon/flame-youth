@@ -76,6 +76,8 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(e => e.Module).IsRequired().HasMaxLength(50).HasDefaultValue("Ministry");
                 entity.Property(e => e.IsCancelled).HasDefaultValue(false);
                 entity.Property(e => e.AcceptsRegistrations).HasDefaultValue(true);
+                entity.Property(e => e.MaxRegistrations).IsRequired(false);
+                entity.Property(e => e.SeatsTaken).HasDefaultValue(0);
                 entity.Property(e => e.AcceptsDonations).HasDefaultValue(true);
                 entity.Property(e => e.DonationLabel).HasMaxLength(200);
                 entity.Property(e => e.IsDeleted).HasDefaultValue(false);

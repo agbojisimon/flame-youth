@@ -24,6 +24,12 @@ namespace GlobalFlameMinistry.API.Mappers
                 Module = eventModel.Module,
                 IsCancelled = eventModel.IsCancelled,
                 AcceptsRegistrations = eventModel.AcceptsRegistrations,
+                MaxRegistrations = eventModel.MaxRegistrations,
+                SeatsTaken = eventModel.SeatsTaken,
+                CanRegister = eventModel.AcceptsRegistrations &&
+                    !eventModel.IsCancelled &&
+                    (eventModel.MaxRegistrations is null ||
+                     eventModel.SeatsTaken < eventModel.MaxRegistrations),
                 AcceptsDonations = eventModel.AcceptsDonations,
                 DonationLabel = eventModel.DonationLabel,
                 CreatedOn = eventModel.CreatedOn,
@@ -44,6 +50,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 MinistryId = createDto.MinistryId,
                 Module = createDto.Module,
                 AcceptsRegistrations = createDto.AcceptsRegistrations,
+                MaxRegistrations = createDto.MaxRegistrations,
                 AcceptsDonations = createDto.AcceptsDonations,
                 DonationLabel = createDto.DonationLabel,
                 CreatedOn = DateTime.UtcNow
@@ -60,6 +67,7 @@ namespace GlobalFlameMinistry.API.Mappers
             eventModel.MinistryId = dto.MinistryId;
             eventModel.IsCancelled = dto.IsCancelled;
             eventModel.AcceptsRegistrations = dto.AcceptsRegistrations;
+            eventModel.MaxRegistrations = dto.MaxRegistrations;
             eventModel.AcceptsDonations = dto.AcceptsDonations;
             eventModel.DonationLabel = dto.DonationLabel;
             eventModel.UpdatedOn = DateTime.UtcNow;

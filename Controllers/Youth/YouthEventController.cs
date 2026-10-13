@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using GlobalFlameMinistry.API.DTOs.Event;
+using GlobalFlameMinistry.API.Exceptions;
 using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -84,6 +85,14 @@ namespace GlobalFlameMinistry.API.Controllers.Youth
                     message = $"Registration confirmed! A confirmation email has been sent to {dto.Email}.",
                     data = registration
                 });
+            }
+            catch (EventRegistrationConflictException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (EventFullException ex)
+            {
+                return BadRequest(ex.Message);
             }
             catch (ApplicationException ex)
             {

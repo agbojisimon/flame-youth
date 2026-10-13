@@ -26,6 +26,9 @@ namespace GlobalFlameMinistry.API.DTOs.Event
         public int? MinistryId { get; set; }
         public bool IsCancelled { get; set; } = false;
         public bool AcceptsRegistrations { get; set; } = true;
+
+        [Range(0, 100000, ErrorMessage = "Max registrations must be between 0 and 100000")]
+        public int? MaxRegistrations { get; set; }
         public bool AcceptsDonations { get; set; } = true;
 
         [StringLength(200)]
