@@ -33,7 +33,7 @@ namespace GlobalFlameMinistry.API.Controllers.Media
         public async Task<IActionResult> GetAll()
         {
             var slides = await _service.GetAllAsync();
-            return Ok(new { isSuccess = true, data = slides });
+            return Ok(slides);
         }
 
         // POST /api/ministry/hero-slides — admin
@@ -41,7 +41,7 @@ namespace GlobalFlameMinistry.API.Controllers.Media
         public async Task<IActionResult> Create([FromBody] CreateHeroSlideDto dto)
         {
             var slide = await _service.CreateAsync(dto);
-            return Ok(new { isSuccess = true, data = slide });
+            return Ok(slide);
         }
 
         // PUT /api/ministry/hero-slides/5 — admin
@@ -50,7 +50,7 @@ namespace GlobalFlameMinistry.API.Controllers.Media
         {
             var slide = await _service.UpdateAsync(id, dto);
             if (slide is null) return NotFound("Hero slide not found");
-            return Ok(new { isSuccess = true, data = slide });
+            return Ok(slide);
         }
 
         // DELETE /api/ministry/hero-slides/5 — admin
@@ -59,7 +59,7 @@ namespace GlobalFlameMinistry.API.Controllers.Media
         {
             var deleted = await _service.DeleteAsync(id);
             if (!deleted) return NotFound("Hero slide not found");
-            return Ok(new { isSuccess = true });
+            return Ok(new { id });
         }
     }
 }
