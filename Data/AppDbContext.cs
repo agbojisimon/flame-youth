@@ -28,6 +28,7 @@ namespace GlobalFlameMinistry.API.Data
         public DbSet<BlogPost> BlogPosts { get; set; }
         public DbSet<BlogPostBlock> BlogPostBlocks { get; set; }
         public DbSet<CounsellingRequest> CounsellingRequests { get; set; }
+        public DbSet<HeroSlide> HeroSlides { get; set; }
         public DbSet<RefreshTokenFamily> RefreshTokenFamilies { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -342,6 +343,23 @@ namespace GlobalFlameMinistry.API.Data
                       .HasForeignKey(c => c.AppUserId)
                       .OnDelete(DeleteBehavior.SetNull)
                       .IsRequired(false);
+            });
+
+            // ── HERO SLIDE ──────────────────────────────────────────────────────
+            builder.Entity<HeroSlide>(entity =>
+            {
+                entity.HasKey(h => h.Id);
+                entity.Property(h => h.MediaType).IsRequired().HasMaxLength(20).HasDefaultValue("Image");
+                entity.Property(h => h.Url).IsRequired().HasMaxLength(500);
+                entity.Property(h => h.Title).HasMaxLength(200);
+                entity.Property(h => h.Subtitle).HasMaxLength(300);
+                entity.Property(h => h.TargetUrl).HasMaxLength(500);
+                entity.Property(h => h.DisplayOrder).HasDefaultValue(0);
+                entity.Property(h => h.IsActive).HasDefaultValue(true);
+                entity.Property(h => h.IsDeleted).HasDefaultValue(false);
+                entity.Property(h => h.CreatedOn).HasDefaultValueSql("NOW()");
+                entity.HasQueryFilter(h => !h.IsDeleted);
+                entity.HasIndex(h => new { h.IsActive, h.DisplayOrder });
             });
 
             // ── REFRESH TOKEN FAMILY ───────────────────────────────────────────

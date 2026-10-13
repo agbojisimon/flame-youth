@@ -43,4 +43,8 @@ public static class CacheKeys
 
     // ── TESTIMONIES ────────────────────────────────────────────────────────────
     public const string TestimoniesApproved = "testimonies:approved_p{0}_s{1}";
+
+    // ── HERO SLIDES ────────────────────────────────────────────────────────────
+    public const string TagHeroSlides = "tag:hero-slides";
+    public const string HeroSlidesActive = "hero-slides:active";
 }

@@ -336,7 +336,9 @@ builder.Services.AddScoped<ICounsellingRepository, CounsellingRepository>();
 builder.Services.AddScoped<ICounsellingService, CounsellingService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IBlogPostRepository, BlogPostRepository>();
-builder.Services.AddScoped<IBlogPostService, BlogPostService>();
+  builder.Services.AddScoped<IBlogPostService, BlogPostService>();
+  builder.Services.AddScoped<IHeroSlideRepository, HeroSlideRepository>();
+  builder.Services.AddScoped<IHeroSlideService, HeroSlideService>();
 
 var app = builder.Build();
 
