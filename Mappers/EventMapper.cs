@@ -23,6 +23,8 @@ namespace GlobalFlameMinistry.API.Mappers
                 MinistrySlug = eventModel.Ministry?.Slug,
                 Module = eventModel.Module,
                 IsCancelled = eventModel.IsCancelled,
+                IsFeaturedOnHome = eventModel.IsFeaturedOnHome,
+                FeaturedOn = eventModel.FeaturedOn,
                 AcceptsRegistrations = eventModel.AcceptsRegistrations,
                 MaxRegistrations = eventModel.MaxRegistrations,
                 SeatsTaken = eventModel.SeatsTaken,
@@ -32,6 +34,9 @@ namespace GlobalFlameMinistry.API.Mappers
                      eventModel.SeatsTaken < eventModel.MaxRegistrations),
                 AcceptsDonations = eventModel.AcceptsDonations,
                 DonationLabel = eventModel.DonationLabel,
+                ConferenceTheme = eventModel.ConferenceTheme,
+                AnchorScripture = eventModel.AnchorScripture,
+                AnchorScriptureReference = eventModel.AnchorScriptureReference,
                 CreatedOn = eventModel.CreatedOn,
                 UpdatedOn = eventModel.UpdatedOn
             };
@@ -49,10 +54,15 @@ namespace GlobalFlameMinistry.API.Mappers
                 ImageUrl = createDto.ImageUrl,
                 MinistryId = createDto.MinistryId,
                 Module = createDto.Module,
+                IsFeaturedOnHome = createDto.IsFeaturedOnHome,
+                FeaturedOn = createDto.IsFeaturedOnHome ? DateTime.UtcNow : null,
                 AcceptsRegistrations = createDto.AcceptsRegistrations,
                 MaxRegistrations = createDto.MaxRegistrations,
                 AcceptsDonations = createDto.AcceptsDonations,
                 DonationLabel = createDto.DonationLabel,
+                ConferenceTheme = createDto.ConferenceTheme,
+                AnchorScripture = createDto.AnchorScripture,
+                AnchorScriptureReference = createDto.AnchorScriptureReference,
                 CreatedOn = DateTime.UtcNow
             };
         }
@@ -66,10 +76,17 @@ namespace GlobalFlameMinistry.API.Mappers
             eventModel.ImageUrl = dto.ImageUrl;
             eventModel.MinistryId = dto.MinistryId;
             eventModel.IsCancelled = dto.IsCancelled;
+            eventModel.IsFeaturedOnHome = dto.IsFeaturedOnHome;
+            eventModel.FeaturedOn = dto.IsFeaturedOnHome
+                ? eventModel.FeaturedOn ?? DateTime.UtcNow
+                : null;
             eventModel.AcceptsRegistrations = dto.AcceptsRegistrations;
             eventModel.MaxRegistrations = dto.MaxRegistrations;
             eventModel.AcceptsDonations = dto.AcceptsDonations;
             eventModel.DonationLabel = dto.DonationLabel;
+            eventModel.ConferenceTheme = dto.ConferenceTheme;
+            eventModel.AnchorScripture = dto.AnchorScripture;
+            eventModel.AnchorScriptureReference = dto.AnchorScriptureReference;
             eventModel.UpdatedOn = DateTime.UtcNow;
         }
         public static List<EventResponseDto> ToDtoList(this IEnumerable<Event> events)

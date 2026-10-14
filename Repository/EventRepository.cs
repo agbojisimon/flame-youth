@@ -66,6 +66,14 @@ namespace GlobalFlameMinistry.API.Repository
             if (query.IsCancelled.HasValue)
                 events = events.Where(e => e.IsCancelled == query.IsCancelled.Value);
 
+            if (query.IsFeaturedOnHome.HasValue)
+            {
+                events = events.Where(e => e.IsFeaturedOnHome == query.IsFeaturedOnHome.Value);
+
+                if (query.IsFeaturedOnHome.Value)
+                    events = events.Where(e => !e.IsCancelled && e.EndDate >= DateTime.Now);
+            }
+
             if (query.UpcomingOnly.HasValue && query.UpcomingOnly.Value)
                 events = events.Where(e => e.StartDate > DateTime.Now);
 
@@ -107,6 +115,9 @@ namespace GlobalFlameMinistry.API.Repository
                 _ => events.OrderBy(e => e.StartDate)
             };
 
+            if (query.IsFeaturedOnHome.HasValue && query.IsFeaturedOnHome.Value)
+                events = events.OrderBy(e => e.StartDate);
+
             return await events
                 .Skip((query.PageNumber - 1) * query.PageSize)
                 .Take(query.PageSize)
@@ -147,6 +158,14 @@ namespace GlobalFlameMinistry.API.Repository
 
             if (query.IsCancelled.HasValue)
                 events = events.Where(e => e.IsCancelled == query.IsCancelled.Value);
+
+            if (query.IsFeaturedOnHome.HasValue)
+            {
+                events = events.Where(e => e.IsFeaturedOnHome == query.IsFeaturedOnHome.Value);
+
+                if (query.IsFeaturedOnHome.Value)
+                    events = events.Where(e => !e.IsCancelled && e.EndDate >= DateTime.Now);
+            }
 
             if (query.UpcomingOnly.HasValue && query.UpcomingOnly.Value)
                 events = events.Where(e => e.StartDate > DateTime.Now);

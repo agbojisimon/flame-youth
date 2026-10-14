@@ -13,12 +13,17 @@ public class EventResponseDto
     public string? MinistrySlug { get; set; }
     public string Module { get; set; } = string.Empty;
     public bool IsCancelled { get; set; }
+    public bool IsFeaturedOnHome { get; set; }
+    public DateTime? FeaturedOn { get; set; }
     public bool AcceptsRegistrations { get; set; }
     public int? MaxRegistrations { get; set; }
     public int SeatsTaken { get; set; }
     public bool CanRegister { get; set; }
     public bool AcceptsDonations { get; set; }
     public string? DonationLabel { get; set; }
+    public string? ConferenceTheme { get; set; }
+    public string? AnchorScripture { get; set; }
+    public string? AnchorScriptureReference { get; set; }
     public DateTime CreatedOn { get; set; }
     public DateTime? UpdatedOn { get; set; }
 }

@@ -10,6 +10,7 @@ namespace GlobalFlameMinistry.API.Helpers
         public string? Module { get; set; }
         public string? Location { get; set; }
         public bool? IsCancelled { get; set; }
+        public bool? IsFeaturedOnHome { get; set; }
         public bool? UpcomingOnly { get; set; }
         public bool? OngoingOnly { get; set; }
         public bool? PastOnly { get; set; }

@@ -12,11 +12,16 @@ namespace GlobalFlameMinistry.API.Models
         public string? ImageUrl { get; set; }
         public string Module { get; set; } = "Ministry";
         public bool IsCancelled { get; set; } = false;
+        public bool IsFeaturedOnHome { get; set; } = false;
+        public DateTime? FeaturedOn { get; set; }
         public bool AcceptsRegistrations { get; set; } = true;
         public int? MaxRegistrations { get; set; }
         public int SeatsTaken { get; set; } = 0;
         public bool AcceptsDonations { get; set; } = true;
         public string? DonationLabel { get; set; }
+        public string? ConferenceTheme { get; set; }
+        public string? AnchorScripture { get; set; }
+        public string? AnchorScriptureReference { get; set; }
         public int? MinistryId { get; set; }
         public MinistryDepartment? Ministry { get; set; }
         public bool IsDeleted { get; set; } = false;

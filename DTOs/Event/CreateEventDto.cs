@@ -30,6 +30,7 @@ namespace GlobalFlameMinistry.API.DTOs.Event
             ErrorMessage = "Module must be 'Ministry' or 'Youth'")]
         public string Module { get; set; } = "Ministry";
         public bool AcceptsRegistrations { get; set; } = true;
+        public bool IsFeaturedOnHome { get; set; } = false;
 
         [Range(0, 100000, ErrorMessage = "Max registrations must be between 0 and 100000")]
         public int? MaxRegistrations { get; set; }
@@ -37,6 +38,15 @@ namespace GlobalFlameMinistry.API.DTOs.Event
 
         [StringLength(200)]
         public string? DonationLabel { get; set; }
+
+        [StringLength(200)]
+        public string? ConferenceTheme { get; set; }
+
+        [StringLength(500)]
+        public string? AnchorScripture { get; set; }
+
+        [StringLength(100)]
+        public string? AnchorScriptureReference { get; set; }
 
         public IEnumerable<ValidationResult> Validate(
             ValidationContext validationContext)
