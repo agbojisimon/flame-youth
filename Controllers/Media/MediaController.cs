@@ -60,6 +60,25 @@ namespace GlobalFlameMinistry.API.Controllers.Media
             }
         }
 
+        /// <summary>
+        /// Public (non-secret) Cloudinary settings the browser needs to upload
+        /// large media directly to Cloudinary. Routing big files through this API
+        /// hits Heroku's 30-second request timeout, which surfaces in the browser
+        /// as a misleading CORS error. The upload preset is an unsigned preset by
+        /// design, so it is safe to hand to authenticated clients.
+        /// </summary>
+        [HttpGet("config")]
+        public IActionResult GetUploadConfig()
+        {
+            var cloudName = _config["Cloudinary:CloudName"];
+            var uploadPreset = _config["Cloudinary:UploadPreset"] ?? "gfm_uploads";
+
+            if (string.IsNullOrWhiteSpace(cloudName))
+                return StatusCode(500, new { message = "Cloudinary is not configured." });
+
+            return Ok(new { cloudName, uploadPreset });
+        }
+
         [HttpPost("sign-upload")]
         public IActionResult SignUpload([FromBody] SignUploadRequest? request)
         {
