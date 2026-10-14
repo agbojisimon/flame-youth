@@ -9,6 +9,7 @@ namespace GlobalFlameMinistry.API.Interfaces
         Task<List<HeroSlideDto>> GetFeaturedClipsAsync();
         Task<List<HeroSlideDto>> GetAllAsync();
         Task<HeroSlideDto?> GetByIdAsync(int id);
+        Task<HeroSlideDto?> GetClipBySlugAsync(string slug);
         Task<HeroSlideDto> CreateAsync(CreateHeroSlideDto dto);
         Task<HeroSlideDto?> UpdateAsync(int id, UpdateHeroSlideDto dto);
         Task<bool> DeleteAsync(int id);

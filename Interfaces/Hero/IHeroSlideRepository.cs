@@ -10,6 +10,8 @@ namespace GlobalFlameMinistry.API.Interfaces
         Task<List<HeroSlide>> GetFeaturedClipsAsync();
         Task<List<HeroSlide>> GetAllAsync();
         Task<HeroSlide?> GetByIdAsync(int id);
+        Task<HeroSlide?> GetBySlugAsync(string slug);
+        Task<bool> SlugExistsAsync(string slug, int? excludeId);
         Task<int> CountFeaturedAsync(int? excludeId);
         Task<int> GetNextFeaturedOrderAsync();
         Task<T> RunInSerializableTransactionAsync<T>(Func<Task<T>> operation);

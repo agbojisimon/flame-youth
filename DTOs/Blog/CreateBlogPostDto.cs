@@ -27,6 +27,16 @@ namespace GlobalFlameMinistry.API.DTOs.Blog
         [MaxLength(500)]
         public string? ThemeScripture { get; set; }
 
+        /// <summary>
+        /// Optional event start date/time, supplied in UTC by the client.
+        /// </summary>
+        public DateTime? EventStartsAt { get; set; }
+
+        /// <summary>
+        /// Optional event end date/time, supplied in UTC by the client.
+        /// </summary>
+        public DateTime? EventEndsAt { get; set; }
+
         public bool IsPublished { get; set; }
 
         public bool IsFeaturedOnHero { get; set; }
@@ -35,6 +45,13 @@ namespace GlobalFlameMinistry.API.DTOs.Blog
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
+            if (EventStartsAt.HasValue && EventEndsAt.HasValue && EventEndsAt.Value < EventStartsAt.Value)
+            {
+                yield return new ValidationResult(
+                    "Event end date/time must be on or after the start date/time.",
+                    new[] { nameof(EventEndsAt) });
+            }
+
             if (Blocks is null)
             {
                 yield return new ValidationResult(

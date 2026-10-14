@@ -113,7 +113,37 @@ namespace GlobalFlameMinistry.API.Services
         public async Task<HeroSlideDto?> GetByIdAsync(int id)
         {
             var slide = await _repo.GetByIdAsync(id);
-            return slide?.ToHeroSlideDto();
+            return slide?.ToHeroSlideDetailDto();
+        }
+
+        public async Task<HeroSlideDto?> GetClipBySlugAsync(string slug)
+        {
+            if (string.IsNullOrWhiteSpace(slug))
+                return null;
+
+            var cacheKey = string.Format(CacheKeys.HeroClipSlug, slug);
+
+            async ValueTask<HeroSlideDto?> Factory(CancellationToken ct)
+            {
+                var slide = await _repo.GetBySlugAsync(slug);
+                return slide?.ToHeroSlideDetailDto();
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(
+                    cacheKey,
+                    Factory,
+                    tags: [CacheKeys.TagHeroSlides],
+                    cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Redis unavailable, falling back to DB for cache key {CacheKey}",
+                    cacheKey);
+                return await Factory(CancellationToken.None);
+            }
         }
 
         public async Task<HeroSlideDto> CreateAsync(CreateHeroSlideDto dto)

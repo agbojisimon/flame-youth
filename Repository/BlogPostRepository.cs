@@ -171,6 +171,8 @@ namespace GlobalFlameMinistry.API.Repository
             existing.IsPublished = dto.IsPublished;
             existing.ConferenceTheme = dto.ConferenceTheme?.Trim();
             existing.ThemeScripture = dto.ThemeScripture?.Trim();
+            existing.EventStartsAt = BlogMapper.ToUtc(dto.EventStartsAt);
+            existing.EventEndsAt = BlogMapper.ToUtc(dto.EventEndsAt);
 
             var wasFeatured = existing.IsFeaturedOnHero;
             if (dto.IsFeaturedOnHero)

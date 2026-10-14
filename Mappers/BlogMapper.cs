@@ -19,6 +19,8 @@ namespace GlobalFlameMinistry.API.Mappers
                 VideoUrl = dto.VideoUrl?.Trim(),
                 ConferenceTheme = dto.ConferenceTheme?.Trim(),
                 ThemeScripture = dto.ThemeScripture?.Trim(),
+                EventStartsAt = ToUtc(dto.EventStartsAt),
+                EventEndsAt = ToUtc(dto.EventEndsAt),
                 IsPublished = dto.IsPublished,
                 IsFeaturedOnHero = dto.IsFeaturedOnHero,
                 AuthorId = authorId,
@@ -52,6 +54,8 @@ namespace GlobalFlameMinistry.API.Mappers
                 Department = post.Department,
                 ConferenceTheme = post.ConferenceTheme,
                 ThemeScripture = post.ThemeScripture,
+                EventStartsAt = AsUtc(post.EventStartsAt),
+                EventEndsAt = AsUtc(post.EventEndsAt),
                 IsPublished = post.IsPublished,
                 IsFeaturedOnHero = post.IsFeaturedOnHero,
                 CreatedOn = post.CreatedOn,
@@ -93,6 +97,35 @@ namespace GlobalFlameMinistry.API.Mappers
         {
             var normalized = CreateSlug(title);
             return id > 0 ? $"{normalized}-{id}" : normalized;
+        }
+
+        /// <summary>
+        /// Normalises an optional client-supplied timestamp to UTC so Npgsql
+        /// accepts it for a <c>timestamp with time zone</c> column. Npgsql
+        /// rejects <see cref="DateTimeKind.Unspecified"/> values for timestamptz.
+        /// </summary>
+        public static DateTime? ToUtc(DateTime? value)
+        {
+            if (!value.HasValue)
+                return null;
+
+            return value.Value.Kind switch
+            {
+                DateTimeKind.Utc => value.Value,
+                DateTimeKind.Local => value.Value.ToUniversalTime(),
+                _ => DateTime.SpecifyKind(value.Value, DateTimeKind.Utc),
+            };
+        }
+
+        /// <summary>
+        /// Tags a stored (UTC) value as <see cref="DateTimeKind.Utc"/> so the JSON
+        /// response carries an explicit offset and clients never misread it as local.
+        /// </summary>
+        private static DateTime? AsUtc(DateTime? value)
+        {
+            return value.HasValue
+                ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+                : null;
         }
     }
 }

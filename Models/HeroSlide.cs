@@ -5,7 +5,9 @@ namespace GlobalFlameMinistry.API.Models
         public int Id { get; set; }
         public string MediaType { get; set; } = "Image";
         public string Url { get; set; } = string.Empty;
+        public string? Slug { get; set; }
         public string? Title { get; set; }
+        public List<HeroSlideBlock> ContentBlocks { get; set; } = new();
         public string? Subtitle { get; set; }
         public string? Label { get; set; }
         public string? ButtonText { get; set; }

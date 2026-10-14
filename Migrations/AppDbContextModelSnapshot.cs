@@ -210,6 +210,12 @@ namespace GlobalFlameMinistry.API.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<DateTime?>("EventEndsAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("EventStartsAt")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<string>("Excerpt")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -887,6 +893,10 @@ namespace GlobalFlameMinistry.API.Migrations
                         .HasColumnType("character varying(20)")
                         .HasDefaultValue("Image");
 
+                    b.Property<string>("Slug")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.Property<string>("Subtitle")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
@@ -909,11 +919,48 @@ namespace GlobalFlameMinistry.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasFilter("\"Slug\" IS NOT NULL");
+
                     b.HasIndex("IsActive", "DisplayOrder");
 
                     b.HasIndex("MediaType", "IsFeatured", "IsActive");
 
                     b.ToTable("HeroSlides");
+                });
+
+            modelBuilder.Entity("GlobalFlameMinistry.API.Models.HeroSlideBlock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BlockType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("text");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("HeroSlideId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HeroSlideId");
+
+                    b.ToTable("HeroSlideBlocks");
                 });
 
             modelBuilder.Entity("GlobalFlameMinistry.API.Models.MinistryDepartment", b =>
@@ -1468,6 +1515,17 @@ namespace GlobalFlameMinistry.API.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("GlobalFlameMinistry.API.Models.HeroSlideBlock", b =>
+                {
+                    b.HasOne("GlobalFlameMinistry.API.Models.HeroSlide", "HeroSlide")
+                        .WithMany("ContentBlocks")
+                        .HasForeignKey("HeroSlideId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("HeroSlide");
+                });
+
             modelBuilder.Entity("GlobalFlameMinistry.API.Models.PrayerRequest", b =>
                 {
                     b.HasOne("GlobalFlameMinistry.API.Models.AppUser", "User")
@@ -1558,6 +1616,11 @@ namespace GlobalFlameMinistry.API.Migrations
             modelBuilder.Entity("GlobalFlameMinistry.API.Models.BlogPost", b =>
                 {
                     b.Navigation("Blocks");
+                });
+
+            modelBuilder.Entity("GlobalFlameMinistry.API.Models.HeroSlide", b =>
+                {
+                    b.Navigation("ContentBlocks");
                 });
 
             modelBuilder.Entity("GlobalFlameMinistry.API.Models.MinistryDepartment", b =>

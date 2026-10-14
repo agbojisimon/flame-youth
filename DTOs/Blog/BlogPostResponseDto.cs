@@ -13,6 +13,8 @@ namespace GlobalFlameMinistry.API.DTOs.Blog
         public string Department { get; set; } = string.Empty;
         public string? ConferenceTheme { get; set; }
         public string? ThemeScripture { get; set; }
+        public DateTime? EventStartsAt { get; set; }
+        public DateTime? EventEndsAt { get; set; }
         public bool IsPublished { get; set; }
         public bool IsFeaturedOnHero { get; set; }
         public DateTime CreatedOn { get; set; }

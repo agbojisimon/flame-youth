@@ -29,6 +29,7 @@ namespace GlobalFlameMinistry.API.Data
         public DbSet<BlogPostBlock> BlogPostBlocks { get; set; }
         public DbSet<CounsellingRequest> CounsellingRequests { get; set; }
         public DbSet<HeroSlide> HeroSlides { get; set; }
+        public DbSet<HeroSlideBlock> HeroSlideBlocks { get; set; }
         public DbSet<RefreshTokenFamily> RefreshTokenFamilies { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -278,6 +279,8 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(p => p.UpdatedOn).IsRequired(false);
                 entity.Property(p => p.DeletedOn).IsRequired(false);
                 entity.Property(p => p.AuthorId).HasMaxLength(450).IsRequired(false);
+                entity.Property(p => p.EventStartsAt).IsRequired(false);
+                entity.Property(p => p.EventEndsAt).IsRequired(false);
                 entity.HasIndex(p => p.Slug).IsUnique();
                 entity.HasIndex(p => new { p.IsFeaturedOnHero, p.IsPublished, p.CreatedOn });
 
@@ -360,6 +363,10 @@ namespace GlobalFlameMinistry.API.Data
                 entity.HasKey(h => h.Id);
                 entity.Property(h => h.MediaType).IsRequired().HasMaxLength(20).HasDefaultValue("Image");
                 entity.Property(h => h.Url).IsRequired().HasMaxLength(500);
+                // Slugs are generated for video clips only; a partial unique index
+                // keeps them unique while allowing many NULLs for image slides.
+                entity.Property(h => h.Slug).HasMaxLength(300);
+                entity.HasIndex(h => h.Slug).IsUnique().HasFilter("\"Slug\" IS NOT NULL");
                 entity.Property(h => h.Title).HasMaxLength(200);
                 entity.Property(h => h.Subtitle).HasMaxLength(300);
                 entity.Property(h => h.Label).HasMaxLength(60);
@@ -371,9 +378,26 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(h => h.FeaturedOrder).HasDefaultValue(0);
                 entity.Property(h => h.IsDeleted).HasDefaultValue(false);
                 entity.Property(h => h.CreatedOn).HasDefaultValueSql("NOW()");
+                entity.HasMany(h => h.ContentBlocks)
+                      .WithOne(b => b.HeroSlide)
+                      .HasForeignKey(b => b.HeroSlideId)
+                      .OnDelete(DeleteBehavior.Cascade);
                 entity.HasQueryFilter(h => !h.IsDeleted);
                 entity.HasIndex(h => new { h.IsActive, h.DisplayOrder });
                 entity.HasIndex(h => new { h.MediaType, h.IsFeatured, h.IsActive });
+            });
+
+            // ── HERO SLIDE BLOCK ───────────────────────────────────────────────
+            // Mirrors BlogPostBlock exactly (same column types) so clip write-ups
+            // reuse the blog's block model, validation and renderer.
+            builder.Entity<HeroSlideBlock>(entity =>
+            {
+                entity.HasKey(b => b.Id);
+                entity.Property(b => b.BlockType).IsRequired().HasMaxLength(50);
+                entity.Property(b => b.Content).HasColumnType("text");
+                entity.Property(b => b.ImageUrl).HasMaxLength(500);
+                entity.Property(b => b.DisplayOrder).IsRequired();
+                entity.HasIndex(b => b.HeroSlideId);
             });
 
             // ── REFRESH TOKEN FAMILY ───────────────────────────────────────────

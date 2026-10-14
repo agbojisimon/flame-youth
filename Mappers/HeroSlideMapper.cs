@@ -1,3 +1,4 @@
+using GlobalFlameMinistry.API.DTOs.Blog;
 using GlobalFlameMinistry.API.DTOs.HeroSlide;
 using GlobalFlameMinistry.API.Models;
 
@@ -12,6 +13,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 Id = slide.Id,
                 MediaType = slide.MediaType,
                 Url = slide.Url,
+                Slug = slide.Slug,
                 Title = slide.Title,
                 Subtitle = slide.Subtitle,
                 Label = slide.Label,
@@ -22,8 +24,29 @@ namespace GlobalFlameMinistry.API.Mappers
                 IsFeatured = slide.IsFeatured,
                 FeaturedOrder = slide.FeaturedOrder,
                 CreatedOn = slide.CreatedOn,
-                UpdatedOn = slide.UpdatedOn
+                UpdatedOn = slide.UpdatedOn,
+                HasWriteUp = slide.ContentBlocks is { Count: > 0 }
             };
+        }
+
+        /// <summary>Full clip payload including the ordered write-up blocks.</summary>
+        public static HeroSlideDto ToHeroSlideDetailDto(this HeroSlide slide)
+        {
+            var dto = slide.ToHeroSlideDto();
+
+            dto.ContentBlocks = slide.ContentBlocks
+                .OrderBy(b => b.DisplayOrder)
+                .Select(b => new BlogBlockResponseDto
+                {
+                    Id = b.Id,
+                    BlockType = b.BlockType,
+                    Content = b.Content,
+                    ImageUrl = b.ImageUrl,
+                    DisplayOrder = b.DisplayOrder
+                })
+                .ToList();
+
+            return dto;
         }
 
         public static HeroSlide ToModel(this CreateHeroSlideDto dto)
@@ -32,6 +55,7 @@ namespace GlobalFlameMinistry.API.Mappers
             {
                 MediaType = dto.MediaType,
                 Url = dto.Url,
+                Slug = string.IsNullOrWhiteSpace(dto.Slug) ? null : dto.Slug.Trim(),
                 Title = dto.Title,
                 Subtitle = dto.Subtitle,
                 Label = dto.Label,
@@ -41,8 +65,25 @@ namespace GlobalFlameMinistry.API.Mappers
                 IsActive = dto.IsActive,
                 IsFeatured = dto.IsFeatured,
                 FeaturedOrder = dto.FeaturedOrder,
-                CreatedOn = DateTime.UtcNow
+                CreatedOn = DateTime.UtcNow,
+                ContentBlocks = dto.ContentBlocks.ToHeroSlideBlocks()
             };
+        }
+
+        public static List<HeroSlideBlock> ToHeroSlideBlocks(this IEnumerable<CreateBlogBlockDto>? blocks)
+        {
+            if (blocks is null)
+                return new List<HeroSlideBlock>();
+
+            return blocks
+                .Select(b => new HeroSlideBlock
+                {
+                    BlockType = b.BlockType,
+                    Content = b.Content,
+                    ImageUrl = b.ImageUrl,
+                    DisplayOrder = b.DisplayOrder
+                })
+                .ToList();
         }
 
         public static void ApplyUpdate(this HeroSlide slide, UpdateHeroSlideDto dto)

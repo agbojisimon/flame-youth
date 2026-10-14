@@ -47,12 +47,31 @@ namespace GlobalFlameMinistry.API.Controllers.Media
             return Ok(clips);
         }
 
+        // GET /api/media/clips/hope-is-alive — public, single clip with its write-up blocks
+        [AllowAnonymous]
+        [HttpGet("/api/media/clips/{slug}")]
+        public async Task<IActionResult> GetClipBySlug(string slug)
+        {
+            var clip = await _service.GetClipBySlugAsync(slug);
+            if (clip is null) return NotFound("Clip not found");
+            return Ok(clip);
+        }
+
         // GET /api/ministry/hero-slides — admin
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var slides = await _service.GetAllAsync();
             return Ok(slides);
+        }
+
+        // GET /api/ministry/hero-slides/5 — admin (includes write-up blocks)
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var slide = await _service.GetByIdAsync(id);
+            if (slide is null) return NotFound("Hero slide not found");
+            return Ok(slide);
         }
 
         // POST /api/ministry/hero-slides — admin
