@@ -13,5 +13,7 @@ namespace GlobalFlameMinistry.API.Interfaces
         Task<BlogPostResponseDto?> UpdateAsync(int id, UpdateBlogPostDto dto);
         Task<bool> DeleteAsync(int id);
         Task<bool> TogglePublishAsync(int id);
+        Task<List<BlogDepartmentDto>> GetDistinctDepartmentsAsync();
+        Task<List<BlogPostResponseDto>> GetRelatedAsync(string slug, int take);
     }
 }

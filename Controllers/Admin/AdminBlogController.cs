@@ -1,4 +1,5 @@
 using GlobalFlameMinistry.API.DTOs.Blog;
+using GlobalFlameMinistry.API.Exceptions;
 using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -45,19 +46,33 @@ namespace GlobalFlameMinistry.API.Controllers.Admin
             if (string.IsNullOrWhiteSpace(authorId))
                 return Unauthorized("Unauthorized");
 
-            var created = await _blogService.CreateAsync(dto, authorId);
-            return Ok(new { isSuccess = true, data = created });
+            try
+            {
+                var created = await _blogService.CreateAsync(dto, authorId);
+                return Ok(new { isSuccess = true, data = created });
+            }
+            catch (BlogValidationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateBlogPostDto dto)
         {
-            var updated = await _blogService.UpdateAsync(id, dto);
+            try
+            {
+                var updated = await _blogService.UpdateAsync(id, dto);
 
-            if (updated is null)
-                return NotFound("Blog post not found");
+                if (updated is null)
+                    return NotFound("Blog post not found");
 
-            return Ok(new { isSuccess = true, data = updated });
+                return Ok(new { isSuccess = true, data = updated });
+            }
+            catch (BlogValidationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpDelete("{id:int}")]

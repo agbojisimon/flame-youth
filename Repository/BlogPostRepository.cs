@@ -1,3 +1,4 @@
+using System.Data;
 using GlobalFlameMinistry.API.Data;
 using GlobalFlameMinistry.API.DTOs.Blog;
 using GlobalFlameMinistry.API.Helpers;
@@ -37,6 +38,8 @@ namespace GlobalFlameMinistry.API.Repository
                 return false;
 
             post.IsDeleted = true;
+            post.IsFeaturedOnHero = false;
+            post.FeaturedOnHeroAt = null;
             post.DeletedOn = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -60,6 +63,11 @@ namespace GlobalFlameMinistry.API.Repository
                 posts = posts.Where(p => p.IsPublished == query.IsPublished.Value);
             }
 
+            if (query.FeaturedOnHero == true)
+            {
+                posts = posts.Where(p => p.IsPublished && p.IsFeaturedOnHero);
+            }
+
             if (!string.IsNullOrWhiteSpace(query.SearchTerm))
             {
                 var search = query.SearchTerm.Trim().ToLowerInvariant();
@@ -67,13 +75,15 @@ namespace GlobalFlameMinistry.API.Repository
                     || (!string.IsNullOrWhiteSpace(p.Excerpt) && p.Excerpt.ToLower().Contains(search)));
             }
 
-            posts = query.SortBy?.Trim().ToLowerInvariant() switch
-            {
-                "title" => query.IsDescending ? posts.OrderByDescending(p => p.Title) : posts.OrderBy(p => p.Title),
-                "department" => query.IsDescending ? posts.OrderByDescending(p => p.Department) : posts.OrderBy(p => p.Department),
-                "updatedon" => query.IsDescending ? posts.OrderByDescending(p => p.UpdatedOn) : posts.OrderBy(p => p.UpdatedOn),
-                _ => query.IsDescending ? posts.OrderByDescending(p => p.CreatedOn) : posts.OrderBy(p => p.CreatedOn),
-            };
+            posts = query.FeaturedOnHero == true
+                ? posts.OrderByDescending(p => p.FeaturedOnHeroAt)
+                : query.SortBy?.Trim().ToLowerInvariant() switch
+                {
+                    "title" => query.IsDescending ? posts.OrderByDescending(p => p.Title) : posts.OrderBy(p => p.Title),
+                    "department" => query.IsDescending ? posts.OrderByDescending(p => p.Department) : posts.OrderBy(p => p.Department),
+                    "updatedon" => query.IsDescending ? posts.OrderByDescending(p => p.UpdatedOn) : posts.OrderBy(p => p.UpdatedOn),
+                    _ => query.IsDescending ? posts.OrderByDescending(p => p.CreatedOn) : posts.OrderBy(p => p.CreatedOn),
+                };
 
             var result = await posts
                 .Skip((query.PageNumber - 1) * query.PageSize)
@@ -96,6 +106,11 @@ namespace GlobalFlameMinistry.API.Repository
             if (query.IsPublished.HasValue)
             {
                 posts = posts.Where(p => p.IsPublished == query.IsPublished.Value);
+            }
+
+            if (query.FeaturedOnHero == true)
+            {
+                posts = posts.Where(p => p.IsPublished && p.IsFeaturedOnHero);
             }
 
             if (!string.IsNullOrWhiteSpace(query.SearchTerm))
@@ -156,6 +171,21 @@ namespace GlobalFlameMinistry.API.Repository
             existing.IsPublished = dto.IsPublished;
             existing.ConferenceTheme = dto.ConferenceTheme?.Trim();
             existing.ThemeScripture = dto.ThemeScripture?.Trim();
+
+            var wasFeatured = existing.IsFeaturedOnHero;
+            if (dto.IsFeaturedOnHero)
+            {
+                existing.IsFeaturedOnHero = true;
+                existing.FeaturedOnHeroAt = wasFeatured
+                    ? existing.FeaturedOnHeroAt ?? DateTime.UtcNow
+                    : DateTime.UtcNow;
+            }
+            else
+            {
+                existing.IsFeaturedOnHero = false;
+                existing.FeaturedOnHeroAt = null;
+            }
+
             existing.UpdatedOn = DateTime.UtcNow;
 
             _context.BlogPostBlocks.RemoveRange(existing.Blocks);
@@ -185,11 +215,17 @@ namespace GlobalFlameMinistry.API.Repository
             post.IsPublished = !post.IsPublished;
             post.UpdatedOn = DateTime.UtcNow;
 
+            if (!post.IsPublished)
+            {
+                post.IsFeaturedOnHero = false;
+                post.FeaturedOnHeroAt = null;
+            }
+
             await _context.SaveChangesAsync();
             return true;
         }
 
-        public async Task<List<string>> GetDistinctDepartmentsAsync(
+        public async Task<List<BlogDepartmentDto>> GetDistinctDepartmentsAsync(
             bool publishedOnly = true)
         {
             var query = _context.BlogPosts.AsQueryable();
@@ -198,11 +234,74 @@ namespace GlobalFlameMinistry.API.Repository
                 query = query.Where(p => p.IsPublished && !p.IsDeleted);
 
             return await query
-                .Select(p => p.Department)
-                .Distinct()
-                .OrderBy(d => d)
+                .GroupBy(p => p.Department)
+                .Select(g => new BlogDepartmentDto { Name = g.Key, Count = g.Count() })
+                .OrderBy(d => d.Name)
                 .ToListAsync();
         }
+
+        public async Task<List<BlogPost>> GetRelatedAsync(
+            int currentId, string department, int take)
+        {
+            if (take <= 0)
+                return new List<BlogPost>();
+
+            var baseQuery = _context.BlogPosts
+                .Include(p => p.Author)
+                .Include(p => p.Blocks)
+                .Where(p => p.IsPublished && !p.IsDeleted && p.Id != currentId);
+
+            var related = await baseQuery
+                .Where(p => p.Department == department)
+                .OrderByDescending(p => p.CreatedOn)
+                .Take(take)
+                .ToListAsync();
+
+            if (related.Count < take)
+            {
+                var excludeIds = related.Select(p => p.Id).Append(currentId).ToList();
+
+                var fill = await baseQuery
+                    .Where(p => !excludeIds.Contains(p.Id))
+                    .OrderByDescending(p => p.CreatedOn)
+                    .Take(take - related.Count)
+                    .ToListAsync();
+
+                related.AddRange(fill);
+            }
+
+            related.ForEach(post => post.Blocks = post.Blocks.OrderBy(block => block.DisplayOrder).ToList());
+            return related;
+        }
+        public async Task<int> CountFeaturedAsync(int? excludeId)
+        {
+            var query = _context.BlogPosts
+                .Where(p => p.IsPublished && p.IsFeaturedOnHero);
+
+            if (excludeId.HasValue)
+                query = query.Where(p => p.Id != excludeId.Value);
+
+            return await query.CountAsync();
+        }
+
+        public async Task<T> RunInSerializableTransactionAsync<T>(Func<Task<T>> operation)
+        {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+
+            try
+            {
+                var result = await operation();
+                await transaction.CommitAsync();
+                return result;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
         private static string GenerateTemporarySlug()
         {
             return Guid.NewGuid().ToString("N");

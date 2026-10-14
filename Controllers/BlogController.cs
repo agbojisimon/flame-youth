@@ -23,6 +23,20 @@ namespace GlobalFlameMinistry.API.Controllers
             return Ok(result);
         }
 
+        [HttpGet("departments")]
+        public async Task<IActionResult> GetDepartments()
+        {
+            var departments = await _blogService.GetDistinctDepartmentsAsync();
+            return Ok(departments);
+        }
+
+        [HttpGet("{slug}/related")]
+        public async Task<IActionResult> GetRelated(string slug, [FromQuery] int take = 3)
+        {
+            var related = await _blogService.GetRelatedAsync(slug, take);
+            return Ok(related);
+        }
+
         [HttpGet("{slug}")]
         public async Task<IActionResult> GetBySlug(string slug)
         {

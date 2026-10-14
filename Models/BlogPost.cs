@@ -16,6 +16,8 @@ namespace GlobalFlameMinistry.API.Models
         public string? ConferenceTheme { get; set; }
         public string? ThemeScripture { get; set; }
         public bool IsPublished { get; set; }
+        public bool IsFeaturedOnHero { get; set; }
+        public DateTime? FeaturedOnHeroAt { get; set; }
         public bool IsDeleted { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime? UpdatedOn { get; set; }

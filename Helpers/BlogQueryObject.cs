@@ -6,6 +6,7 @@ namespace GlobalFlameMinistry.API.Helpers
     {
         public string? Department { get; set; }
         public bool? IsPublished { get; set; }
+        public bool? FeaturedOnHero { get; set; }
         public string? SearchTerm { get; set; }
     }
 }

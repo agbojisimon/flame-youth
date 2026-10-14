@@ -20,6 +20,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 ConferenceTheme = dto.ConferenceTheme?.Trim(),
                 ThemeScripture = dto.ThemeScripture?.Trim(),
                 IsPublished = dto.IsPublished,
+                IsFeaturedOnHero = dto.IsFeaturedOnHero,
                 AuthorId = authorId,
                 Blocks = dto.Blocks
                     .Select(block => new BlogPostBlock
@@ -43,6 +44,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 Slug = post.Slug,
                 Excerpt = post.Excerpt,
                 CoverImageUrl = post.CoverImageUrl,
+                VideoUrl = post.VideoUrl,
                 AuthorId = post.AuthorId,
                 AuthorName = post.Author is null
                     ? string.Empty
@@ -51,6 +53,7 @@ namespace GlobalFlameMinistry.API.Mappers
                 ConferenceTheme = post.ConferenceTheme,
                 ThemeScripture = post.ThemeScripture,
                 IsPublished = post.IsPublished,
+                IsFeaturedOnHero = post.IsFeaturedOnHero,
                 CreatedOn = post.CreatedOn,
                 UpdatedOn = post.UpdatedOn,
                 Blocks = post.Blocks

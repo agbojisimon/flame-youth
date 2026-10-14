@@ -29,6 +29,8 @@ namespace GlobalFlameMinistry.API.DTOs.Blog
 
         public bool IsPublished { get; set; }
 
+        public bool IsFeaturedOnHero { get; set; }
+
         public List<CreateBlogBlockDto> Blocks { get; set; } = new();
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
