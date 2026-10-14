@@ -78,7 +78,14 @@ namespace GlobalFlameMinistry.API.Services
                 var result = new MediaUploadResponseDto
                 {
                     Url = json["secure_url"]?.Value<string>() ?? string.Empty,
-                    PublicId = json["public_id"]?.Value<string>() ?? string.Empty
+                    PublicId = json["public_id"]?.Value<string>() ?? string.Empty,
+                    ResourceType = json["resource_type"]?.Value<string>() ?? string.Empty,
+                    Format = json["format"]?.Value<string>() ?? string.Empty,
+                    Duration = json["duration"]?.Value<double?>(),
+                    Bytes = json["bytes"]?.Value<long?>(),
+                    Width = json["width"]?.Value<int?>(),
+                    Height = json["height"]?.Value<int?>(),
+                    PageCount = json["pages"]?.Value<int?>()
                 };
 
                 if (string.IsNullOrWhiteSpace(result.Url))

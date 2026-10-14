@@ -1,3 +1,4 @@
+using System.Data;
 using GlobalFlameMinistry.API.Data;
 using GlobalFlameMinistry.API.DTOs.HeroSlide;
 using GlobalFlameMinistry.API.Interfaces;
@@ -19,9 +20,28 @@ namespace GlobalFlameMinistry.API.Repository
         public async Task<List<HeroSlide>> GetActiveAsync()
         {
             return await _context.HeroSlides
-                .Where(h => h.IsActive)
+                .Where(h => h.IsActive && h.MediaType == "Image")
                 .OrderBy(h => h.DisplayOrder)
                 .ThenBy(h => h.CreatedOn)
+                .ToListAsync();
+        }
+
+        public async Task<List<HeroSlide>> GetClipsAsync()
+        {
+            return await _context.HeroSlides
+                .Where(h => h.IsActive && h.MediaType == "Video")
+                .OrderBy(h => h.DisplayOrder)
+                .ThenBy(h => h.CreatedOn)
+                .ToListAsync();
+        }
+
+        public async Task<List<HeroSlide>> GetFeaturedClipsAsync()
+        {
+            return await _context.HeroSlides
+                .Where(h => h.IsActive && h.MediaType == "Video" && h.IsFeatured)
+                .OrderBy(h => h.FeaturedOrder)
+                .ThenBy(h => h.CreatedOn)
+                .Take(3)
                 .ToListAsync();
         }
 
@@ -36,6 +56,49 @@ namespace GlobalFlameMinistry.API.Repository
         public async Task<HeroSlide?> GetByIdAsync(int id)
         {
             return await _context.HeroSlides.FindAsync(id);
+        }
+
+        public async Task<int> CountFeaturedAsync(int? excludeId)
+        {
+            var query = _context.HeroSlides
+                .Where(h => h.IsActive && h.MediaType == "Video" && h.IsFeatured);
+
+            if (excludeId.HasValue)
+                query = query.Where(h => h.Id != excludeId.Value);
+
+            return await query.CountAsync();
+        }
+
+        public async Task<int> GetNextFeaturedOrderAsync()
+        {
+            var used = await _context.HeroSlides
+                .Where(h => h.IsActive && h.MediaType == "Video" && h.IsFeatured)
+                .Select(h => h.FeaturedOrder)
+                .ToListAsync();
+
+            var order = 0;
+            while (used.Contains(order))
+                order++;
+
+            return order;
+        }
+
+        public async Task<T> RunInSerializableTransactionAsync<T>(Func<Task<T>> operation)
+        {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+
+            try
+            {
+                var result = await operation();
+                await transaction.CommitAsync();
+                return result;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<HeroSlide> CreateAsync(HeroSlide slide)
@@ -61,6 +124,8 @@ namespace GlobalFlameMinistry.API.Repository
             if (slide is null) return false;
 
             slide.IsDeleted = true;
+            slide.IsFeatured = false;
+            slide.FeaturedOrder = 0;
             await _context.SaveChangesAsync();
             return true;
         }

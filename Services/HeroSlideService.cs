@@ -1,4 +1,5 @@
 using GlobalFlameMinistry.API.DTOs.HeroSlide;
+using GlobalFlameMinistry.API.Exceptions;
 using GlobalFlameMinistry.API.Helpers;
 using GlobalFlameMinistry.API.Interfaces;
 using GlobalFlameMinistry.API.Mappers;
@@ -8,6 +9,12 @@ namespace GlobalFlameMinistry.API.Services
 {
     public class HeroSlideService : IHeroSlideService
     {
+        private const int MaxFeaturedClips = 3;
+        private const string MaxFeaturedMessage =
+            "A maximum of 3 clips can be featured on the home page. Unfeature one first.";
+        private const string VideoOnlyMessage =
+            "Only video clips can be featured on the home page.";
+
         private readonly IHeroSlideRepository _repo;
         private readonly HybridCache _cache;
         private readonly ILogger<HeroSlideService> _logger;
@@ -47,6 +54,56 @@ namespace GlobalFlameMinistry.API.Services
             }
         }
 
+        public async Task<List<HeroSlideDto>> GetClipsAsync()
+        {
+            async ValueTask<List<HeroSlideDto>> Factory(CancellationToken ct)
+            {
+                var clips = await _repo.GetClipsAsync();
+                return clips.ToHeroSlideDtoList();
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(
+                    CacheKeys.HeroClips,
+                    Factory,
+                    tags: [CacheKeys.TagHeroSlides],
+                    cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Redis unavailable, falling back to DB for cache key {CacheKey}",
+                    CacheKeys.HeroClips);
+                return await Factory(CancellationToken.None);
+            }
+        }
+
+        public async Task<List<HeroSlideDto>> GetFeaturedClipsAsync()
+        {
+            async ValueTask<List<HeroSlideDto>> Factory(CancellationToken ct)
+            {
+                var clips = await _repo.GetFeaturedClipsAsync();
+                return clips.ToHeroSlideDtoList();
+            }
+
+            try
+            {
+                return await _cache.GetOrCreateAsync(
+                    CacheKeys.HeroClipsFeatured,
+                    Factory,
+                    tags: [CacheKeys.TagHeroSlides],
+                    cancellationToken: CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Redis unavailable, falling back to DB for cache key {CacheKey}",
+                    CacheKeys.HeroClipsFeatured);
+                return await Factory(CancellationToken.None);
+            }
+        }
+
         public async Task<List<HeroSlideDto>> GetAllAsync()
         {
             var slides = await _repo.GetAllAsync();
@@ -61,14 +118,75 @@ namespace GlobalFlameMinistry.API.Services
 
         public async Task<HeroSlideDto> CreateAsync(CreateHeroSlideDto dto)
         {
-            var created = await _repo.CreateAsync(dto.ToModel());
+            if (dto.IsFeatured && !IsVideo(dto.MediaType))
+                throw new HeroSlideValidationException(VideoOnlyMessage);
+
+            var created = await _repo.RunInSerializableTransactionAsync(async () =>
+            {
+                var model = dto.ToModel();
+
+                if (dto.IsFeatured && IsVideo(dto.MediaType) && dto.IsActive)
+                {
+                    var featuredCount = await _repo.CountFeaturedAsync(null);
+                    if (featuredCount >= MaxFeaturedClips)
+                        throw new HeroSlideValidationException(MaxFeaturedMessage);
+
+                    model.IsFeatured = true;
+                    model.FeaturedOrder = await _repo.GetNextFeaturedOrderAsync();
+                }
+                else
+                {
+                    model.IsFeatured = false;
+                    model.FeaturedOrder = 0;
+                }
+
+                return await _repo.CreateAsync(model);
+            });
+
             await InvalidateCacheAsync();
             return created.ToHeroSlideDto();
         }
 
         public async Task<HeroSlideDto?> UpdateAsync(int id, UpdateHeroSlideDto dto)
         {
-            var updated = await _repo.UpdateAsync(id, dto);
+            if (dto.IsFeatured && !IsVideo(dto.MediaType))
+                throw new HeroSlideValidationException(VideoOnlyMessage);
+
+            var updated = await _repo.RunInSerializableTransactionAsync(async () =>
+            {
+                var existing = await _repo.GetByIdAsync(id);
+                if (existing is null) return null;
+
+                var wasFeatured =
+                    existing.IsFeatured && existing.MediaType == "Video" && existing.IsActive;
+                var willFeature = dto.IsFeatured && IsVideo(dto.MediaType) && dto.IsActive;
+
+                if (willFeature)
+                {
+                    dto.IsFeatured = true;
+
+                    if (wasFeatured)
+                    {
+                        dto.FeaturedOrder = existing.FeaturedOrder;
+                    }
+                    else
+                    {
+                        var featuredCount = await _repo.CountFeaturedAsync(id);
+                        if (featuredCount >= MaxFeaturedClips)
+                            throw new HeroSlideValidationException(MaxFeaturedMessage);
+
+                        dto.FeaturedOrder = await _repo.GetNextFeaturedOrderAsync();
+                    }
+                }
+                else
+                {
+                    dto.IsFeatured = false;
+                    dto.FeaturedOrder = 0;
+                }
+
+                return await _repo.UpdateAsync(id, dto);
+            });
+
             if (updated is null) return null;
 
             await InvalidateCacheAsync();
@@ -83,6 +201,9 @@ namespace GlobalFlameMinistry.API.Services
 
             return deleted;
         }
+
+        private static bool IsVideo(string? mediaType) =>
+            string.Equals(mediaType, "Video", StringComparison.OrdinalIgnoreCase);
 
         private async Task InvalidateCacheAsync()
         {

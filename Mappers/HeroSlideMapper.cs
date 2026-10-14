@@ -14,9 +14,13 @@ namespace GlobalFlameMinistry.API.Mappers
                 Url = slide.Url,
                 Title = slide.Title,
                 Subtitle = slide.Subtitle,
+                Label = slide.Label,
+                ButtonText = slide.ButtonText,
                 TargetUrl = slide.TargetUrl,
                 DisplayOrder = slide.DisplayOrder,
                 IsActive = slide.IsActive,
+                IsFeatured = slide.IsFeatured,
+                FeaturedOrder = slide.FeaturedOrder,
                 CreatedOn = slide.CreatedOn,
                 UpdatedOn = slide.UpdatedOn
             };
@@ -30,9 +34,13 @@ namespace GlobalFlameMinistry.API.Mappers
                 Url = dto.Url,
                 Title = dto.Title,
                 Subtitle = dto.Subtitle,
+                Label = dto.Label,
+                ButtonText = dto.ButtonText,
                 TargetUrl = dto.TargetUrl,
                 DisplayOrder = dto.DisplayOrder,
                 IsActive = dto.IsActive,
+                IsFeatured = dto.IsFeatured,
+                FeaturedOrder = dto.FeaturedOrder,
                 CreatedOn = DateTime.UtcNow
             };
         }
@@ -43,9 +51,13 @@ namespace GlobalFlameMinistry.API.Mappers
             slide.Url = dto.Url;
             slide.Title = dto.Title;
             slide.Subtitle = dto.Subtitle;
+            slide.Label = dto.Label;
+            slide.ButtonText = dto.ButtonText;
             slide.TargetUrl = dto.TargetUrl;
             slide.DisplayOrder = dto.DisplayOrder;
             slide.IsActive = dto.IsActive;
+            slide.IsFeatured = dto.IsFeatured;
+            slide.FeaturedOrder = dto.FeaturedOrder;
             slide.UpdatedOn = DateTime.UtcNow;
         }
 

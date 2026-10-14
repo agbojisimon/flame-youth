@@ -1,4 +1,5 @@
 using GlobalFlameMinistry.API.DTOs.HeroSlide;
+using GlobalFlameMinistry.API.Exceptions;
 using GlobalFlameMinistry.API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,13 +20,31 @@ namespace GlobalFlameMinistry.API.Controllers.Media
             _service = service;
         }
 
-        // GET /api/media/hero — public, active slides for the homepage hero
+        // GET /api/media/hero — public, active image slides for the homepage hero
         [AllowAnonymous]
         [HttpGet("/api/media/hero")]
         public async Task<IActionResult> GetActive()
         {
             var slides = await _service.GetActiveAsync();
             return Ok(slides);
+        }
+
+        // GET /api/media/clips — public, active video clips
+        [AllowAnonymous]
+        [HttpGet("/api/media/clips")]
+        public async Task<IActionResult> GetClips()
+        {
+            var clips = await _service.GetClipsAsync();
+            return Ok(clips);
+        }
+
+        // GET /api/media/clips/featured — public, featured video clips (max 3)
+        [AllowAnonymous]
+        [HttpGet("/api/media/clips/featured")]
+        public async Task<IActionResult> GetFeaturedClips()
+        {
+            var clips = await _service.GetFeaturedClipsAsync();
+            return Ok(clips);
         }
 
         // GET /api/ministry/hero-slides — admin
@@ -40,17 +59,31 @@ namespace GlobalFlameMinistry.API.Controllers.Media
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateHeroSlideDto dto)
         {
-            var slide = await _service.CreateAsync(dto);
-            return Ok(slide);
+            try
+            {
+                var slide = await _service.CreateAsync(dto);
+                return Ok(slide);
+            }
+            catch (HeroSlideValidationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         // PUT /api/ministry/hero-slides/5 — admin
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateHeroSlideDto dto)
         {
-            var slide = await _service.UpdateAsync(id, dto);
-            if (slide is null) return NotFound("Hero slide not found");
-            return Ok(slide);
+            try
+            {
+                var slide = await _service.UpdateAsync(id, dto);
+                if (slide is null) return NotFound("Hero slide not found");
+                return Ok(slide);
+            }
+            catch (HeroSlideValidationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         // DELETE /api/ministry/hero-slides/5 — admin
