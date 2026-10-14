@@ -27,9 +27,12 @@ public static class CacheKeys
     public const string MinistrySlug = "ministries:slug_{0}";
 
     // ── EVENTS ─────────────────────────────────────────────────────────────────
-    public const string EventsUpcoming = "events:upcoming_p{0}_s{1}";
-    public const string EventId = "events:id_{0}";
-    public const string EventSlug = "events:slug_{0}";
+    // v2: EventResponseDto gained ConferenceTheme / AnchorScripture /
+    // AnchorScriptureReference. The version segment ensures any DTO cached
+    // before this change (which lacks the new fields) is not served.
+    public const string EventsUpcoming = "events:v2:upcoming_p{0}_s{1}";
+    public const string EventId = "events:v2:id_{0}";
+    public const string EventSlug = "events:v2:slug_{0}";
 
     // ── ANNOUNCEMENTS ──────────────────────────────────────────────────────────
     public const string AnnouncementsPublished = "announcements:published";
@@ -37,14 +40,23 @@ public static class CacheKeys
     public const string AnnouncementSlug = "announcements:slug_{0}";
 
     // ── BLOG POSTS ─────────────────────────────────────────────────────────────
-    public const string BlogPublished = "blog:published_p{0}_s{1}";
-    public const string BlogId = "blog:id_{0}";
-    public const string BlogSlug = "blog:slug_{0}";
+    // v3: BlogPostResponseDto now includes VideoUrl. The version segment ensures
+    // any DTO cached before this change (which lacks the header video) is not served.
+    // {0}=page {1}=size {2}=department {3}=search {4}=isPublished {5}=featuredOnHero
+    public const string BlogPublished = "blog:v3:list_p{0}_s{1}_d{2}_q{3}_pub{4}_feat{5}";
+    public const string BlogId = "blog:v3:id_{0}";
+    public const string BlogSlug = "blog:v3:slug_{0}";
+    public const string BlogDepartments = "blog:departments";
+    public const string BlogRelated = "blog:v3:related_{0}_t{1}";
 
     // ── TESTIMONIES ────────────────────────────────────────────────────────────
     public const string TestimoniesApproved = "testimonies:approved_p{0}_s{1}";
 
     // ── HERO SLIDES ────────────────────────────────────────────────────────────
+    // v2: HeroSlideDto gained Label / ButtonText. The version segment ensures any
+    // DTO cached before this change (which lacks the new fields) is not served.
     public const string TagHeroSlides = "tag:hero-slides";
-    public const string HeroSlidesActive = "hero-slides:active";
+    public const string HeroSlidesActive = "hero-slides:v2:active";
+    public const string HeroClips = "hero-slides:v2:clips";
+    public const string HeroClipsFeatured = "hero-slides:v2:clips:featured";
 }

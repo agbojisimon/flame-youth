@@ -214,7 +214,15 @@ namespace GlobalFlameMinistry.API.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<DateTime?>("FeaturedOnHeroAt")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsFeaturedOnHero")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
@@ -249,6 +257,8 @@ namespace GlobalFlameMinistry.API.Migrations
 
                     b.HasIndex("Slug")
                         .IsUnique();
+
+                    b.HasIndex("IsFeaturedOnHero", "IsPublished", "CreatedOn");
 
                     b.ToTable("BlogPosts");
                 });
@@ -678,6 +688,18 @@ namespace GlobalFlameMinistry.API.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
+                    b.Property<string>("AnchorScripture")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("AnchorScriptureReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ConferenceTheme")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<DateTime>("CreatedOn")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp without time zone")
@@ -697,6 +719,9 @@ namespace GlobalFlameMinistry.API.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<DateTime?>("FeaturedOn")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<string>("ImageUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -707,6 +732,11 @@ namespace GlobalFlameMinistry.API.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsFeaturedOnHome")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
@@ -756,6 +786,8 @@ namespace GlobalFlameMinistry.API.Migrations
 
                     b.HasIndex("Slug")
                         .IsUnique();
+
+                    b.HasIndex("IsFeaturedOnHome", "StartDate");
 
                     b.ToTable("Events");
                 });
@@ -810,12 +842,21 @@ namespace GlobalFlameMinistry.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ButtonText")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
                     b.Property<DateTime>("CreatedOn")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp without time zone")
                         .HasDefaultValueSql("NOW()");
 
                     b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("FeaturedOrder")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(0);
@@ -829,6 +870,15 @@ namespace GlobalFlameMinistry.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
+
+                    b.Property<bool>("IsFeatured")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
 
                     b.Property<string>("MediaType")
                         .IsRequired()
@@ -860,6 +910,8 @@ namespace GlobalFlameMinistry.API.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("IsActive", "DisplayOrder");
+
+                    b.HasIndex("MediaType", "IsFeatured", "IsActive");
 
                     b.ToTable("HeroSlides");
                 });

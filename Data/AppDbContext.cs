@@ -76,13 +76,19 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(e => e.ImageUrl).HasMaxLength(500);
                 entity.Property(e => e.Module).IsRequired().HasMaxLength(50).HasDefaultValue("Ministry");
                 entity.Property(e => e.IsCancelled).HasDefaultValue(false);
+                entity.Property(e => e.IsFeaturedOnHome).HasDefaultValue(false);
+                entity.Property(e => e.FeaturedOn).IsRequired(false);
                 entity.Property(e => e.AcceptsRegistrations).HasDefaultValue(true);
                 entity.Property(e => e.MaxRegistrations).IsRequired(false);
                 entity.Property(e => e.SeatsTaken).HasDefaultValue(0);
                 entity.Property(e => e.AcceptsDonations).HasDefaultValue(true);
                 entity.Property(e => e.DonationLabel).HasMaxLength(200);
+                entity.Property(e => e.ConferenceTheme).HasMaxLength(200);
+                entity.Property(e => e.AnchorScripture).HasMaxLength(500);
+                entity.Property(e => e.AnchorScriptureReference).HasMaxLength(100);
                 entity.Property(e => e.IsDeleted).HasDefaultValue(false);
                 entity.Property(e => e.CreatedOn).HasDefaultValueSql("NOW()");
+                entity.HasIndex(e => new { e.IsFeaturedOnHome, e.StartDate });
                 entity.HasQueryFilter(e => !e.IsDeleted);
                 entity.HasOne(e => e.Ministry)
                       .WithMany(m => m.Events)
@@ -265,12 +271,15 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(p => p.CoverImageUrl).HasMaxLength(500);
                 entity.Property(p => p.Department).IsRequired().HasMaxLength(50);
                 entity.Property(p => p.IsPublished).HasDefaultValue(false);
+                entity.Property(p => p.IsFeaturedOnHero).HasDefaultValue(false);
+                entity.Property(p => p.FeaturedOnHeroAt).IsRequired(false);
                 entity.Property(p => p.IsDeleted).HasDefaultValue(false);
                 entity.Property(p => p.CreatedOn).HasDefaultValueSql("NOW()");
                 entity.Property(p => p.UpdatedOn).IsRequired(false);
                 entity.Property(p => p.DeletedOn).IsRequired(false);
                 entity.Property(p => p.AuthorId).HasMaxLength(450).IsRequired(false);
                 entity.HasIndex(p => p.Slug).IsUnique();
+                entity.HasIndex(p => new { p.IsFeaturedOnHero, p.IsPublished, p.CreatedOn });
 
                 entity.HasOne(p => p.Author)
                       .WithMany()
@@ -353,13 +362,18 @@ namespace GlobalFlameMinistry.API.Data
                 entity.Property(h => h.Url).IsRequired().HasMaxLength(500);
                 entity.Property(h => h.Title).HasMaxLength(200);
                 entity.Property(h => h.Subtitle).HasMaxLength(300);
+                entity.Property(h => h.Label).HasMaxLength(60);
+                entity.Property(h => h.ButtonText).HasMaxLength(40);
                 entity.Property(h => h.TargetUrl).HasMaxLength(500);
                 entity.Property(h => h.DisplayOrder).HasDefaultValue(0);
                 entity.Property(h => h.IsActive).HasDefaultValue(true);
+                entity.Property(h => h.IsFeatured).HasDefaultValue(false);
+                entity.Property(h => h.FeaturedOrder).HasDefaultValue(0);
                 entity.Property(h => h.IsDeleted).HasDefaultValue(false);
                 entity.Property(h => h.CreatedOn).HasDefaultValueSql("NOW()");
                 entity.HasQueryFilter(h => !h.IsDeleted);
                 entity.HasIndex(h => new { h.IsActive, h.DisplayOrder });
+                entity.HasIndex(h => new { h.MediaType, h.IsFeatured, h.IsActive });
             });
 
             // ── REFRESH TOKEN FAMILY ───────────────────────────────────────────
